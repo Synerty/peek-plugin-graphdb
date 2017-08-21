@@ -1,0 +1,34 @@
+{
+    "plugin": {
+        "title": "LiveDB Plugin",
+        "packageName": "peek_plugin_graphdb",
+    "version":"0.7.0",
+        "buildNumber": "#PLUGIN_BUILD#",
+        "buildDate": "#BUILD_DATE#",
+        "creator": "Synerty Pty Ltd",
+        "website": "www.synerty.com"
+    },
+    "requiresServices": [
+        "client",
+        "server",
+        "storage",
+        "admin",
+        "agent",
+        "worker"
+    ],
+    "server": {
+    },
+    "storage": {
+        "alembicDir": "_private/alembic"
+    },
+    "admin": {
+        "showHomeLink": true,
+        "appDir": "_private/admin-app",
+        "appModule": "graphdb.module#LiveDBModule",
+        "moduleDir": "plugin-module"
+    },
+    "agent": {
+    },
+    "worker": {
+    }
+}
