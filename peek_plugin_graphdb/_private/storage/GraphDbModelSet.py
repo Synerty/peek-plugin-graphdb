@@ -8,8 +8,8 @@ from .DeclarativeBase import DeclarativeBase
 
 
 @addTupleType
-class LiveDbModelSet(Tuple, DeclarativeBase):
-    __tablename__ = 'LiveDbModelSet'
+class GraphDbModelSet(Tuple, DeclarativeBase):
+    __tablename__ = 'GraphDbModelSet'
     __tupleType__ = graphdbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -19,10 +19,10 @@ class LiveDbModelSet(Tuple, DeclarativeBase):
     propsJson = Column(String(500))
 
 
-def getOrCreateLiveDbModelSet(session, modelSetName:str) -> LiveDbModelSet:
-    qry = session.query(LiveDbModelSet).filter(LiveDbModelSet.name == modelSetName)
+def getOrCreateGraphDbModelSet(session, modelSetName:str) -> GraphDbModelSet:
+    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.name == modelSetName)
     if not qry.count():
-        session.add(LiveDbModelSet(name=modelSetName))
+        session.add(GraphDbModelSet(name=modelSetName))
         session.commit()
 
     return qry.one()

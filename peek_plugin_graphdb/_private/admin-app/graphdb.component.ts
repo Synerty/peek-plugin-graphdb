@@ -4,7 +4,7 @@ import {Component, OnInit} from "@angular/core";
     selector: 'graphdb-admin',
     templateUrl: 'graphdb.component.html'
 })
-export class LiveDBComponent  implements OnInit {
+export class GraphDBComponent  implements OnInit {
 
     ngOnInit() {
 

@@ -5,9 +5,9 @@ from rx.subjects import Subject
 from twisted.internet.defer import Deferred
 
 
-class LiveDBReadApiABC(metaclass=ABCMeta):
+class GraphDBReadApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def priorityLiveDbKeysObservable(self, modelSetName: str) -> Subject:
+    def priorityGraphDbKeysObservable(self, modelSetName: str) -> Subject:
         """ Priority Live DB ID Observable
 
         This observable emits list of keys that the live db acquisition plugins should
@@ -31,7 +31,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         :param modelSetName: The name of the model set for the live db
 
         :return: An observable that fires when keys are removed from the live db
-        :rtype: An observable that emits List[LiveDbDisplayValueTuple]
+        :rtype: An observable that emits List[GraphDbDisplayValueTuple]
 
         """
 
@@ -60,7 +60,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         :param keyList:  An optional list of keys that the data is required for
 
         :return: A deferred that fires with a list of tuples
-        :rtype: C{LiveDbDisplayValueTuple}
+        :rtype: C{GraphDbDisplayValueTuple}
 
         This is served up in chunks to prevent ballooning the memory usage.
 
@@ -69,18 +69,18 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         ::
 
                 @inlineCallbacks
-                def loadFromDiagramApi(diagramLiveDbApi:DiagramLiveDbApiABC):
-                    deferredGenerator = diagramLiveDbApi.bulkLoadDeferredGenerator("modelName")
+                def loadFromDiagramApi(diagramGraphDbApi:DiagramGraphDbApiABC):
+                    deferredGenerator = diagramGraphDbApi.bulkLoadDeferredGenerator("modelName")
 
                     while True:
                         d = next(deferredGenerator)
-                        liveDbValueTuples = yield d # List[LiveDbDisplayValueTuple]
+                        graphDbValueTuples = yield d # List[GraphDbDisplayValueTuple]
 
                         # The end of the list is marked my an empty result
-                        if not liveDbValueTuples:
+                        if not graphDbValueTuples:
                             break
 
-                        # TODO, do something with this chunk of liveDbValueTuples
+                        # TODO, do something with this chunk of graphDbValueTuples
 
 
 
@@ -90,13 +90,13 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
     def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
         """ Raw Value Update Observable
 
-        Return an observable that fires with lists of C{LiveDbRawValueTuple} tuples
+        Return an observable that fires with lists of C{GraphDbRawValueTuple} tuples
         containing updates to live db values.
 
         :param modelSetName:  The name of the model set for the live db
 
         :return: An observable that fires when values are updated in the graphdb
-        :rtype: Subject[List[LiveDbRawValueTuple]]
+        :rtype: Subject[List[GraphDbRawValueTuple]]
 
         """
 
@@ -104,12 +104,12 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
     def displayValueUpdatesObservable(self, modelSetName: str) -> Subject:
         """ Display Value Update Observable
 
-        Return an observable that fires with lists of C{LiveDbDisplayValueTuple} tuples
+        Return an observable that fires with lists of C{GraphDbDisplayValueTuple} tuples
         containing updates to live db values.
 
         :param modelSetName:  The name of the model set for the live db
 
         :return: An observable that fires when values are updated in the graphdb
-        :rtype: An observable that fires with List[LiveDbDisplayValueTuple]
+        :rtype: An observable that fires with List[GraphDbDisplayValueTuple]
 
         """

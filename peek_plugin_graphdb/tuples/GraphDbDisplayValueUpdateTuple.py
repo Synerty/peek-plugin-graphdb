@@ -4,11 +4,11 @@ from vortex.Tuple import Tuple, addTupleType
 
 
 @addTupleType
-class LiveDbDisplayValueUpdateTuple(Tuple):
+class GraphDbDisplayValueUpdateTuple(Tuple):
     """ Live DB Display Value Update
 
     This tuple represents an update to the display value for a live db item
 
     """
-    __tupleType__ = graphdbTuplePrefix + 'LiveDbDisplayValueUpdateTuple'
+    __tupleType__ = graphdbTuplePrefix + 'GraphDbDisplayValueUpdateTuple'
     __slots__ = ("key", "displayValue")

@@ -1,6 +1,6 @@
 {
     "plugin": {
-        "title": "LiveDB Plugin",
+        "title": "GraphDB Plugin",
         "packageName": "peek_plugin_graphdb",
     "version":"0.7.0",
         "buildNumber": "#PLUGIN_BUILD#",
@@ -24,7 +24,7 @@
     "admin": {
         "showHomeLink": true,
         "appDir": "_private/admin-app",
-        "appModule": "graphdb.module#LiveDBModule",
+        "appModule": "graphdb.module#GraphDBModule",
         "moduleDir": "plugin-module"
     },
     "agent": {

@@ -6,8 +6,8 @@ from sqlalchemy.sql.expression import bindparam, and_
 from txcelery.defer import CeleryClient, DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_graphdb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
+from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import getOrCreateGraphDbModelSet
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
 from vortex.Payload import Payload
 
@@ -27,16 +27,16 @@ def updateValues(self, modelSetName, updates, raw=True):
     """
 
     startTime = datetime.utcnow()
-    table = LiveDbItem.__table__
+    table = GraphDbItem.__table__
 
     session = CeleryDbConn.getDbSession()
     conn = CeleryDbConn.getDbEngine().connect()
     try:
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetName)
 
         sql = (table.update()
                .where(and_(table.c.key == bindparam('b_key'),
-                           table.c.modelSetId == liveDbModelSet.id))
+                           table.c.modelSetId == graphDbModelSet.id))
                .values({"rawValue" if raw else "displayValue": bindparam("b_value")}))
 
         conn.execute(sql, [

@@ -11,15 +11,15 @@ from peek_plugin_base.storage.AlembicEnvBase import isPostGreSQLDialect, isMssql
 from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 from .DeclarativeBase import DeclarativeBase
-from .LiveDbModelSet import LiveDbModelSet
+from .GraphDbModelSet import GraphDbModelSet
 
 logger = logging.getLogger(__name__)
 
 
 @addTupleType
-class LiveDbItem(Tuple, DeclarativeBase):
+class GraphDbItem(Tuple, DeclarativeBase):
     __tupleTypeShort__ = 'LDK'
-    __tablename__ = 'LiveDbItem'
+    __tablename__ = 'GraphDbItem'
     __tupleType__ = graphdbTuplePrefix + __tablename__
 
     NUMBER_VALUE = 0
@@ -29,15 +29,15 @@ class LiveDbItem(Tuple, DeclarativeBase):
     LINE_STYLE = 4
     GROUP_PTR = 5
 
-    id_seq = Sequence('LiveDbItem_id_seq',
+    id_seq = Sequence('GraphDbItem_id_seq',
                       metadata=DeclarativeBase.metadata,
                       schema=DeclarativeBase.metadata.schema)
     id = Column(Integer, id_seq, server_default=id_seq.next_value(),
                 primary_key=True, autoincrement=False)
 
-    modelSetId = Column(Integer, ForeignKey('LiveDbModelSet.id', ondelete='CASCADE'),
+    modelSetId = Column(Integer, ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),
                         doc=JSON_EXCLUDE, nullable=False)
-    modelSet = relationship(LiveDbModelSet)
+    modelSet = relationship(GraphDbModelSet)
 
     # comment="The unique reference of the value we want from the live db"
     key = Column(String(50), nullable=False)
@@ -57,7 +57,7 @@ class LiveDbItem(Tuple, DeclarativeBase):
     propsJson = Column(String(500))
 
     __table_args__ = (
-        Index("idx_LiveDbDKey_importHash", importHash, unique=False),
-        Index("idx_LiveDbDKey_modelSet_key", modelSetId, key, unique=True),
+        Index("idx_GraphDbDKey_importHash", importHash, unique=False),
+        Index("idx_GraphDbDKey_modelSet_key", modelSetId, key, unique=True),
     )
 

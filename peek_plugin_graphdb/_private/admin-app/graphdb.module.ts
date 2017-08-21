@@ -7,13 +7,13 @@ import {EditSettingComponent} from "./edit-setting-table/edit.component";
 
 
 // Import our components
-import {LiveDBComponent} from "./graphdb.component";
+import {GraphDBComponent} from "./graphdb.component";
 
 // Define the routes for this Angular module
 export const pluginRoutes: Routes = [
     {
         path: '',
-        component: LiveDBComponent
+        component: GraphDBComponent
     }
 
 ];
@@ -27,8 +27,8 @@ export const pluginRoutes: Routes = [
     ],
     exports: [],
     providers: [],
-    declarations: [LiveDBComponent, EditStringIntComponent, EditSettingComponent]
+    declarations: [GraphDBComponent, EditStringIntComponent, EditSettingComponent]
 })
-export class LiveDBModule {
+export class GraphDBModule {
 
 }

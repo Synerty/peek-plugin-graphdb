@@ -3,8 +3,8 @@ import {graphdbTuplePrefix} from "../PluginNames";
 
 
 @addTupleType
-export class LiveDBTuple extends Tuple {
-    public static readonly tupleName = graphdbTuplePrefix + "LiveDBTuple";
+export class GraphDBTuple extends Tuple {
+    public static readonly tupleName = graphdbTuplePrefix + "GraphDBTuple";
 
     //  Description of date1
     dict1 : {};
@@ -16,6 +16,6 @@ export class LiveDBTuple extends Tuple {
     date1 : Date;
 
     constructor() {
-        super(LiveDBTuple.tupleName)
+        super(GraphDBTuple.tupleName)
     }
 }

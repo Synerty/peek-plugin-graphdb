@@ -7,18 +7,18 @@ from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_graphdb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
+from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import getOrCreateGraphDbModelSet
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
+from peek_plugin_graphdb.tuples.ImportGraphDbItemTuple import ImportGraphDbItemTuple
 
 logger = logging.getLogger(__name__)
 
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def importLiveDbItems(self, modelSetName: str,
-                      newItems: List[ImportLiveDbItemTuple]) -> List[str]:
+def importGraphDbItems(self, modelSetName: str,
+                      newItems: List[ImportGraphDbItemTuple]) -> List[str]:
     """ Compile Grids Task
 
     :param self: A celery reference to this task
@@ -34,10 +34,10 @@ def importLiveDbItems(self, modelSetName: str,
     conn = engine.connect()
     transaction = conn.begin()
 
-    liveDbTable = LiveDbItem.__table__
+    graphDbTable = GraphDbItem.__table__
     try:
 
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetName)
 
         # This will remove duplicates
         itemsByKey = {i.key: i for i in newItems}
@@ -53,10 +53,10 @@ def importLiveDbItems(self, modelSetName: str,
             if not chunk:
                 break
             offset += chunkSize
-            stmt = (select([liveDbTable.c.key])
-                    .where(liveDbTable.c.modelSetId == liveDbModelSet.id)
+            stmt = (select([graphDbTable.c.key])
+                    .where(graphDbTable.c.modelSetId == graphDbModelSet.id)
             .where(makeCoreValuesSubqueryCondition(
-                engine, liveDbTable.c.key, chunk
+                engine, graphDbTable.c.key, chunk
             ))
             )
 
@@ -72,7 +72,7 @@ def importLiveDbItems(self, modelSetName: str,
                 continue
 
             inserts.append(dict(
-                modelSetId=liveDbModelSet.id,
+                modelSetId=graphDbModelSet.id,
                 key=newItem.key,
                 dataType=newItem.dataType,
                 rawValue=newItem.rawValue,
@@ -85,10 +85,10 @@ def importLiveDbItems(self, modelSetName: str,
         if not inserts:
             return []
 
-        conn.execute(LiveDbItem.__table__.insert(), inserts)
+        conn.execute(GraphDbItem.__table__.insert(), inserts)
 
         transaction.commit()
-        logger.info("Inserted %s LiveDbItems, %s already existed, in %s",
+        logger.info("Inserted %s GraphDbItems, %s already existed, in %s",
                     len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
 
         return newKeys

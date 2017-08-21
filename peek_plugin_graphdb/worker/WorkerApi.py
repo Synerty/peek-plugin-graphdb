@@ -4,49 +4,49 @@ from sqlalchemy import select
 
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition, \
     makeOrmValuesSubqueryCondition
-from peek_plugin_graphdb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_graphdb._private.storage.LiveDbModelSet import LiveDbModelSet, \
-    getOrCreateLiveDbModelSet
-from peek_plugin_graphdb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
-from peek_plugin_graphdb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
+from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet, \
+    getOrCreateGraphDbModelSet
+from peek_plugin_graphdb.tuples.GraphDbDisplayValueTuple import GraphDbDisplayValueTuple
+from peek_plugin_graphdb.tuples.GraphDbRawValueTuple import GraphDbRawValueTuple
 
 
 class WorkerApi:
     """ Worker Api
 
-    This class allows other classes to work with the LiveDB plugin on the
+    This class allows other classes to work with the GraphDB plugin on the
     worker service.
 
     """
     _FETCH_SIZE = 5000
 
     @classmethod
-    def getLiveDbDisplayValues(cls,
+    def getGraphDbDisplayValues(cls,
                                ormSession,
                                modelSetName: str,
-                               liveDbKeys: List[str]
-                               ) -> List[LiveDbRawValueTuple]:
+                               graphDbKeys: List[str]
+                               ) -> List[GraphDbRawValueTuple]:
         """ Get Live DB Display Values
 
-        Return an array of items representing the display values from the LiveDB.
+        Return an array of items representing the display values from the GraphDB.
 
         :param ormSession: The SQLAlchemy orm session from the calling code.
         :param modelSetName: The name of the model set to get the keys for
-        :param liveDbKeys: An array of LiveDb Keys.
+        :param graphDbKeys: An array of GraphDb Keys.
 
         :returns: An array of tuples.
         """
-        if not liveDbKeys:
+        if not graphDbKeys:
             return []
 
-        liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(ormSession, modelSetName)
 
-        liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
+        graphDbKeys = set(graphDbKeys)  # Remove duplicates if any exist.
         qry = (
-            ormSession.query(LiveDbItem)
-                .filter(LiveDbItem.modelSetId == liveDbModelSet.id)
+            ormSession.query(GraphDbItem)
+                .filter(GraphDbItem.modelSetId == graphDbModelSet.id)
                 .filter(makeOrmValuesSubqueryCondition(
-                ormSession, LiveDbItem.key, list(liveDbKeys)
+                ormSession, GraphDbItem.key, list(graphDbKeys)
             ))
                 .yield_per(cls._FETCH_SIZE)
         )
@@ -55,7 +55,7 @@ class WorkerApi:
 
         for item in qry:
             results.append(
-                LiveDbDisplayValueTuple(key=item.key,
+                GraphDbDisplayValueTuple(key=item.key,
                                         displayValue=item.displayValue,
                                         rawValue=item.rawValue,
                                         dataType=item.dataType)
@@ -64,33 +64,33 @@ class WorkerApi:
         return results
 
     @classmethod
-    def getLiveDbKeyDatatypeDict(cls, ormSession,
+    def getGraphDbKeyDatatypeDict(cls, ormSession,
                                  modelSetName: str,
-                                 liveDbKeys: List[str]) -> Dict[str, int]:
+                                 graphDbKeys: List[str]) -> Dict[str, int]:
         """ Get Live DB Display Values
 
-        Return an array of items representing the display values from the LiveDB.
+        Return an array of items representing the display values from the GraphDB.
 
         :param ormSession: The SQLAlchemy orm session from the calling code.
         :param modelSetName: The name of the model set to get the keys for
-        :param liveDbKeys: An array of LiveDb Keys.
+        :param graphDbKeys: An array of GraphDb Keys.
 
         :returns: An array of tuples.
         """
-        liveDbTable = LiveDbItem.__table__
-        modelTable = LiveDbModelSet.__table__
+        graphDbTable = GraphDbItem.__table__
+        modelTable = GraphDbModelSet.__table__
 
-        if not liveDbKeys:
+        if not graphDbKeys:
             return {}
 
-        liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
-        stmt = (select([liveDbTable.c.key, liveDbTable.c.dataType])
-                .select_from(liveDbTable
+        graphDbKeys = list(set(graphDbKeys))  # Remove duplicates if any exist.
+        stmt = (select([graphDbTable.c.key, graphDbTable.c.dataType])
+                .select_from(graphDbTable
                              .join(modelTable,
-                                   liveDbTable.c.modelSetId == modelTable.c.id))
+                                   graphDbTable.c.modelSetId == modelTable.c.id))
                 .where(modelTable.c.name == modelSetName)
                 .where(makeCoreValuesSubqueryCondition(
-                    ormSession.bind, liveDbTable.c.key, liveDbKeys
+                    ormSession.bind, graphDbTable.c.key, graphDbKeys
                 ))
         )
         resultSet = ormSession.execute(stmt)

@@ -1,5 +1,5 @@
 export * from "./PluginNames";
-export {LiveDBTuple} from "./tuples/LiveDBTuple";
+export {GraphDBTuple} from "./tuples/GraphDBTuple";
 export {StringIntTuple} from "./tuples/StringIntTuple";
 export {SettingPropertyTuple} from "./tuples/SettingPropertyTuple";
 export {AddIntValueActionTuple} from "./tuples/AddIntValueActionTuple";

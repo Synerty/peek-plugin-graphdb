@@ -5,27 +5,27 @@ from sqlalchemy import select
 from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.LiveDbItem import LiveDbItem
+from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
+from peek_plugin_graphdb.tuples.GraphDbDisplayValueTuple import GraphDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)
 
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def qryChunkInWorker(self, offset, limit) -> List[LiveDbDisplayValueTuple]:
+def qryChunkInWorker(self, offset, limit) -> List[GraphDbDisplayValueTuple]:
     """ Query Chunk
 
-    This returns a chunk of LiveDB items from the database
+    This returns a chunk of GraphDB items from the database
 
     :param self: A celery reference to this task
     :param offset: The offset of the chunk
     :param limit: An encoded payload containing the updates
-    :returns: List[LiveDbDisplayValueTuple] serialised in a payload json
+    :returns: List[GraphDbDisplayValueTuple] serialised in a payload json
     """
 
-    table = LiveDbItem.__table__
+    table = GraphDbItem.__table__
     cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
 
     session = CeleryDbConn.getDbSession()
@@ -35,7 +35,7 @@ def qryChunkInWorker(self, offset, limit) -> List[LiveDbDisplayValueTuple]:
                                  .offset(offset)
                                  .limit(limit))
 
-        return [LiveDbDisplayValueTuple(
+        return [GraphDbDisplayValueTuple(
             key=o.key, dataType=o.dataType,
             rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
 

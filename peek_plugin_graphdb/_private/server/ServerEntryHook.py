@@ -7,15 +7,15 @@ from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
-from peek_plugin_graphdb._private.server.controller.LiveDbController import \
-    LiveDbController
-from peek_plugin_graphdb._private.server.controller.LiveDbImportController import \
-    LiveDbImportController
+from peek_plugin_graphdb._private.server.controller.GraphDbController import \
+    GraphDbController
+from peek_plugin_graphdb._private.server.controller.GraphDbImportController import \
+    GraphDbImportController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
-from .LiveDBApi import LiveDBApi
+from .GraphDBApi import GraphDBApi
 from .TupleActionProcessor import makeTupleActionProcessorHandler
 from .TupleDataObservable import makeTupleDataObservableHandler
 from .admin_backend import makeAdminBackendHandlers
@@ -92,21 +92,21 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         self._loadedObjects.append(mainController)
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-        liveDbController = LiveDbController(self.dbSessionCreator)
-        self._loadedObjects.append(liveDbController)
+        graphDbController = GraphDbController(self.dbSessionCreator)
+        self._loadedObjects.append(graphDbController)
 
-        liveDbImportController = LiveDbImportController(self.dbSessionCreator)
-        self._loadedObjects.append(liveDbImportController)
+        graphDbImportController = GraphDbImportController(self.dbSessionCreator)
+        self._loadedObjects.append(graphDbImportController)
 
         # Initialise the API object that will be shared with other plugins
-        self._api = LiveDBApi(liveDbController=liveDbController,
-                              liveDbImportController=liveDbImportController,
+        self._api = GraphDBApi(graphDbController=graphDbController,
+                              graphDbImportController=graphDbImportController,
                               dbSessionCreator=self.dbSessionCreator,
                               dbEngine=self.dbEngine)
         self._loadedObjects.append(self._api)
 
         # noinspection PyTypeChecker
-        liveDbImportController.setReadApi(self._api.readApi)
+        graphDbImportController.setReadApi(self._api.readApi)
 
         logger.debug("Started")
 

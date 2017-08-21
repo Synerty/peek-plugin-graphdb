@@ -7,22 +7,22 @@ from sqlalchemy import select
 from twisted.internet.defer import Deferred
 
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
-from peek_plugin_graphdb._private.server.controller.LiveDbController import \
-    LiveDbController
-from peek_plugin_graphdb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_graphdb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
-from peek_plugin_graphdb.server.LiveDBReadApiABC import LiveDBReadApiABC
-from peek_plugin_graphdb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
+from peek_plugin_graphdb._private.server.controller.GraphDbController import \
+    GraphDbController
+from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import getOrCreateGraphDbModelSet
+from peek_plugin_graphdb.server.GraphDBReadApiABC import GraphDBReadApiABC
+from peek_plugin_graphdb.tuples.GraphDbDisplayValueTuple import GraphDbDisplayValueTuple
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 logger = logging.getLogger(__name__)
 
 
-class LiveDBReadApi(LiveDBReadApiABC):
-    def __init__(self, liveDbController: LiveDbController,
+class GraphDBReadApi(GraphDBReadApiABC):
+    def __init__(self, graphDbController: GraphDbController,
                  dbSessionCreator,
                  dbEngine):
-        self._liveDbController = liveDbController
+        self._graphDbController = graphDbController
         self._dbSessionCreator = dbSessionCreator
         self._dbEngine = dbEngine
 
@@ -35,7 +35,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
     def shutdown(self):
         pass
 
-    def priorityLiveDbKeysObservable(self, modelSetName: str) -> Subject:
+    def priorityGraphDbKeysObservable(self, modelSetName: str) -> Subject:
         return self._prioritySubject[modelSetName]
 
     def itemAdditionsObservable(self, modelSetName: str) -> Subject:
@@ -61,21 +61,21 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 @deferToThreadWrapWithLogger(logger)
 def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
-             dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+             dbSessionCreator) -> List[GraphDbDisplayValueTuple]:
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
         return []
 
-    table = LiveDbItem.__table__
+    table = GraphDbItem.__table__
     cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
 
     session = dbSessionCreator()
     try:
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetName)
 
         stmt = (select(cols)
                 .order_by(table.c.id)
-                .where(table.c.modelSetId == liveDbModelSet.id))
+                .where(table.c.modelSetId == graphDbModelSet.id))
 
         if keyList is not None:
             stmt = stmt.where(makeCoreValuesSubqueryCondition(
@@ -86,7 +86,7 @@ def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
 
         result = session.execute(stmt)
 
-        return [LiveDbDisplayValueTuple(
+        return [GraphDbDisplayValueTuple(
             key=o.key, dataType=o.dataType,
             rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
 

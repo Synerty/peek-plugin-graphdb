@@ -4,31 +4,31 @@ from typing import List
 
 from twisted.internet.defer import Deferred, inlineCallbacks
 
-from peek_plugin_graphdb._private.server.LiveDBReadApi import LiveDBReadApi
-from peek_plugin_graphdb._private.worker.tasks.LiveDbItemImportTask import \
-    importLiveDbItems
-from peek_plugin_graphdb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
+from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
+from peek_plugin_graphdb._private.worker.tasks.GraphDbItemImportTask import \
+    importGraphDbItems
+from peek_plugin_graphdb.tuples.ImportGraphDbItemTuple import ImportGraphDbItemTuple
 from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
 
-class LiveDbImportController:
-    """ LiveDB Import Controller
+class GraphDbImportController:
+    """ GraphDB Import Controller
     """
 
     def __init__(self, dbSessionCreator):
         self._dbSessionCreator = dbSessionCreator
 
-    def setReadApi(self, readApi:LiveDBReadApi):
+    def setReadApi(self, readApi:GraphDBReadApi):
         self._readApi = readApi
 
     def shutdown(self):
         self._readApi = None
 
     @inlineCallbacks
-    def importLiveDbItems(self, modelSetName: str,
-                          newItems: List[ImportLiveDbItemTuple]) -> Deferred:
+    def importGraphDbItems(self, modelSetName: str,
+                          newItems: List[ImportGraphDbItemTuple]) -> Deferred:
         """ Import Live DB Items
 
         1) set the  coordSetId
@@ -40,7 +40,7 @@ class LiveDbImportController:
         :return:
         """
 
-        newKeys = yield importLiveDbItems.delay(
+        newKeys = yield importGraphDbItems.delay(
             modelSetName=modelSetName,
             newItems=newItems
         )
@@ -51,7 +51,7 @@ class LiveDbImportController:
             modelSetName, keyList=newKeys)
         while True:
             d = next(deferredGenerator)
-            newTuplesChunk = yield d  # List[LiveDbDisplayValueTuple]
+            newTuplesChunk = yield d  # List[GraphDbDisplayValueTuple]
             newTuples += newTuplesChunk
 
             # The end of the list is marked my an empty result

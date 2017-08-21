@@ -1,18 +1,6 @@
 #!/usr/bin/env bash
 
 
-# remove the git index
-[ -f .git/index ] && rm .git/index || true
-
-rm -rf dist *egg-info || true
-
-find ./ -name '__pycache__' -exec rm -rf {} \; || true
-
-caps="DATA_DMS"
-underscore="_data_dms"
-hyphen="-data-dms"
-camelL="dataDms"
-camelU="DataDms"
 
 set nounset
 set errexit
@@ -40,12 +28,7 @@ function replace {
 
 }
 
-replace "_livedb" "_graphdb" 
-replace "-livedb" "-graphdb" 
-replace "LIVEDB" "GRAPHDB" 
-replace "Livedb" "Graphdb" 
-replace "livedb" "graphdb" 
-
-# Remove compile generated javascript
-find ./ -type f -not -name '.git' -name "*.js" -exec rm {} \; || true
-find ./ -type f -not -name '.git' -name "*.js.map" -exec rm {} \; || true
+replace "liveDb" "graphDb"
+replace "liveDB" "graphDb"
+replace "LiveDb" "GraphDb"
+replace "LiveDB" "GraphDB"
