@@ -7,7 +7,7 @@ from twisted.internet.defer import Deferred
 
 class GraphDBReadApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def priorityGraphDbKeysObservable(self, modelSetName: str) -> Subject:
+    def propUpdateObservable(self, modelSetName: str) -> Subject:
         """ Priority Live DB ID Observable
 
         This observable emits list of keys that the live db acquisition plugins should
@@ -23,7 +23,7 @@ class GraphDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def itemAdditionsObservable(self, modelSetName: str) -> Subject:
+    def edgeAdditionObservable(self, modelSetName: str) -> Subject:
         """ Live DB Tuple Added Items Observable
 
         Return an observable that fires when graphdb items are added
@@ -36,7 +36,7 @@ class GraphDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def itemDeletionsObservable(self, modelSetName: str) -> Subject:
+    def edgeDeletionObservable(self, modelSetName: str) -> Subject:
         """ Live DB Tuple Removed Items Observable
 
         Return an observable that fires when graphdb items are removed
@@ -48,46 +48,9 @@ class GraphDBReadApiABC(metaclass=ABCMeta):
 
         """
 
-    @abstractmethod
-    def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]] = None) -> Deferred:
-        """ Live DB Tuples
-
-        Return a generator that returns deferreds that are fired with chunks of the
-         entire live db.
-
-        :param modelSetName:  The name of the model set for the live db
-        :param keyList:  An optional list of keys that the data is required for
-
-        :return: A deferred that fires with a list of tuples
-        :rtype: C{GraphDbDisplayValueTuple}
-
-        This is served up in chunks to prevent ballooning the memory usage.
-
-        Here is an example of how to use this method
-
-        ::
-
-                @inlineCallbacks
-                def loadFromDiagramApi(diagramGraphDbApi:DiagramGraphDbApiABC):
-                    deferredGenerator = diagramGraphDbApi.bulkLoadDeferredGenerator("modelName")
-
-                    while True:
-                        d = next(deferredGenerator)
-                        graphDbValueTuples = yield d # List[GraphDbDisplayValueTuple]
-
-                        # The end of the list is marked my an empty result
-                        if not graphDbValueTuples:
-                            break
-
-                        # TODO, do something with this chunk of graphDbValueTuples
-
-
-
-        """
 
     @abstractmethod
-    def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
+    def vertexAdditionObservable(self, modelSetName: str) -> Subject:
         """ Raw Value Update Observable
 
         Return an observable that fires with lists of C{GraphDbRawValueTuple} tuples
@@ -101,7 +64,7 @@ class GraphDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def displayValueUpdatesObservable(self, modelSetName: str) -> Subject:
+    def vertexDeletionObservable(self, modelSetName: str) -> Subject:
         """ Display Value Update Observable
 
         Return an observable that fires with lists of C{GraphDbDisplayValueTuple} tuples

@@ -1,7 +1,7 @@
 from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
 from peek_plugin_graphdb._private.server.GraphDBWriteApi import GraphDBWriteApi
-from peek_plugin_graphdb._private.server.controller.GraphDbController import \
-    GraphDbController
+from peek_plugin_graphdb._private.server.controller.GraphDbModelController import \
+    GraphDbModelController
 from peek_plugin_graphdb._private.server.controller.GraphDbImportController import \
     GraphDbImportController
 from peek_plugin_graphdb.server.GraphDBApiABC import GraphDBApiABC
@@ -10,7 +10,7 @@ from peek_plugin_graphdb.server.GraphDBWriteApiABC import GraphDBWriteApiABC
 
 
 class GraphDBApi(GraphDBApiABC):
-    def __init__(self, graphDbController: GraphDbController,
+    def __init__(self, graphDbController: GraphDbModelController,
                  graphDbImportController: GraphDbImportController,
                  dbSessionCreator,
                  dbEngine):

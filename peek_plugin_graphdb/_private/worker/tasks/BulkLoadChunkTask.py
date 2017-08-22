@@ -5,9 +5,9 @@ from sqlalchemy import select
 from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbItem
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb.tuples.GraphDbDisplayValueTuple import GraphDbDisplayValueTuple
+from peek_plugin_graphdb.tuples.GraphDbVertexTuple import GraphDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,8 @@
-
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
 from sqlalchemy import Column
 from sqlalchemy import Integer, String
-from vortex.Tuple import addTupleType, Tuple, TupleField
+from vortex.Tuple import addTupleType, Tuple
 
+from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
 
 
@@ -14,15 +13,19 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, unique=True)
+    key = Column(String(50), nullable=False, unique=True)
     comment = Column(String)
 
     propsJson = Column(String(500))
 
 
-def getOrCreateGraphDbModelSet(session, modelSetName:str) -> GraphDbModelSet:
-    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.name == modelSetName)
+def getOrCreateGraphDbModelSet(session, modelSetName: str) -> GraphDbModelSet:
+    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.key == modelSetName)
     if not qry.count():
-        session.add(GraphDbModelSet(name=modelSetName))
+        session.add(GraphDbModelSet(
+            name=modelSetName,
+            key=modelSetName
+        ))
         session.commit()
 
     return qry.one()

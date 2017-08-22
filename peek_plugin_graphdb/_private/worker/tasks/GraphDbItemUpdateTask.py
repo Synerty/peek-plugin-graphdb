@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import bindparam, and_
 from txcelery.defer import CeleryClient, DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbItem
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import getOrCreateGraphDbModelSet
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
 from vortex.Payload import Payload

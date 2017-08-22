@@ -7,8 +7,8 @@ from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
-from peek_plugin_graphdb._private.server.controller.GraphDbController import \
-    GraphDbController
+from peek_plugin_graphdb._private.server.controller.GraphDbModelController import \
+    GraphDbModelController
 from peek_plugin_graphdb._private.server.controller.GraphDbImportController import \
     GraphDbImportController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
@@ -92,7 +92,7 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         self._loadedObjects.append(mainController)
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-        graphDbController = GraphDbController(self.dbSessionCreator)
+        graphDbController = GraphDbModelController(self.dbSessionCreator)
         self._loadedObjects.append(graphDbController)
 
         graphDbImportController = GraphDbImportController(self.dbSessionCreator)

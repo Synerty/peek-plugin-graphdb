@@ -1,30 +1,48 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
+from sqlalchemy import not_
 from sqlalchemy.sql.expression import select
 from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
-from peek_plugin_graphdb._private.storage.GraphDbModelSet import getOrCreateGraphDbModelSet
+from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import \
+    getOrCreateGraphDbModelSet
+from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb.tuples.ImportGraphDbItemTuple import ImportGraphDbItemTuple
+from peek_plugin_graphdb.tuples.GraphDbImportEdgeTuple import GraphDbImportEdgeTuple
+from peek_plugin_graphdb.tuples.GraphDbImportVertexTuple import GraphDbImportVertexTuple
 
 logger = logging.getLogger(__name__)
+
+vertexTable = GraphDbVertex.__table__
+edgeTable = GraphDbEdge.__table__
+
+CHUNK_SIZE = 1000
 
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def importGraphDbItems(self, modelSetName: str,
-                      newItems: List[ImportGraphDbItemTuple]) -> List[str]:
-    """ Compile Grids Task
+def importGraphSegment(self, modelSetName: str, segmentHash: str,
+                       vertices: List[GraphDbImportVertexTuple],
+                       edges: List[GraphDbImportEdgeTuple]) -> List[str]:
+    """ Import Graph Segment
 
-    :param self: A celery reference to this task
-    :param modelSetName: The model set name
-    :param newItems: The list of new items
-    :returns: A list of grid keys that have been updated.
+    Import a new segment of the Graph, replacing existing vertices and edges with the
+    same segmentHash.
+
+    :param self: A reference to the bound celery task
+    :param modelSetName:  The name of the model set for the live db.
+    :param segmentHash: The unique segment hash for the graph segment being imported.
+    :param vertices: A list of vertices to import / update.
+    :param edges: A list of edges to import / update.
+
+
+    1) Search for nodes that have other segments edges connected to them.
+
     """
 
     startTime = datetime.utcnow()
@@ -34,61 +52,40 @@ def importGraphDbItems(self, modelSetName: str,
     conn = engine.connect()
     transaction = conn.begin()
 
-    graphDbTable = GraphDbItem.__table__
     try:
+        vertexKeys = [v.key for v in vertices]
 
-        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetName)
+        modelSet = getOrCreateGraphDbModelSet(session, modelSetName)
 
-        # This will remove duplicates
-        itemsByKey = {i.key: i for i in newItems}
+        _deleteSegment(conn, segmentHash)
 
-        allKeys = list(itemsByKey)
-        existingKeys = set()
+        existingVerticesIdByKey = _findExistingVertices(
+            engine, conn, modelSet.id, vertexKeys,
+        )
 
-        # Query for existing keys, in 1000 chinks
-        chunkSize = 1000
-        offset = 0
-        while True:
-            chunk = allKeys[offset:offset + chunkSize]
-            if not chunk:
-                break
-            offset += chunkSize
-            stmt = (select([graphDbTable.c.key])
-                    .where(graphDbTable.c.modelSetId == graphDbModelSet.id)
-            .where(makeCoreValuesSubqueryCondition(
-                engine, graphDbTable.c.key, chunk
-            ))
-            )
+        vertexInserts = []
+        edgeInserts = []
 
-            result = conn.execute(stmt)
-
-            existingKeys.update([o[0] for o in result.fetchall()])
-
-        inserts = []
-        newKeys = []
-
-        for newItem in itemsByKey.values():
-            if newItem.key in existingKeys:
+        for newVertex in vertices:
+            if newVertex.key in existingVerticesIdByKey:
                 continue
 
-            inserts.append(dict(
-                modelSetId=graphDbModelSet.id,
-                key=newItem.key,
-                dataType=newItem.dataType,
-                rawValue=newItem.rawValue,
-                displayValue=newItem.displayValue,
-                importHash=newItem.importHash
+            vertexInserts.append(dict(
+                modelSetId=modelSet.id,
+                key=newVertex.key,
+                propsJson=newVertex.propsJson
             ))
 
             newKeys.append(newItem.key)
 
-        if not inserts:
-            return []
+        if vertexInserts:
+            conn.execute(vertexTable.__table__.insert(), vertexInserts)
 
-        conn.execute(GraphDbItem.__table__.insert(), inserts)
+        if edgeInserts:
+            conn.execute(edgeTable.__table__.insert(), edgeInserts)
 
         transaction.commit()
-        logger.info("Inserted %s GraphDbItems, %s already existed, in %s",
+        logger.info("Inserted / Updated %s GraphDbItems, %s already existed, in %s",
                     len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
 
         return newKeys
@@ -101,3 +98,45 @@ def importGraphDbItems(self, modelSetName: str,
     finally:
         conn.close()
         session.close()
+
+
+def _deleteSegment(conn, segmentHash: str):
+    # Delete all edges in this segment
+    conn.execute(
+        edgeTable.delete()
+            .where(edgeTable.c.segmentHash == segmentHash))
+
+    # Delete all vertices that no longer have an edge connected to them.
+    # NOTE: This deletes ALL nodes that don't have edges connected to them
+    conn.execute(
+        vertexTable.delete()
+            .where(not_(vertexTable.c.id.in_(select([edgeTable.c.srcId]))))
+            .where(not_(vertexTable.c.id.in_(select([edgeTable.c.dstId]))))
+
+    )
+
+
+def _findExistingVertices(engine, conn, modelSetId: int,
+                          vertexKeys: List[str]) -> Dict[str, int]:
+    result = {}
+
+    # Query for existing vertices, in 1000 chinks
+    offset = 0
+    while True:
+        chunk = vertexKeys[offset:offset + CHUNK_SIZE]
+        if not chunk:
+            break
+        offset += CHUNK_SIZE
+
+        stmt = (
+            select([vertexTable.c.key])
+                .where(vertexTable.c.modelSetId == modelSetId)
+                .where(makeCoreValuesSubqueryCondition(engine, vertexTable.c.key, chunk)
+                       )
+        )
+
+        result = conn.execute(stmt)
+
+        result.update({o[0]: o[1] for o in result.fetchall()})
+
+    return result

@@ -4,10 +4,10 @@ from sqlalchemy import select
 
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition, \
     makeOrmValuesSubqueryCondition
-from peek_plugin_graphdb._private.storage.GraphDbItem import GraphDbItem
+from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbItem
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet, \
     getOrCreateGraphDbModelSet
-from peek_plugin_graphdb.tuples.GraphDbDisplayValueTuple import GraphDbDisplayValueTuple
+from peek_plugin_graphdb.tuples.GraphDbVertexTuple import GraphDbDisplayValueTuple
 from peek_plugin_graphdb.tuples.GraphDbRawValueTuple import GraphDbRawValueTuple
 
 

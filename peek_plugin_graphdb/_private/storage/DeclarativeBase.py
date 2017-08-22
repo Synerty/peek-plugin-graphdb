@@ -19,6 +19,6 @@ def loadStorageTuples():
 
     """
     for mod in filterModules(__package__, __file__):
-        if mod.startswith("Declaratrive"):
+        if mod.startswith("Declarative"):
             continue
         __import__(mod, locals(), globals())
