@@ -3,16 +3,15 @@ import logging
 from collections import defaultdict
 from rx.subjects import Subject
 
-from peek_plugin_graphdb._private.server.controller.GraphDbModelController import \
-    GraphDbModelController
+from peek_plugin_graphdb._private.server.controller.MainController import MainController
 from peek_plugin_graphdb.server.GraphDBReadApiABC import GraphDBReadApiABC
 
 logger = logging.getLogger(__name__)
 
 
 class GraphDBReadApi(GraphDBReadApiABC):
-    def __init__(self, graphDbController: GraphDbModelController):
-        self._graphDbController = graphDbController
+    def __init__(self, mainController: MainController):
+        self._mainController = mainController
 
         self._propUpdateSubject = defaultdict(Subject)
         self._edgeAdditionSubject = defaultdict(Subject)
@@ -23,17 +22,17 @@ class GraphDBReadApi(GraphDBReadApiABC):
     def shutdown(self):
         pass
 
-    def propUpdateObservable(self, modelSetName: str) -> Subject:
-        return self._propUpdateSubject[modelSetName]
+    def propUpdateObservable(self, modelSetKey: str) -> Subject:
+        return self._propUpdateSubject[modelSetKey]
 
-    def edgeAdditionObservable(self, modelSetName: str) -> Subject:
-        return self._edgeAdditionSubject[modelSetName]
+    def edgeAdditionObservable(self, modelSetKey: str) -> Subject:
+        return self._edgeAdditionSubject[modelSetKey]
 
-    def edgeDeletionObservable(self, modelSetName: str) -> Subject:
-        return self._edgeDeletionSubject[modelSetName]
+    def edgeDeletionObservable(self, modelSetKey: str) -> Subject:
+        return self._edgeDeletionSubject[modelSetKey]
 
-    def vertexAdditionObservable(self, modelSetName: str) -> Subject:
-        return self._vertexAdditionSubject[modelSetName]
+    def vertexAdditionObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexAdditionSubject[modelSetKey]
 
-    def vertexDeletionObservable(self, modelSetName: str) -> Subject:
-        return self._vertexDeletionSubject[modelSetName]
+    def vertexDeletionObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexDeletionSubject[modelSetKey]

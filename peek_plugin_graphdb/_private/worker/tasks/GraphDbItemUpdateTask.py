@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def updateValues(self, modelSetName, updates, raw=True):
+def updateValues(self, modelSetKey, updates, raw=True):
     """ Compile Grids Task
 
     :param self: A celery reference to this task
-    :param modelSetName: The model set name
+    :param modelSetKey: The model set name
     :param updates: An encoded payload containing the updates
     :param raw: Are the updates raw updates?
     :returns: A list of grid keys that have been updated.
@@ -32,7 +32,7 @@ def updateValues(self, modelSetName, updates, raw=True):
     session = CeleryDbConn.getDbSession()
     conn = CeleryDbConn.getDbEngine().connect()
     try:
-        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(session, modelSetKey)
 
         sql = (table.update()
                .where(and_(table.c.key == bindparam('b_key'),

@@ -9,7 +9,7 @@ from peek_plugin_graphdb.tuples.GraphDbImportVertexTuple import GraphDbImportVer
 
 class GraphDBWriteApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def importGraphSegment(self, modelSetName: str, segmentHash: str,
+    def importGraphSegment(self, modelSetKey: str, segmentHash: str,
                            vertices: List[GraphDbImportVertexTuple],
                            edges: List[GraphDbImportEdgeTuple]) -> Deferred:
         """ Import Graph Segment
@@ -17,7 +17,7 @@ class GraphDBWriteApiABC(metaclass=ABCMeta):
         Import a new segment of the Graph, replacing existing vertices and edges with the
         same segmentHash.
 
-        :param modelSetName:  The name of the model set for the live db.
+        :param modelSetKey:  The name of the model set for the live db.
         :param segmentHash: The unique segment hash for the graph segment being imported.
         :param vertices: A list of vertices to import / update.
         :param edges: A list of edges to import / update.

@@ -23,7 +23,7 @@ class WorkerApi:
     @classmethod
     def getGraphDbDisplayValues(cls,
                                ormSession,
-                               modelSetName: str,
+                               modelSetKey: str,
                                graphDbKeys: List[str]
                                ) -> List[GraphDbRawValueTuple]:
         """ Get Live DB Display Values
@@ -31,7 +31,7 @@ class WorkerApi:
         Return an array of items representing the display values from the GraphDB.
 
         :param ormSession: The SQLAlchemy orm session from the calling code.
-        :param modelSetName: The name of the model set to get the keys for
+        :param modelSetKey: The name of the model set to get the keys for
         :param graphDbKeys: An array of GraphDb Keys.
 
         :returns: An array of tuples.
@@ -39,7 +39,7 @@ class WorkerApi:
         if not graphDbKeys:
             return []
 
-        graphDbModelSet = getOrCreateGraphDbModelSet(ormSession, modelSetName)
+        graphDbModelSet = getOrCreateGraphDbModelSet(ormSession, modelSetKey)
 
         graphDbKeys = set(graphDbKeys)  # Remove duplicates if any exist.
         qry = (
@@ -65,14 +65,14 @@ class WorkerApi:
 
     @classmethod
     def getGraphDbKeyDatatypeDict(cls, ormSession,
-                                 modelSetName: str,
+                                 modelSetKey: str,
                                  graphDbKeys: List[str]) -> Dict[str, int]:
         """ Get Live DB Display Values
 
         Return an array of items representing the display values from the GraphDB.
 
         :param ormSession: The SQLAlchemy orm session from the calling code.
-        :param modelSetName: The name of the model set to get the keys for
+        :param modelSetKey: The name of the model set to get the keys for
         :param graphDbKeys: An array of GraphDb Keys.
 
         :returns: An array of tuples.
@@ -88,7 +88,7 @@ class WorkerApi:
                 .select_from(graphDbTable
                              .join(modelTable,
                                    graphDbTable.c.modelSetId == modelTable.c.id))
-                .where(modelTable.c.name == modelSetName)
+                .where(modelTable.c.name == modelSetKey)
                 .where(makeCoreValuesSubqueryCondition(
                     ormSession.bind, graphDbTable.c.key, graphDbKeys
                 ))

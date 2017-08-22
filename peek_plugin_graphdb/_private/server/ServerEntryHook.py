@@ -7,10 +7,8 @@ from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
-from peek_plugin_graphdb._private.server.controller.GraphDbModelController import \
-    GraphDbModelController
-from peek_plugin_graphdb._private.server.controller.GraphDbImportController import \
-    GraphDbImportController
+from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
+    GraphSegmentImporter
 from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
@@ -67,23 +65,6 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
 
         self._loadedObjects.append(tupleObservable)
 
-        # session = self.dbSessionCreator()
-        #
-        # This will retrieve all the settings
-        # from peek_plugin_graphdb._private.storage.Setting import globalSetting
-        # allSettings = globalSetting(session)
-        # logger.debug(allSettings)
-        #
-        # This will retrieve the value of property1
-        # from peek_plugin_graphdb._private.storage.Setting import PROPERTY1
-        # value1 = globalSetting(session, key=PROPERTY1)
-        # logger.debug("value1 = %s" % value1)
-        #
-        # This will set property1
-        # globalSetting(session, key=PROPERTY1, value="new value 1")
-        # session.commit()
-        #
-        # session.close()
 
         mainController = MainController(
             dbSessionCreator=self.dbSessionCreator,
@@ -92,11 +73,7 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         self._loadedObjects.append(mainController)
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-        graphDbController = GraphDbModelController(self.dbSessionCreator)
-        self._loadedObjects.append(graphDbController)
-
-        graphDbImportController = GraphDbImportController(self.dbSessionCreator)
-        self._loadedObjects.append(graphDbImportController)
+        self._loadedObjects.append(GraphSegmentImporter(mainController))
 
         # Initialise the API object that will be shared with other plugins
         self._api = GraphDBApi(graphDbController=graphDbController,

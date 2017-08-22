@@ -1,27 +1,23 @@
 from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
 from peek_plugin_graphdb._private.server.GraphDBWriteApi import GraphDBWriteApi
-from peek_plugin_graphdb._private.server.controller.GraphDbModelController import \
-    GraphDbModelController
-from peek_plugin_graphdb._private.server.controller.GraphDbImportController import \
-    GraphDbImportController
+from peek_plugin_graphdb._private.server.controller.MainController import MainController
+from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
+    GraphSegmentImporter
 from peek_plugin_graphdb.server.GraphDBApiABC import GraphDBApiABC
 from peek_plugin_graphdb.server.GraphDBReadApiABC import GraphDBReadApiABC
 from peek_plugin_graphdb.server.GraphDBWriteApiABC import GraphDBWriteApiABC
 
 
 class GraphDBApi(GraphDBApiABC):
-    def __init__(self, graphDbController: GraphDbModelController,
-                 graphDbImportController: GraphDbImportController,
-                 dbSessionCreator,
-                 dbEngine):
-        self._readApi = GraphDBReadApi(graphDbController=graphDbController,
-                                      dbSessionCreator=dbSessionCreator,
-                                      dbEngine=dbEngine)
-        self._writeApi = GraphDBWriteApi(graphDbController=graphDbController,
-                                        graphDbImportController=graphDbImportController,
-                                        readApi=self._readApi,
-                                        dbSessionCreator=dbSessionCreator,
-                                        dbEngine=dbEngine)
+    def __init__(self, mainController: MainController,
+                 graphDbImportController: GraphSegmentImporter):
+        self._readApi = GraphDBReadApi(
+            mainController=mainController
+        )
+
+        self._writeApi = GraphDBWriteApi(
+            graphDbImportController=graphDbImportController
+        )
 
     def shutdown(self):
         self._readApi.shutdown()

@@ -19,12 +19,12 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
     propsJson = Column(String(500))
 
 
-def getOrCreateGraphDbModelSet(session, modelSetName: str) -> GraphDbModelSet:
-    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.key == modelSetName)
+def getOrCreateGraphDbModelSet(session, modelSetKey: str) -> GraphDbModelSet:
+    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.key == modelSetKey)
     if not qry.count():
         session.add(GraphDbModelSet(
-            name=modelSetName,
-            key=modelSetName
+            name=modelSetKey,
+            key=modelSetKey
         ))
         session.commit()
 

@@ -11,4 +11,4 @@ class GraphDbImportVertexTuple(Tuple):
 
     """
     __tupleType__ = graphdbTuplePrefix + 'GraphDbDisplayValueTuple'
-    __slots__ = ("key", "name", "desc", "props")
+    __slots__ = ("key", "name", "desc", "propsJson")
