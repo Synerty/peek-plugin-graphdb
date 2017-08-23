@@ -20,7 +20,7 @@ class GraphSegmentImporter:
     """ GraphDB Import Controller
     """
 
-    def __init__(self, graphModel: GraphModel, ):
+    def __init__(self, graphModel: GraphModel):
         self._graphModel = graphModel
 
     @inlineCallbacks

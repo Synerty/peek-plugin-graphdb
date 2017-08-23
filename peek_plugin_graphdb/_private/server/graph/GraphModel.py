@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional, Tuple, Dict
-from ujson import json
+import ujson as json
 
 from collections import defaultdict
 from sqlalchemy import select
@@ -8,8 +8,6 @@ from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
-from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import \
-    GraphUpdateContext
 from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
@@ -60,8 +58,15 @@ class GraphModel(object):
     def vertexForId(self, id: int) -> Optional[GraphDbVertexTuple]:
         return self._vertexById.get(id)
 
-    def newUpdateContext(self) -> GraphUpdateContext:
+    def newUpdateContext(self) -> 'GraphUpdateContext':
+        from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import \
+            GraphUpdateContext
         return GraphUpdateContext(self, self._readApi, self._dbSessionCreator)
+
+    def newSegmentImporter(self) -> 'GraphSegmentImporter':
+        from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
+            GraphSegmentImporter
+        return GraphSegmentImporter(self)
 
     def modelSet(self) -> GraphDbModelSet:
         return self._modelSet

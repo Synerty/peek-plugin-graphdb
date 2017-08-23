@@ -1,12 +1,8 @@
-from typing import Optional, List
-
 from abc import ABCMeta, abstractmethod
 from rx.subjects import Subject
-from twisted.internet.defer import Deferred
 
 
 class GraphDBReadApiABC(metaclass=ABCMeta):
-
     # ---------------
     # Vertex Methods
 
@@ -73,6 +69,7 @@ class GraphDBReadApiABC(metaclass=ABCMeta):
         :return: An observable that emits a GraphDbEdgeTuple.
 
         """
+
     @abstractmethod
     def edgePropUpdateObservable(self, modelSetKey: str) -> Subject:
         """ Edge Property Update Observable

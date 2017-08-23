@@ -7,9 +7,6 @@ from vortex.TupleAction import TupleActionABC
 from vortex.handler.TupleActionProcessor import TupleActionProcessorDelegateABC
 from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
-from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
-from peek_plugin_graphdb._private.server.graph.GraphModel import \
-    GraphModel
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet, \
     getOrCreateGraphDbModelSet
 
@@ -25,7 +22,10 @@ class MainController(TupleActionProcessorDelegateABC):
         self._graphsByModelSetKey = {}
 
     @inlineCallbacks
-    def start(self, readApi: GraphDBReadApi) -> Deferred:
+    def start(self, readApi) -> Deferred:
+        from peek_plugin_graphdb._private.server.graph.GraphModel import \
+            GraphModel
+
         self._readApi = readApi
 
         modelSets = yield self._loadModelSets()
@@ -46,6 +46,9 @@ class MainController(TupleActionProcessorDelegateABC):
 
     @inlineCallbacks
     def graphForModelSetKey(self, modelSetKey: str) -> Deferred:
+        from peek_plugin_graphdb._private.server.graph.GraphModel import \
+            GraphModel
+
         graphModel =  self._graphsByModelSetKey.get(modelSetKey)
         if  graphModel:
             return graphModel

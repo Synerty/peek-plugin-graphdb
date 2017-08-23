@@ -73,17 +73,13 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         self._loadedObjects.append(mainController)
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-        self._loadedObjects.append(GraphSegmentImporter(mainController))
 
         # Initialise the API object that will be shared with other plugins
-        self._api = GraphDBApi(graphDbController=graphDbController,
-                              graphDbImportController=graphDbImportController,
-                              dbSessionCreator=self.dbSessionCreator,
-                              dbEngine=self.dbEngine)
+        self._api = GraphDBApi(mainController)
         self._loadedObjects.append(self._api)
 
         # noinspection PyTypeChecker
-        graphDbImportController.setReadApi(self._api.readApi)
+        yield mainController.start(self._api.readApi)
 
         logger.debug("Started")
 

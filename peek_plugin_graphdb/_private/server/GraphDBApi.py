@@ -9,14 +9,13 @@ from peek_plugin_graphdb.server.GraphDBWriteApiABC import GraphDBWriteApiABC
 
 
 class GraphDBApi(GraphDBApiABC):
-    def __init__(self, mainController: MainController,
-                 graphDbImportController: GraphSegmentImporter):
+    def __init__(self, mainController: MainController):
         self._readApi = GraphDBReadApi(
             mainController=mainController
         )
 
         self._writeApi = GraphDBWriteApi(
-            graphDbImportController=graphDbImportController
+            mainController=mainController
         )
 
     def shutdown(self):
