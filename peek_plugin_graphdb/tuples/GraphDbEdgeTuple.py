@@ -11,4 +11,4 @@ class GraphDbEdgeTuple(Tuple):
 
     """
     __tupleType__ = graphdbTuplePrefix + 'GraphDbEdgeTuple'
-    __slots__ = ("id", "srcId", "dstId", "src", "dst", "key", "props")
+    __slots__ = ("id", "key", "srcId", "dstId", "segmentHash", "src", "dst", "props")

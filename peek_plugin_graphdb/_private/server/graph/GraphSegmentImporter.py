@@ -136,11 +136,13 @@ class GraphSegmentImporter:
 
             else:
                 newEdge = GraphDbEdgeTuple(
-                    key=importEdge.key,
-                    name=importEdge.name,
-                    desc=importEdge.desc,
-                    props=importEdge.props,
-                    edges=tuple()
+                        id=None,
+                        srcId=srcVertex.id,
+                        dstId=dstVertex.id,
+                        segmentHash=segmentHash,
+                        src=srcVertex,
+                        dst=dstVertex,
+                        props=json.loads(newEdge.propsJson)
                 )
                 context.addEdge(newEdge)
 
