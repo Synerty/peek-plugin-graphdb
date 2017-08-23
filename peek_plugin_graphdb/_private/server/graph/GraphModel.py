@@ -54,10 +54,10 @@ class GraphModel(object):
     def edgeForKey(self, key: str) -> Optional[GraphDbEdgeTuple]:
         return self._edgeByKey.get(key)
 
-    def vertexForKey(self, key: str) -> GraphDbVertexTuple:
+    def vertexForKey(self, key: str) -> Optional[GraphDbVertexTuple]:
         return self._vertexByKey.get(key)
 
-    def vertexForId(self, id: int) -> GraphDbVertexTuple:
+    def vertexForId(self, id: int) -> Optional[GraphDbVertexTuple]:
         return self._vertexById.get(id)
 
     def newUpdateContext(self) -> GraphUpdateContext:
@@ -106,7 +106,6 @@ class GraphModel(object):
             while chunk:
                 for item in chunk:
                     vertex = GraphDbVertexTuple(
-                        id=item.id,
                         key=item.key,
                         name=item.name,
                         desc=item.desc,
@@ -142,7 +141,6 @@ class GraphModel(object):
                         continue
 
                     edge = GraphDbEdgeTuple(
-                        id=item.id,
                         srcId=item.srcId,
                         dstId=item.dstId,
                         segmentHash=self._makeSharedString(item.segmentHash),

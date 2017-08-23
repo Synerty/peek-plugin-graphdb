@@ -13,17 +13,35 @@ class GraphDBReadApi(GraphDBReadApiABC):
     def __init__(self, mainController: MainController):
         self._mainController = mainController
 
-        self._propUpdateSubject = defaultdict(Subject)
-        self._edgeAdditionSubject = defaultdict(Subject)
-        self._edgeDeletionSubject = defaultdict(Subject)
         self._vertexAdditionSubject = defaultdict(Subject)
         self._vertexDeletionSubject = defaultdict(Subject)
+        self._vertexAttrUpdateSubject = defaultdict(Subject)
+        self._vertexPropUpdateSubject = defaultdict(Subject)
+
+        self._edgeAdditionSubject = defaultdict(Subject)
+        self._edgeDeletionSubject = defaultdict(Subject)
+        self._edgePropUpdateSubject = defaultdict(Subject)
 
     def shutdown(self):
         pass
 
-    def propUpdateObservable(self, modelSetKey: str) -> Subject:
-        return self._propUpdateSubject[modelSetKey]
+    # ---------------
+    # Vertex observables
+
+    def vertexAdditionObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexAdditionSubject[modelSetKey]
+
+    def vertexDeletionObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexDeletionSubject[modelSetKey]
+
+    def vertexAttrUpdateObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexAttrUpdateSubject[modelSetKey]
+
+    def vertexPropUpdateObservable(self, modelSetKey: str) -> Subject:
+        return self._vertexPropUpdateSubject[modelSetKey]
+
+    # ---------------
+    # Edge observables
 
     def edgeAdditionObservable(self, modelSetKey: str) -> Subject:
         return self._edgeAdditionSubject[modelSetKey]
@@ -31,8 +49,5 @@ class GraphDBReadApi(GraphDBReadApiABC):
     def edgeDeletionObservable(self, modelSetKey: str) -> Subject:
         return self._edgeDeletionSubject[modelSetKey]
 
-    def vertexAdditionObservable(self, modelSetKey: str) -> Subject:
-        return self._vertexAdditionSubject[modelSetKey]
-
-    def vertexDeletionObservable(self, modelSetKey: str) -> Subject:
-        return self._vertexDeletionSubject[modelSetKey]
+    def edgePropUpdateObservable(self, modelSetKey: str) -> Subject:
+        return self._edgePropUpdateSubject[modelSetKey]

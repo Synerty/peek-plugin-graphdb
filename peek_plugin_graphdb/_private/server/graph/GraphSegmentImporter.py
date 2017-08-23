@@ -1,12 +1,10 @@
 import logging
 import ujson as json
-from typing import List
+from typing import List, Dict
 
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
-from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
-from peek_plugin_graphdb._private.server.controller.MainController import MainController
 from peek_plugin_graphdb._private.server.graph.GraphModel import GraphModel
 from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import \
     GraphUpdateContext
@@ -22,17 +20,11 @@ class GraphSegmentImporter:
     """ GraphDB Import Controller
     """
 
-    def __init__(self, mainController: MainController):
-        self._mainController = mainController
-
-    def setReadApi(self, readApi: GraphDBReadApi):
-        self._readApi = readApi
-
-    def shutdown(self):
-        self._readApi = None
+    def __init__(self, graphModel: GraphModel, ):
+        self._graphModel = graphModel
 
     @inlineCallbacks
-    def importGraphSegment(self, modelSetKey: str, segmentHash: str,
+    def importGraphSegment(self, segmentHash: str,
                            vertices: List[GraphDbImportVertexTuple],
                            edges: List[GraphDbImportEdgeTuple]) -> Deferred:
         """ Import Graph Segment
@@ -41,7 +33,6 @@ class GraphSegmentImporter:
 
         2) Drop all disps with matching importGroupHash
 
-        :param modelSetKey:  The name of the model set for the live db.
         :param segmentHash: The unique segment hash for the graph segment being imported.
         :param vertices: A list of vertices to import / update.
         :param edges: A list of edges to import / update.
@@ -51,31 +42,29 @@ class GraphSegmentImporter:
         :return:
         """
 
-        graphModel = yield self._mainController.graphForModelSetKey(modelSetKey)
-        context = graphModel.newUpdateContext()
-        yield self._checkForVerticesToDelete(graphModel, context, segmentHash, edges)
-        yield self._importGraphSegment(graphModel, context, segmentHash, vertices, edges)
+        context = self._graphModel.newUpdateContext()
+        yield self._checkForVerticesToDelete(context, segmentHash, edges)
+        yield self._importGraphSegment(context, segmentHash, vertices, edges)
 
         yield context.save()
 
     @deferToThreadWrapWithLogger(logger)
-    def _importGraphSegment(self, graphModel: GraphModel,
-                            context: GraphUpdateContext,
+    def _importGraphSegment(self, context: GraphUpdateContext,
                             segmentHash: str,
                             vertices: List[GraphDbImportVertexTuple],
                             edges: List[GraphDbImportEdgeTuple]) -> Deferred:
 
         existingEdgesByKeySrcDst = {}
-        for existingEdge in graphModel.edgesForSegmentHash(segmentHash):
+        for existingEdge in self._graphModel.edgesForSegmentHash(segmentHash):
             key = (existingEdge.key, existingEdge.src.key, existingEdge.dst.key)
             existingEdgesByKeySrcDst[key] = existingEdge
 
-        vertexByKey = {}
+        vertexByKey: Dict[str, GraphDbVertexTuple] = {}
 
         # Import Vortex -----
         for importVertex in vertices:
             importPropsJson = json.loads(importVertex.propsJson)
-            existingVertex = graphModel.vertexForKey(importVertex.key)
+            existingVertex = self._graphModel.vertexForKey(importVertex.key)
 
             if existingVertex:
                 vertexByKey[existingVertex.key] = existingVertex
@@ -136,13 +125,13 @@ class GraphSegmentImporter:
 
             else:
                 newEdge = GraphDbEdgeTuple(
-                        id=None,
-                        srcId=srcVertex.id,
-                        dstId=dstVertex.id,
-                        segmentHash=segmentHash,
-                        src=srcVertex,
-                        dst=dstVertex,
-                        props=json.loads(newEdge.propsJson)
+                    id=None,
+                    srcId=None,
+                    dstId=None,
+                    segmentHash=segmentHash,
+                    src=srcVertex,
+                    dst=dstVertex,
+                    props=json.loads(importEdge.propsJson)
                 )
                 context.addEdge(newEdge)
 
@@ -150,8 +139,7 @@ class GraphSegmentImporter:
             context.deleteEdge(oldEdge)
 
     @deferToThreadWrapWithLogger(logger)
-    def _checkForVerticesToDelete(self, graphModel: GraphModel,
-                                  context: GraphUpdateContext,
+    def _checkForVerticesToDelete(self, context: GraphUpdateContext,
                                   segmentHash: str,
                                   edges: List[GraphDbImportEdgeTuple]):
 
@@ -161,7 +149,7 @@ class GraphSegmentImporter:
             newEdgeVertexKeys.add(edge.dstKey)
 
         existingVertices = set()
-        for edge in graphModel.edgesForSegmentHash(segmentHash):
+        for edge in self._graphModel.edgesForSegmentHash(segmentHash):
             existingVertices.add(edge.src)
             existingVertices.add(edge.dst)
 

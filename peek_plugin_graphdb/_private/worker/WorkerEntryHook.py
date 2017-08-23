@@ -3,8 +3,6 @@ import logging
 from peek_plugin_base.worker.PluginWorkerEntryHookABC import PluginWorkerEntryHookABC
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
-from peek_plugin_graphdb._private.worker.tasks import GraphDbItemImportTask, \
-    GraphDbItemUpdateTask, BulkLoadChunkTask
 from peek_plugin_graphdb.tuples import loadPublicTuples
 
 logger = logging.getLogger(__name__)
@@ -29,9 +27,7 @@ class WorkerEntryHook(PluginWorkerEntryHookABC):
 
     @property
     def celeryAppIncludes(self):
-        return [GraphDbItemImportTask.__name__,
-                GraphDbItemUpdateTask.__name__,
-                BulkLoadChunkTask.__name__]
+        return []
 
     @property
     def celeryApp(self):
