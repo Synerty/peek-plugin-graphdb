@@ -2,7 +2,7 @@
     "plugin": {
         "title": "GraphDB Plugin",
         "packageName": "peek_plugin_graphdb",
-    "version":"0.7.0",
+        "version": "0.7.0",
         "buildNumber": "#PLUGIN_BUILD#",
         "buildDate": "#BUILD_DATE#",
         "creator": "Synerty Pty Ltd",
@@ -14,8 +14,14 @@
         "storage",
         "admin",
         "agent",
-        "worker"
+        "worker",
+        "doc-admin"
     ],
+    "doc-admin": {
+        "docDir": "doc-admin",
+        "docRst": "index.rst",
+        "hasApi": true
+    },
     "server": {
     },
     "storage": {
