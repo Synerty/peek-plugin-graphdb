@@ -1,5 +1,6 @@
-=================
-GraphDB Plugin 1
-=================
+===============
+Graph DB Plugin
+===============
 
-This is a Peek Plugin, from the graphdb.
+The GraphDB plugin stores a graph model with vertices and edges.
+This is ideal for representing an IT network, Power network, Gas network, etc.
