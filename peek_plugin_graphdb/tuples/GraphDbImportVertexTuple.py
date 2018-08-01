@@ -7,7 +7,7 @@ from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
 class GraphDbImportVertexTuple(Tuple):
     """ Graph DB Import Vertex Tuple
 
-    This tuple represents a vertex that is being imported into the GraphDB plugin.
+    This tuple represents a vertex that is being imported into the GraphDb plugin.
 
     """
     __tupleType__ = graphdbTuplePrefix + 'GraphDbDisplayValueTuple'

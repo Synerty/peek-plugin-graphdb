@@ -1,0 +1,26 @@
+<StackLayout class="p-20 peek-tables-section">
+    <GridLayout columns="2*, 3*" rows="auto" class="table">
+        <Label class="th" col="0" [text]="doc.key"></Label>
+        <Label class="th" col="1" [text]="docTypeName"></Label>
+    </GridLayout>
+
+    <GridLayout class="table">
+        <ListView [items]="docProps" >
+            <ng-template let-item="item" let-i="index" let-odd="odd" let-even="even">
+                <GridLayout [class.odd]="odd" [class.even]="even"
+                            columns="2*, 3*" rows="auto" class="tr">
+                    <!-- Title -->
+                    <Label class="td" row="0" col="0"
+                           textWrap="true"
+                           [text]="item.title"></Label>
+                    <!-- Valie -->
+                    <Label class="td" row="0" col="1"
+                           textWrap="true"
+                           [text]="item.value"></Label>
+
+                </GridLayout>
+            </ng-template>
+        </ListView>
+    </GridLayout>
+
+</StackLayout>

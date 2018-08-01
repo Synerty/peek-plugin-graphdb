@@ -1,20 +1,22 @@
 {
     "plugin": {
-        "title": "GraphDB Plugin",
+        "title": "GraphDb Plugin",
         "packageName": "peek_plugin_graphdb",
-        "version": "0.7.0",
+        "version": "0.0.0",
         "buildNumber": "#PLUGIN_BUILD#",
         "buildDate": "#BUILD_DATE#",
         "creator": "Synerty Pty Ltd",
         "website": "www.synerty.com"
     },
     "requiresServices": [
-        "client",
         "server",
+        "worker",
+        "agent",
         "storage",
         "admin",
-        "agent",
-        "worker",
+        "client",
+        "mobile",
+        "desktop",
         "doc-admin"
     ],
     "doc-admin": {
@@ -30,11 +32,59 @@
     "admin": {
         "showHomeLink": true,
         "appDir": "_private/admin-app",
-        "appModule": "graphdb.module#GraphDBModule",
+        "appModule": "graphDb.module#GraphDbModule",
         "moduleDir": "plugin-module"
     },
-    "agent": {
+    "client": {
     },
-    "worker": {
+    "mobile": {
+        "cfgDir": "_private/both-cfg",
+        "cfgModule": "graphdb-cfg.module#DocDBCfgModule",
+        "showHomeLink": false,
+        "appDir": "_private/both-app",
+        "appModule": "graphdb.module#GraphDbModule",
+        "assetDir": "_private/both-assets",
+        "icon": "/assets/peek_plugin_graphdb/icon.png",
+        "moduleDir": "plugin-module",
+        "rootServices": [
+            {
+                "file": "_private/GraphDbTupleService",
+                "class": "GraphDbTupleService"
+            },
+            {
+                "file": "_private/segment-loader/PrivateSegmentLoaderService",
+                "class": "PrivateSegmentLoaderService",
+                "persistent": true
+            },
+            {
+                "file": "GraphDbService",
+                "class": "GraphDbService"
+            }
+        ]
+    },
+    "desktop": {
+        "cfgDir": "_private/both-cfg",
+        "cfgModule": "graphdb-cfg.module#DocDBCfgModule",
+        "showHomeLink": false,
+        "appDir": "_private/both-app",
+        "appModule": "graphdb.module#GraphDbModule",
+        "assetDir": "_private/both-assets",
+        "icon": "/assets/peek_plugin_graphdb/icon.png",
+        "moduleDir": "plugin-module",
+        "rootServices": [
+            {
+                "file": "_private/GraphDbTupleService",
+                "class": "GraphDbTupleService"
+            },
+            {
+                "file": "_private/segment-loader/PrivateSegmentLoaderService",
+                "class": "PrivateSegmentLoaderService",
+                "persistent": true
+            },
+            {
+                "file": "GraphDbService",
+                "class": "GraphDbService"
+            }
+        ]
     }
 }

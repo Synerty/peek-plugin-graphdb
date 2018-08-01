@@ -9,17 +9,16 @@ logger = logging.getLogger(__name__)
 class AgentEntryHook(PluginAgentEntryHookABC):
 
     def load(self) -> None:
-        # loadStorageTuples()
-        # loadPrivateTuples()
+        # Load public tuples so they can be serialised in the agent
         loadPublicTuples()
 
         logger.debug("Loaded")
 
     def start(self):
-        logger.debug("Started")
+        pass
 
     def stop(self):
-        logger.debug("Stopped")
+        pass
 
     def unload(self):
         logger.debug("Unloaded")

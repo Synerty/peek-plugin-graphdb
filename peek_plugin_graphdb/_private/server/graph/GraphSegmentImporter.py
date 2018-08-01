@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GraphSegmentImporter:
-    """ GraphDB Import Controller
+    """ GraphDb Import Controller
     """
 
     def __init__(self, graphModel: GraphModel):

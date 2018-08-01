@@ -7,7 +7,7 @@ from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
 class GraphDbVertexTuple(Tuple):
     """ Graph DB Vertex Tuple
 
-    This tuple represents a vertex in the GraphDB plugin.
+    This tuple represents a vertex in the GraphDb plugin.
 
     """
     __tupleType__ = graphdbTuplePrefix + 'GraphDbVertexTuple'

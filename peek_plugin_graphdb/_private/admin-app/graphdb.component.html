@@ -5,10 +5,25 @@
         <li role="presentation" class="active">
             <a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a>
         </li>
-        <!-- Edit String Int Tab -->
+        <!-- Status -->
         <li role="presentation">
-            <a href="#editStringInt" aria-controls="editStringInt" role="tab"
-               data-toggle="tab">Edit String Int</a>
+            <a href="#status" aria-controls="status" role="tab"
+               data-toggle="tab">Status</a>
+        </li>
+        <!-- Edit Segment Tab -->
+        <li role="presentation">
+            <a href="#editSegment" aria-controls="editSegment" role="tab"
+               data-toggle="tab">View Segment</a>
+        </li>
+        <!-- Edit Segment Type Tab -->
+        <li role="presentation">
+            <a href="#editDocType" aria-controls="editDocType" role="tab"
+               data-toggle="tab">Edit Segment Types</a>
+        </li>
+        <!-- Edit Property Names Tab -->
+        <li role="presentation">
+            <a href="#editPropertyNames" aria-controls="editPropertyNames" role="tab"
+               data-toggle="tab">Edit Property Names</a>
         </li>
         <!-- Edit Settings Tab -->
         <li role="presentation">
@@ -19,19 +34,35 @@
 
     <!-- Tab panes -->
     <div class="tab-content">
+        <!-- Edit Status Tab -->
+        <div role="tabpanel" class="tab-pane" id="status">
+            <pl-graphdb-status></pl-graphdb-status>
+        </div>
         <!-- Edit Settings Tab -->
         <div role="tabpanel" class="tab-pane" id="editSetting">
             <pl-graphdb-edit-setting></pl-graphdb-edit-setting>
         </div>
-        <!-- Edit String Int Tab -->
-        <div role="tabpanel" class="tab-pane" id="editStringInt">
-            <pl-graphdb-edit-string-int></pl-graphdb-edit-string-int>
+        <!-- Edit Segment Tab -->
+        <div role="tabpanel" class="tab-pane" id="editSegment">
+            <pl-graphdb-view-segment></pl-graphdb-view-segment>
+        </div>
+        <!-- Edit Segment Type Tab -->
+        <div role="tabpanel" class="tab-pane" id="editDocType">
+            <pl-graphdb-edit-object-type></pl-graphdb-edit-object-type>
+        </div>
+        <!-- Edit Property Names Tab -->
+        <div role="tabpanel" class="tab-pane" id="editPropertyNames">
+            <pl-graphdb-edit-property></pl-graphdb-edit-property>
         </div>
         <!-- Home Tab -->
         <div role="tabpanel" class="tab-pane active" id="home">
-            <h1 class="text-center">GraphDB Plugin</h1>
-            <p>Angular2 Lazy Loaded Module</p>
-            <p>This is the root of the admin app for the GraphDB plugin</p>
+            <h1 class="text-center">Segment DB</h1>
+            <p>This plugin stores JSON like 'Segments', and supports offline caching.</p>
+            <p>The segments are used to store information about objects, for example,
+                A piece of equipment might have a segment that looks like this:</p>
+            <pre>
+{{exampleDoc}}
+            </pre>
         </div>
 
     </div>

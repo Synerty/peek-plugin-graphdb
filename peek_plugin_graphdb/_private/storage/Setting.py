@@ -8,7 +8,7 @@ from sqlalchemy.sql.schema import Index
 from sqlalchemy.types import Integer, String, Boolean
 from vortex.Tuple import Tuple, addTupleType
 
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
 
 
@@ -60,7 +60,7 @@ class ProxiedDictMixin(object):
 
 
 class PolymorphicVerticalProperty(object):
-    """A key/value pair with polymorphic value storage.
+    """A key/value pair with polymorphic value storage-old.
 
     The class which is mapped should indicate typing information
     within the "info" dictionary of mapped Column objects; see
@@ -128,17 +128,17 @@ class SettingProperty(PolymorphicVerticalProperty, Tuple, DeclarativeBase):
     """A setting property."""
 
     __tablename__ = 'SettingProperty'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     settingId = Column(ForeignKey('Setting.id'), nullable=False)
     key = Column(String(50), nullable=False)
     type = Column(String(16))
 
-    # add information about storage for different types
+    # add information about storage-old for different types
     # in the info dictionary of Columns
     int_value = Column(Integer, info={'type': (int, 'integer')})
-    char_value = Column(String(50), info={'type': (str, 'string')})
+    char_value = Column(String, info={'type': (str, 'string')})
     boolean_value = Column(Boolean, info={'type': (bool, 'boolean')})
 
     def __init__(self, key=None, value=None):
@@ -155,10 +155,10 @@ class Setting(ProxiedDictMixin, Tuple, DeclarativeBase):
     """an Animal"""
 
     __tablename__ = 'Setting'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50))
+    name = Column(String)
 
     properties = relationship("SettingProperty",
                               collection_class=attribute_mapped_collection('key'))
@@ -213,15 +213,15 @@ class PropertyKey(object):
 def _getSetting(ormSession, name, propertyDict, key=None, value=None):
     all = ormSession.query(Setting).filter(Setting.name == name).all()
 
-    needsCommit = False
-
     if all:
         setting = all[0]
         ormSession.expire(setting)
     else:
         setting = Setting(name)
         ormSession.add(setting)
-        needsCommit = True
+        ormSession.commit()
+
+    needsCommit = False
 
     for prop in list(propertyDict.values()):
         if not prop.name in setting:
@@ -256,3 +256,8 @@ globalProperties = {}
 
 def globalSetting(ormSession, key=None, value=None):
     return _getSetting(ormSession, "Global", globalProperties, key=key, value=value)
+
+
+# PROPERTY1 = PropertyKey('Property1', 'value1', propertyDict=globalProperties)
+#
+# PROPERTY2 = PropertyKey('Property2', 'value2', propertyDict=globalProperties)

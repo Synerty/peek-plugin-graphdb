@@ -1,5 +1,5 @@
-graphdbFilt = {"plugin": "peek_plugin_graphdb"}
-graphdbTuplePrefix = "peek_plugin_graphdb."
-graphdbObservableName = "peek_plugin_graphdb"
-graphdbActionProcessorName = "peek_plugin_graphdb"
-graphdbTupleOfflineServiceName = "peek_plugin_graphdb"
+graphDbFilt = {"plugin": "peek_plugin_graphdb"}
+graphDbTuplePrefix = "peek_plugin_graphdb."
+graphDbObservableName = "peek_plugin_graphdb"
+graphDbActionProcessorName = "peek_plugin_graphdb"
+graphDbTupleOfflineServiceName = "peek_plugin_graphdb"

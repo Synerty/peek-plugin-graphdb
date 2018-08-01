@@ -1,8 +1,10 @@
-export let graphdbFilt = {"plugin": "peek_plugin_graphdb"};
-export let graphdbTuplePrefix = "peek_plugin_graphdb.";
+export let graphDbFilt = {"plugin": "peek_plugin_graphdb"};
+export let graphDbTuplePrefix = "peek_plugin_graphdb.";
 
-export let graphdbObservableName = "peek_plugin_graphdb";
-export let graphdbActionProcessorName = "peek_plugin_graphdb";
-export let graphdbTupleOfflineServiceName = "peek_plugin_graphdb";
+export let graphDbObservableName = "peek_plugin_graphdb";
+export let graphDbActionProcessorName = "peek_plugin_graphdb";
+export let graphDbTupleOfflineServiceName = "peek_plugin_graphdb";
 
-export let graphdbBaseUrl = "peek_plugin_graphdb";
+export let graphDbBaseUrl = "peek_plugin_graphdb";
+
+export let graphDbCacheStorageName = "peek_plugin_graphdb.cache"

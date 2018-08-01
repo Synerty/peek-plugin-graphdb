@@ -7,7 +7,7 @@ from sqlalchemy import select
 from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
-from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
+from peek_plugin_graphdb._private.server.GraphDbReadApi import GraphDbReadApi
 from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class GraphModel(object):
     def __init__(self, dbSessionCreator,
-                 readApi: GraphDBReadApi,
+                 readApi: GraphDbReadApi,
                  modelSet: GraphDbModelSet):
 
         self._dbSessionCreator = dbSessionCreator

@@ -1,0 +1,20 @@
+<StackLayout class="p-10">
+
+
+    <GridLayout class="peek-nav-section" rows="auto" columns="auto, *, auto">
+    </GridLayout>
+
+    <StackLayout class="hr"></StackLayout>
+
+    <StackLayout class="peek-information-section">
+
+        <button class="btn"
+                [class.bg-success]="lastStatus.cacheForOfflineEnabled"
+                [text]="lastStatus.cacheForOfflineEnabled ? 'Disable Offline Support':'Enable Offline Support'"
+                (tap)="toggleOfflineMode()"></button>
+        <label text="Load Complete : {{lastStatus.initialLoadComplete}}" textWrap="true"></label>
+        <label text="Load Progress : {{lastStatus.loadProgress}}/{{lastStatus.loadTotal}}" textWrap="true"></label>
+        <label text="Last Check : {{lastStatus.lastCheck}}" textWrap="true"></label>
+
+    </StackLayout>
+</StackLayout>

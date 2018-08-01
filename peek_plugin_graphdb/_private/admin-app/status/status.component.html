@@ -1,0 +1,33 @@
+<div class="panel panel-default">
+    <div class="panel-heading">Storage Compiling Status
+    </div>
+    <div class="panel-body">
+
+        <table class="table">
+            <thead>
+
+            <tr>
+                <th></th>
+                <th>Is Running</th>
+                <th>Queue Size</th>
+                <th>Total Processed</th>
+                <th>Last Error</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <tr>
+                <th>Segment Storage Compiler</th>
+                <td>{{item.segmentCompilerQueueStatus}}</td>
+                <td>{{item.segmentCompilerQueueSize}}</td>
+                <td>{{item.segmentCompilerQueueProcessedTotal}}</td>
+                <td>{{item.segmentCompilerQueueLastError}}</td>
+
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>

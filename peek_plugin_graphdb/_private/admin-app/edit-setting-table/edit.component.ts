@@ -6,7 +6,7 @@ import {
     TupleLoader,
     VortexService
 } from "@synerty/vortexjs";
-import {SettingPropertyTuple, graphdbFilt} from "@peek/peek_plugin_graphdb/_private";
+import {SettingPropertyTuple, graphDbFilt} from "@peek/peek_plugin_graphdb/_private";
 
 
 @Component({
@@ -28,7 +28,7 @@ export class EditSettingComponent extends ComponentLifecycleEventEmitter {
         super();
 
         this.loader = vortexService.createTupleLoader(this,
-            () => extend({}, this.filt, graphdbFilt));
+            () => extend({}, this.filt, graphDbFilt));
 
         this.loader.observable
             .subscribe((tuples:SettingPropertyTuple[]) => this.items = tuples);

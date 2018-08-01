@@ -1,13 +1,13 @@
 from vortex.handler.TupleActionProcessor import TupleActionProcessor
 
-from peek_plugin_graphdb._private.PluginNames import graphdbFilt
-from peek_plugin_graphdb._private.PluginNames import graphdbActionProcessorName
+from peek_plugin_graphdb._private.PluginNames import graphDbFilt
+from peek_plugin_graphdb._private.PluginNames import graphDbActionProcessorName
 from .controller.MainController import MainController
 
 
 def makeTupleActionProcessorHandler(mainController: MainController):
     processor = TupleActionProcessor(
-        tupleActionProcessorName=graphdbActionProcessorName,
-        additionalFilt=graphdbFilt,
+        tupleActionProcessorName=graphDbActionProcessorName,
+        additionalFilt=graphDbFilt,
         defaultDelegate=mainController)
     return processor

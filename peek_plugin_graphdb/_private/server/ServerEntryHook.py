@@ -7,13 +7,23 @@ from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
-from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
-    GraphSegmentImporter
+from peek_plugin_graphdb._private.server.api.GraphDbApi import GraphDbApi
+from peek_plugin_graphdb._private.server.client_handlers.ClientChunkLoadRpc import \
+    ClientChunkLoadRpc
+from peek_plugin_graphdb._private.server.client_handlers.ClientChunkUpdateHandler import \
+    ClientChunkUpdateHandler
+from peek_plugin_graphdb._private.server.controller.ChunkCompilerQueueController import \
+    ChunkCompilerQueueController
+from peek_plugin_graphdb._private.server.controller.ImportController import ImportController
+from peek_plugin_graphdb._private.server.controller.StatusController import StatusController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
-from .GraphDBApi import GraphDBApi
+from peek_plugin_graphdb.tuples.SegmentTuple import SegmentTuple
+from peek_plugin_graphdb.tuples.ImportSegmentTuple import ImportSegmentTuple
+from vortex.DeferUtil import vortexLogFailure
+from vortex.Payload import Payload
 from .TupleActionProcessor import makeTupleActionProcessorHandler
 from .TupleDataObservable import makeTupleDataObservableHandler
 from .admin_backend import makeAdminBackendHandlers
@@ -22,7 +32,8 @@ from .controller.MainController import MainController
 logger = logging.getLogger(__name__)
 
 
-class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
+class ServerEntryHook(PluginServerEntryHookABC,
+                      PluginServerStorageEntryHookABC,
                       PluginServerWorkerEntryHookABC):
     def __init__(self, *args, **kwargs):
         """" Constructor """
@@ -58,30 +69,119 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
 
         """
 
-        tupleObservable = makeTupleDataObservableHandler(self.dbSessionCreator)
+        # ----------------
+        # Client Handlers and RPC
 
-        self._loadedObjects.extend(
-            makeAdminBackendHandlers(tupleObservable, self.dbSessionCreator))
+        self._loadedObjects += ClientChunkLoadRpc(self.dbSessionCreator).makeHandlers()
 
+        # ----------------
+        # Client Search Object client update handler
+        clientChunkUpdateHandler = ClientChunkUpdateHandler(
+            self.dbSessionCreator
+        )
+        self._loadedObjects.append(clientChunkUpdateHandler)
+
+        # ----------------
+        # Status Controller
+        statusController = StatusController()
+        self._loadedObjects.append(statusController)
+
+        # ----------------
+        # Tuple Observable
+        tupleObservable = makeTupleDataObservableHandler(
+            dbSessionCreator=self.dbSessionCreator,
+            statusController=statusController
+        )
         self._loadedObjects.append(tupleObservable)
 
+        # ----------------
+        # Admin Handler
+        self._loadedObjects.extend(
+            makeAdminBackendHandlers(tupleObservable, self.dbSessionCreator)
+        )
 
+        # ----------------
+        # Tell the status controller about the Tuple Observable
+        statusController.setTupleObservable(tupleObservable)
+
+        # ----------------
+        # Main Controller
         mainController = MainController(
             dbSessionCreator=self.dbSessionCreator,
             tupleObservable=tupleObservable)
 
         self._loadedObjects.append(mainController)
+
+        # ----------------
+        # Search Object Controller
+        searchObjectChunkCompilerQueueController = ChunkCompilerQueueController(
+            dbSessionCreator=self.dbSessionCreator,
+            statusController=statusController,
+            clientChunkUpdateHandler=clientChunkUpdateHandler
+        )
+        self._loadedObjects.append(searchObjectChunkCompilerQueueController)
+
+        # ----------------
+        # Import Controller
+        searchObjectImportController = ImportController()
+        self._loadedObjects.append(searchObjectImportController)
+
+        # ----------------
+        # Setup the Action Processor
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-
+        # ----------------
+        # Setup the APIs
         # Initialise the API object that will be shared with other plugins
-        self._api = GraphDBApi(mainController)
+        self._api = GraphDbApi(searchObjectImportController)
         self._loadedObjects.append(self._api)
 
-        # noinspection PyTypeChecker
-        yield mainController.start(self._api.readApi)
+        # ----------------
+        # Start the compiler controllers
+        searchObjectChunkCompilerQueueController.start()
+
+        # self._test()
 
         logger.debug("Started")
+
+    def _test(self):
+        # ----------------
+        # API test
+        newDocs = []
+        so1 = ImportSegmentTuple(
+            key="doc1key",
+            modelSetKey="testModel",
+            segmentTypeKey="objectType1",
+            importGroupHash='test load',
+            segment={
+                "name": "134 Ocean Parade, Circuit breaker 1",
+                "alias": "SO1ALIAS",
+                "propStr": "Test Property 1",
+                "propNumArr": [1, 2, 4, 5, 6],
+                "propStrArr": ["one", "two", "three", "four"]
+            }
+        )
+
+        newDocs.append(so1)
+        so2 = ImportSegmentTuple(
+            key="doc2key",
+            modelSetKey="testModel",
+            segmentTypeKey="objectType2",
+            importGroupHash='test load',
+            segment={
+                "name": "69 Sheep Farmers Rd Sub TX breaker",
+                "alias": "SO2ALIAS",
+                "propStr": "Test Property 1",
+                "propNumArr": [7,8,9,10,11],
+                "propStrArr": ["five", "siz", "seven", "eight"]
+            }
+        )
+
+        newDocs.append(so2)
+
+        d = Payload(tuples=newDocs).toEncodedPayloadDefer()
+        d.addCallback(self._api.createOrUpdateSegments)
+        d.addErrback(vortexLogFailure, logger, consumeError=True)
 
     def stop(self):
         """ Stop

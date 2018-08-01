@@ -1,14 +1,14 @@
 import logging
 from vortex.sqla_orm.OrmCrudHandler import OrmCrudHandler
 
-from peek_plugin_graphdb._private.PluginNames import graphdbFilt
+from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.storage.Setting import SettingProperty, globalSetting
 
 logger = logging.getLogger(__name__)
 
 # This dict matches the definition in the Admin angular app.
 filtKey = {"key": "admin.Edit.SettingProperty"}
-filtKey.update(graphdbFilt)
+filtKey.update(graphDbFilt)
 
 
 # This is the CRUD handler

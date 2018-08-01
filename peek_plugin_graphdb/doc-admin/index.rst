@@ -2,7 +2,7 @@
 Administration
 ==============
 
-The GraphDB plugin stores a graph model with vertices and edges.
+The GraphDb plugin stores a graph model with vertices and edges.
 This is ideal for representing an IT network, Power network, Gas network, etc.
 
 Segments

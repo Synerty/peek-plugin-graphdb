@@ -1,6 +1,11 @@
+export {SegmentResultI} from "./segment-loader/PrivateSegmentLoaderService";
+
+export {SettingPropertyTuple} from "./admin/SettingPropertyTuple";
+export {AdminStatusTuple} from "./admin/AdminStatusTuple";
 export * from "./PluginNames";
-export {GraphDBTuple} from "./tuples/GraphDBTuple";
-export {StringIntTuple} from "./tuples/StringIntTuple";
-export {SettingPropertyTuple} from "./tuples/SettingPropertyTuple";
-export {AddIntValueActionTuple} from "./tuples/AddIntValueActionTuple";
-export {StringCapToggleActionTuple} from "./tuples/StringCapToggleActionTuple";
+
+
+export {OfflineConfigTuple} from "./tuples/OfflineConfigTuple";
+
+export {GraphDbTupleService} from "./GraphDbTupleService";
+

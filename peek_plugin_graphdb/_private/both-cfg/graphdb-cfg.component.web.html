@@ -1,0 +1,20 @@
+<div class="peek-nav-section">
+
+</div>
+
+<div class="peek-nav-bar-padding ">
+    <div class="peek-information-section">
+        <button class="btn" [class.bg-success]="lastStatus.cacheForOfflineEnabled"
+                (click)="toggleOfflineMode()">
+            {{lastStatus.cacheForOfflineEnabled
+            ? 'Disable Offline Support'
+            : 'Enable Offline Support'}}
+        </button>
+        <p>
+            Load Complete : {{lastStatus.initialLoadComplete}}<br/>
+            Load Progress : {{lastStatus.loadProgress}}/{{lastStatus.loadTotal}}<br/>
+            Last Check : {{lastStatus.lastCheck}}<br/>
+        </p>
+
+    </div>
+</div>

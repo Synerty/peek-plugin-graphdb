@@ -10,7 +10,7 @@ from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 from peek_plugin_base.storage.DbConnection import DbSessionCreator, DeclarativeIdCreator
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
-from peek_plugin_graphdb._private.server.GraphDBReadApi import GraphDBReadApi
+from peek_plugin_graphdb._private.server.GraphDbReadApi import GraphDbReadApi
 from peek_plugin_graphdb._private.server.graph.GraphModel import GraphModel
 from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
 from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
@@ -28,11 +28,11 @@ EdgePropUpdate = namedtuple("EdgePropUpdate", ("key", "props"))
 
 
 class GraphUpdateContext:
-    """ GraphDB Import Controller
+    """ GraphDb Import Controller
     """
 
     def __init__(self, graphModel: GraphModel,
-                 readApi: GraphDBReadApi,
+                 readApi: GraphDbReadApi,
                  dbSessionCreator: DbSessionCreator,
                  dbIdCreator: DeclarativeIdCreator):
         self._graphModel = graphModel
