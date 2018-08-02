@@ -41,6 +41,8 @@ let clientSegmentWatchUpdateFromDeviceFilt = extend(
     graphDbFilt
 );
 
+const cacheAll = "cacheAll";
+
 // ----------------------------------------------------------------------------
 /** SegmentChunkTupleSelector
  *
@@ -299,7 +301,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
             .then((tuplesAny: any) => {
                 let serverIndex: SegmentUpdateDateTuple = tuplesAny[0];
                 let keys = Object.keys(serverIndex.updateDateByChunkKey);
-                let keysNeedingUpdate:string[] = [];
+                let keysNeedingUpdate: string[] = [];
 
                 this._status.loadTotal = keys.length;
 
@@ -356,7 +358,9 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
             return;
 
         let indexChunk: SegmentUpdateDateTuple = this.askServerChunks.pop();
-        let pl = new Payload(clientSegmentWatchUpdateFromDeviceFilt, [indexChunk]);
+        let filt = extend({}, clientSegmentWatchUpdateFromDeviceFilt);
+        filt[cacheAll] = true;
+        let pl = new Payload(filt, [indexChunk]);
         this.vortexService.sendPayload(pl);
 
         this._status.lastCheck = new Date();
@@ -384,11 +388,11 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
                     this._hasLoaded = true;
                     this._hasLoadedSubject.next();
 
-                } else {
+                } else if (payloadEnvelope.filt[cacheAll] == true) {
                     this.askServerForNextUpdateChunk();
 
                 }
-                this._notifyStatus();
+
             })
             .then(() => this._notifyStatus())
             .catch(e =>
@@ -535,7 +539,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
      *
      */
     private getSegmentsForKeys(keys: string[],
-                                chunkKey: string): Promise<SegmentTuple[]> {
+                               chunkKey: string): Promise<SegmentTuple[]> {
 
         if (!this.index.updateDateByChunkKey.hasOwnProperty(chunkKey)) {
             console.log(`ObjectIDs: ${keys} doesn't appear in the index`);
