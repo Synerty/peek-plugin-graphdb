@@ -18,3 +18,11 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
     comment = Column(String)
     propsJson = Column(String)
 
+
+def getOrCreateGraphDbModelSet(session, modelSetName: str) -> GraphDbModelSet:
+    qry = session.query(GraphDbModelSet).filter(GraphDbModelSet.name == modelSetName)
+    if not qry.count():
+        session.add(GraphDbModelSet(name=modelSetName))
+        session.commit()
+
+    return qry.one()

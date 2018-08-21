@@ -5,7 +5,7 @@ from typing import List, Dict
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
-from peek_plugin_graphdb._private.server.graph.GraphModel import GraphModel
+from peek_plugin_graphdb._private.server.graph.GrpahModelController import GraphModel
 from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import \
     GraphUpdateContext
 from peek_plugin_graphdb.tuples.GraphDbEdgeTuple import GraphDbEdgeTuple

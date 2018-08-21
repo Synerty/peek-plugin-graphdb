@@ -10,8 +10,8 @@ from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 from peek_plugin_base.storage.DbConnection import DbSessionCreator, DeclarativeIdCreator
 from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
-from peek_plugin_graphdb._private.server.GraphDbReadApi import GraphDbReadApi
-from peek_plugin_graphdb._private.server.graph.GraphModel import GraphModel
+from peek_plugin_graphdb._private.server.api.GraphDbReadApi import GraphDbReadApi
+from peek_plugin_graphdb._private.server.graph.GrpahModelController import GraphModel
 from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
 from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
 from peek_plugin_graphdb.tuples.GraphDbEdgeTuple import GraphDbEdgeTuple

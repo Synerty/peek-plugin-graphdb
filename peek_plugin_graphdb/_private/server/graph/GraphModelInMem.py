@@ -7,17 +7,16 @@ from sqlalchemy import select
 from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
-from peek_plugin_graphdb._private.server.GraphDbReadApi import GraphDbReadApi
-from peek_plugin_graphdb._private.storage.GraphDbEdge import GraphDbEdge
+from peek_plugin_graphdb._private.server.api.GraphDbReadApi import GraphDbReadApi
+from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
 from peek_plugin_graphdb.tuples.GraphDbEdgeTuple import GraphDbEdgeTuple
 from peek_plugin_graphdb.tuples.GraphDbVertexTuple import GraphDbVertexTuple
 
 logger = logging.getLogger(__name__)
 
 
-class GraphModel(object):
+class GraphModelInMem(object):
     def __init__(self, dbSessionCreator,
                  readApi: GraphDbReadApi,
                  modelSet: GraphDbModelSet):

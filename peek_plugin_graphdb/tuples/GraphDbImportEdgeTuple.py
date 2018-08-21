@@ -1,6 +1,6 @@
 from vortex.Tuple import Tuple, addTupleType
 
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 
 
 @addTupleType
@@ -11,5 +11,5 @@ class GraphDbImportEdgeTuple(Tuple):
     the GraphDb plugin.
 
     """
-    __tupleType__ = graphdbTuplePrefix + 'GraphDbImportEdgeTuple'
+    __tupleType__ = graphDbTuplePrefix + 'GraphDbImportEdgeTuple'
     __slots__ = ("key", "srcKey", "dstKey", "propsJson")

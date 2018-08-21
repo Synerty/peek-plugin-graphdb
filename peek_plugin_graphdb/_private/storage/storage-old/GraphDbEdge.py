@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index, Sequence
 from vortex.Tuple import addTupleType, Tuple
 
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb._private.storage.GraphDbVertex import GraphDbVertex
 from .DeclarativeBase import DeclarativeBase
 from .GraphDbModelSet import GraphDbModelSet
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 @addTupleType
 class GraphDbEdge(Tuple, DeclarativeBase):
     __tablename__ = 'GraphDbEdge'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id_seq = Sequence('GraphDbEdge_id_seq',
                       metadata=DeclarativeBase.metadata,

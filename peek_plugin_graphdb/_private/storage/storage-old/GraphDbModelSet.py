@@ -2,14 +2,14 @@ from sqlalchemy import Column
 from sqlalchemy import Integer, String
 from vortex.Tuple import addTupleType, Tuple
 
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
 
 
 @addTupleType
 class GraphDbModelSet(Tuple, DeclarativeBase):
     __tablename__ = 'GraphDbModelSet'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, unique=True)

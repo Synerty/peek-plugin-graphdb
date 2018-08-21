@@ -8,7 +8,7 @@ from sqlalchemy.sql.schema import Index
 from sqlalchemy.types import Integer, String, Boolean
 from vortex.Tuple import Tuple, addTupleType
 
-from peek_plugin_graphdb._private.PluginNames import graphdbTuplePrefix
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
 
 
@@ -128,7 +128,7 @@ class SettingProperty(PolymorphicVerticalProperty, Tuple, DeclarativeBase):
     """A setting property."""
 
     __tablename__ = 'SettingProperty'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     settingId = Column(ForeignKey('Setting.id'), nullable=False)
@@ -155,7 +155,7 @@ class Setting(ProxiedDictMixin, Tuple, DeclarativeBase):
     """an Animal"""
 
     __tablename__ = 'Setting'
-    __tupleType__ = graphdbTuplePrefix + __tablename__
+    __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50))

@@ -23,7 +23,7 @@ class MainController(TupleActionProcessorDelegateABC):
 
     @inlineCallbacks
     def start(self, readApi) -> Deferred:
-        from peek_plugin_graphdb._private.server.graph.GraphModel import \
+        from peek_plugin_graphdb._private.server.graph.GrpahModelController import \
             GraphModel
 
         self._readApi = readApi
@@ -46,7 +46,7 @@ class MainController(TupleActionProcessorDelegateABC):
 
     @inlineCallbacks
     def graphForModelSetKey(self, modelSetKey: str) -> Deferred:
-        from peek_plugin_graphdb._private.server.graph.GraphModel import \
+        from peek_plugin_graphdb._private.server.graph.GrpahModelController import \
             GraphModel
 
         graphModel =  self._graphsByModelSetKey.get(modelSetKey)

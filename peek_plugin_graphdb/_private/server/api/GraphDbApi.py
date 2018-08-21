@@ -1,5 +1,5 @@
-from peek_plugin_graphdb._private.server.GraphDbReadApi import GraphDbReadApi
-from peek_plugin_graphdb._private.server.GraphDbWriteApi import GraphDbWriteApi
+from peek_plugin_graphdb._private.server.api.GraphDbReadApi import GraphDbReadApi
+from peek_plugin_graphdb._private.server.api.GraphDbWriteApi import GraphDbWriteApi
 from peek_plugin_graphdb._private.server.controller.MainController import MainController
 from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
     GraphSegmentImporter
