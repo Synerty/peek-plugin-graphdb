@@ -1,5 +1,6 @@
 import logging
 
+from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from peek_plugin_graphdb._private.worker.tasks.ImportTask import createOrUpdateSegments
@@ -15,5 +16,8 @@ class ImportController:
         pass
 
     @inlineCallbacks
-    def createOrUpdateSegments(self, segmentsEncodedPayload: bytes):
-        yield createOrUpdateSegments.delay(segmentsEncodedPayload)
+    def createOrUpdateSegments(self, modelSetKey: str, graphSegmentEncodedPayload: bytes):
+        yield createOrUpdateSegments.delay(modelSetKey, graphSegmentEncodedPayload)
+
+    def deleteSegment(self, modelSetKey: str, segmentKey: str):
+        return defer.succeed(None)

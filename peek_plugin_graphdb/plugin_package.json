@@ -32,7 +32,7 @@
     "admin": {
         "showHomeLink": true,
         "appDir": "_private/admin-app",
-        "appModule": "graphDb.module#GraphDbModule",
+        "appModule": "graphdb.module#GraphDbModule",
         "moduleDir": "plugin-module"
     },
     "client": {

@@ -7,4 +7,4 @@ export let graphDbTupleOfflineServiceName = "peek_plugin_graphdb";
 
 export let graphDbBaseUrl = "peek_plugin_graphdb";
 
-export let graphDbCacheStorageName = "peek_plugin_graphdb.cache"
+export let graphDbCacheStorageName = "peek_plugin_graphdb.cache";

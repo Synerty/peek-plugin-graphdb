@@ -6,7 +6,7 @@ from peek_plugin_graphdb._private.client.tuple_providers.ClientSegmentUpdateDate
     ClientSegmentUpdateDateTupleProvider
 from peek_plugin_graphdb._private.tuples.SegmentUpdateDateTuple import \
     SegmentUpdateDateTuple
-from peek_plugin_graphdb.tuples.SegmentTuple import SegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
 from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 
@@ -22,7 +22,7 @@ def makeClientTupleDataObservableHandler(
 
     """
 
-    tupleObservable.addTupleProvider(SegmentTuple.tupleName(),
+    tupleObservable.addTupleProvider(GraphDbSegmentTuple.tupleName(),
                                      ClientSegmentTupleProvider(cacheHandler))
 
     tupleObservable.addTupleProvider(SegmentUpdateDateTuple.tupleName(),

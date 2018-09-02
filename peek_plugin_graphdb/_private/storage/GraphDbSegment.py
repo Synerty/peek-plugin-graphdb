@@ -1,13 +1,11 @@
 from sqlalchemy import Column, Index, ForeignKey
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
+from vortex.Tuple import Tuple, addTupleType
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb._private.storage.DeclarativeBase import DeclarativeBase
-from peek_plugin_graphdb._private.storage.GraphDbSegmentTypeTuple import \
-    GraphDbSegmentTypeTuple
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from vortex.Tuple import Tuple, addTupleType
 
 
 @addTupleType
@@ -24,12 +22,6 @@ class GraphDbSegment(Tuple, DeclarativeBase):
                         nullable=False)
     modelSet = relationship(GraphDbModelSet)
 
-    #:  The model set for this segment
-    segmentTypeId = Column(Integer,
-                            ForeignKey('GraphDbSegmentType.id', ondelete='CASCADE'),
-                            nullable=False)
-    segmentType = relationship(GraphDbSegmentTypeTuple)
-
     importGroupHash = Column(String, nullable=False)
 
     #:  The unique key of this segment
@@ -43,7 +35,6 @@ class GraphDbSegment(Tuple, DeclarativeBase):
 
     __table_args__ = (
         Index("idx_Segment_key", modelSetId, key, unique=True),
-        Index("idx_Segment_segmentType", segmentTypeId, unique=False),
         Index("idx_Segment_gridKey", chunkKey, unique=False),
         Index("idx_Segment_importGroupHash", importGroupHash, unique=False),
     )

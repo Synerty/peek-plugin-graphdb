@@ -1,34 +1,26 @@
-from peek_plugin_graphdb._private.server.api.GraphDbReadApi import GraphDbReadApi
-from peek_plugin_graphdb._private.server.api.GraphDbWriteApi import GraphDbWriteApi
-from peek_plugin_graphdb._private.server.controller.MainController import MainController
-from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
-    GraphSegmentImporter
+from twisted.internet import defer
+from twisted.internet.defer import Deferred
+
+from peek_plugin_graphdb._private.server.controller.ImportController import \
+    ImportController
 from peek_plugin_graphdb.server.GraphDbApiABC import GraphDbApiABC
-from peek_plugin_graphdb.server.GraphDbReadApiABC import GraphDbReadApiABC
-from peek_plugin_graphdb.server.GraphDbWriteApiABC import GraphDbWriteApiABC
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 
 
 class GraphDbApi(GraphDbApiABC):
-    def __init__(self, mainController: MainController):
-        self._readApi = GraphDbReadApi(
-            mainController=mainController
-        )
-
-        self._writeApi = GraphDbWriteApi(
-            mainController=mainController
-        )
+    def __init__(self, importController: ImportController):
+        self._importController = importController
 
     def shutdown(self):
-        self._readApi.shutdown()
-        self._writeApi.shutdown()
+        self._importController = None
 
-        self._readApi = None
-        self._writeApi = None
+    def createOrUpdateSegment(self, modelSetKey: str,
+                              graphSegmentEncodedPayload: bytes) -> Deferred:
+        
+        return defer.succeed(True)
+        # return self._importController.createOrUpdateSegments(
+        #     modelSetKey, graphSegmentEncodedPayload
+        # )
 
-    @property
-    def writeApi(self) -> GraphDbWriteApiABC:
-        return self._writeApi
-
-    @property
-    def readApi(self) -> GraphDbReadApiABC:
-        return self._readApi
+    def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
+        return self._importController.deleteSegment(modelSetKey, segmentKey)

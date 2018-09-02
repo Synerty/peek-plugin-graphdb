@@ -12,7 +12,7 @@ from peek_plugin_graphdb._private.storage.GraphDbSegmentTypeTuple import \
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.worker.tasks._CalcChunkKey import makeChunkKey
-from peek_plugin_graphdb.tuples.SegmentTuple import SegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -33,7 +33,7 @@ class ClientSegmentTupleProvider(TuplesProviderABC):
 
         keysByChunkKey = defaultdict(list)
 
-        foundSegments: List[SegmentTuple] = []
+        foundSegments: List[GraphDbSegmentTuple] = []
 
         for key in keys:
             keysByChunkKey[makeChunkKey(modelSetKey, key)].append(key)
@@ -68,7 +68,7 @@ class ClientSegmentTupleProvider(TuplesProviderABC):
                 del objectProps['_msid']
 
                 # Create the new object
-                newObject = SegmentTuple()
+                newObject = GraphDbSegmentTuple()
                 foundSegments.append(newObject)
 
                 newObject.key = subKey

@@ -12,10 +12,8 @@ import {
 
 import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
-import {SegmentResultI, PrivateSegmentLoaderService} from "./_private/segment-loader";
-import {SegmentTuple} from "./SegmentTuple";
+import {PrivateSegmentLoaderService, SegmentResultI} from "./_private/segment-loader";
 import {GraphDbTupleService} from "./_private";
-import {GraphDbPropertyTuple} from "./GraphDbPropertyTuple";
 
 export interface DocPropT {
     title: string;
@@ -36,30 +34,11 @@ export interface DocPropT {
 @Injectable()
 export class GraphDbService extends ComponentLifecycleEventEmitter {
 
-    propertiesByName: { [key: string]: GraphDbPropertyTuple; } = {};
-
     constructor(private segmentLoader: PrivateSegmentLoaderService,
                 private tupleService: GraphDbTupleService) {
         super();
 
 
-        let propTs = new TupleSelector(GraphDbPropertyTuple.tupleName, {});
-        this.tupleService.offlineObserver
-            .subscribeToTupleSelector(propTs)
-            .takeUntil(this.onDestroyEvent)
-            .subscribe((tuples: GraphDbPropertyTuple[]) => {
-                this.propertiesByName = {};
-
-                for (let item of tuples) {
-                    let propKey = this._makePropKey(item.modelSetId, item.name);
-                    this.propertiesByName[propKey] = item;
-                }
-            });
-
-    }
-
-    private _makePropKey(modelSetId: number, name: string): string {
-        return `${modelSetId}.${name.toLowerCase()}`;
     }
 
 
@@ -72,21 +51,5 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
         return this.segmentLoader.getSegments(modelSetKey, keys);
     }
 
-    getNiceOrderedProperties(doc: SegmentTuple): DocPropT[] {
-        let props: DocPropT[] = [];
-
-        for (let name of Object.keys(doc.segment)) {
-            let propKey = this._makePropKey(doc.modelSet.id, name);
-            let prop = this.propertiesByName[propKey] || new GraphDbPropertyTuple();
-            props.push({
-                title: prop.title,
-                order: prop.order,
-                value: doc.segment[name]
-            });
-        }
-        props.sort((a, b) => a.order - b.order);
-
-        return props;
-    }
 
 }

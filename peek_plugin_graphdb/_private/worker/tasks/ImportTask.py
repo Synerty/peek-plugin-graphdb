@@ -8,18 +8,15 @@ from typing import List, Dict, Set, Tuple
 import pytz
 from sqlalchemy import select, bindparam, and_
 from txcelery.defer import DeferrableTask
+from vortex.Payload import Payload
 
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
-from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
-from peek_plugin_graphdb._private.storage.GraphDbSegmentTypeTuple import \
-    GraphDbSegmentTypeTuple
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.storage.GraphDbPropertyTuple import GraphDbPropertyTuple
+from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb._private.worker.tasks._CalcChunkKey import makeChunkKey
-from peek_plugin_graphdb.tuples.ImportSegmentTuple import ImportSegmentTuple
-from vortex.Payload import Payload
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +30,16 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def removeSegmentTask(self, modelSetKey: str, keys: List[str]) -> None:
+def deleteSegment(self, modelSetKey: str, segmentKey: str) -> None:
     pass
 
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def createOrUpdateSegments(self, segmentsEncodedPayload: bytes) -> None:
+def createOrUpdateSegments(self, segmentEncodedPayload: bytes) -> None:
     # Decode arguments
-    newSegments: List[ImportSegmentTuple] = (
-        Payload().fromEncodedPayload(segmentsEncodedPayload).tuples
+    newSegments: List[GraphDbImportSegmentTuple] = (
+        Payload().fromEncodedPayload(segmentEncodedPayload).tuples
     )
 
     _validateNewSegments(newSegments)
@@ -53,17 +50,16 @@ def createOrUpdateSegments(self, segmentsEncodedPayload: bytes) -> None:
     try:
 
         segmentByModelKey = defaultdict(list)
-        for doc in newSegments:
-            segmentByModelKey[doc.modelSetKey].append(doc)
+        for segment in newSegments:
+            segmentByModelKey[segment.modelSetKey].append(segment)
 
-        for modelSetKey, docs in segmentByModelKey.items():
+        for modelSetKey, segments in segmentByModelKey.items():
             modelSetId = modelSetIdByKey.get(modelSetKey)
             if modelSetId is None:
                 modelSetId = _makeModelSet(modelSetKey)
                 modelSetIdByKey[modelSetKey] = modelSetId
 
-            docTypeIdsByName = _prepareLookups(docs, modelSetId)
-            _insertOrUpdateObjects(docs, modelSetId, docTypeIdsByName)
+            _insertOrUpdateObjects(segments, modelSetId)
 
     except Exception as e:
         logger.debug("Retrying import graphDb objects, %s", e)
@@ -71,19 +67,13 @@ def createOrUpdateSegments(self, segmentsEncodedPayload: bytes) -> None:
 
 
 
-def _validateNewSegments(newSegments: List[ImportSegmentTuple]) -> None:
-    for doc in newSegments:
-        if not doc.key:
-            raise Exception("key is empty for %s" % doc)
+def _validateNewSegments(newSegments: List[GraphDbImportSegmentTuple]) -> None:
+    for segment in newSegments:
+        if not segment.key:
+            raise Exception("key is empty for %s" % segment)
 
-        if not doc.modelSetKey:
-            raise Exception("modelSetKey is empty for %s" % doc)
-
-        if not doc.segmentTypeKey:
-            raise Exception("segmentTypeKey is empty for %s" % doc)
-
-        # if not doc.segment:
-        #     raise Exception("segment is empty for %s" % doc)
+        if not segment.modelSetKey:
+            raise Exception("modelSetKey is empty for %s" % segment)
 
 
 def _loadModelSets() -> Dict[str, int]:
@@ -116,85 +106,9 @@ def _makeModelSet(modelSetKey: str) -> int:
         dbSession.close()
 
 
-def _prepareLookups(newSegments: List[ImportSegmentTuple], modelSetId: int) -> Dict[str, int]:
-    """ Check Or Insert Search Properties
 
-    Make sure the search properties exist.
-
-    """
-
-    dbSession = CeleryDbConn.getDbSession()
-
-    startTime = datetime.now(pytz.utc)
-
-    try:
-
-        docTypeNames = set()
-        propertyNames = set()
-
-        for o in newSegments:
-            o.segmentTypeKey = o.segmentTypeKey.lower()
-            docTypeNames.add(o.segmentTypeKey)
-
-            if o.segment:
-                propertyNames.update([s.lower() for s in o.segment])
-
-        # Prepare Properties
-        dbProps = (
-            dbSession.query(GraphDbPropertyTuple)
-                .filter(GraphDbPropertyTuple.modelSetId == modelSetId)
-                .all()
-        )
-        propertyNames -= set([o.name for o in dbProps])
-
-        if propertyNames:
-            for newPropName in propertyNames:
-                dbSession.add(GraphDbPropertyTuple(
-                    name=newPropName, title=newPropName, modelSetId=modelSetId
-                ))
-
-            dbSession.commit()
-
-        del dbProps
-        del propertyNames
-
-        # Prepare Object Types
-        dbObjectTypes = (
-            dbSession.query(GraphDbSegmentTypeTuple)
-                .filter(GraphDbSegmentTypeTuple.modelSetId == modelSetId)
-                .all()
-        )
-        docTypeNames -= set([o.name for o in dbObjectTypes])
-
-        if not docTypeNames:
-            docTypeIdsByName = {o.name: o.id for o in dbObjectTypes}
-
-        else:
-            for newType in docTypeNames:
-                dbSession.add(GraphDbSegmentTypeTuple(
-                    name=newType, title=newType, modelSetId=modelSetId
-                ))
-
-            dbSession.commit()
-
-            dbObjectTypes = dbSession.query(GraphDbSegmentTypeTuple).all()
-            docTypeIdsByName = {o.name: o.id for o in dbObjectTypes}
-
-        logger.debug("Prepared lookups in %s", (datetime.now(pytz.utc) - startTime))
-
-        return docTypeIdsByName
-
-    except Exception as e:
-        dbSession.rollback()
-        raise
-
-    finally:
-        dbSession.close()
-
-
-def _insertOrUpdateObjects(newSegments: List[ImportSegmentTuple],
-                           modelSetId: int,
-                           docTypeIdsByName: Dict[str, int]) -> None:
+def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
+                           modelSetId: int) -> None:
     """ Insert or Update Objects
 
     1) Find objects and update them
@@ -217,7 +131,7 @@ def _insertOrUpdateObjects(newSegments: List[ImportSegmentTuple],
         objectIdByKey: Dict[str, int] = {}
 
         objectKeys = [o.key for o in newSegments]
-        chunkKeysForQueue: Set[Tuple(str, str)] = set()
+        chunkKeysForQueue: Set[Tuple[str, str]] = set()
 
         # Query existing objects
         results = list(conn.execute(select(
@@ -244,10 +158,8 @@ def _insertOrUpdateObjects(newSegments: List[ImportSegmentTuple],
             importHashSet.add(importSegment.importGroupHash)
 
             existingObject = foundObjectByKey.get(importSegment.key)
-            importSegmentTypeId = docTypeIdsByName[importSegment.segmentTypeKey]
 
             packedJsonDict = copy(importSegment.segment)
-            packedJsonDict['_dtid'] = importSegmentTypeId
             packedJsonDict['_msid'] = modelSetId
             segmentJson = json.dumps(packedJsonDict, sort_keys=True)
 
@@ -255,7 +167,6 @@ def _insertOrUpdateObjects(newSegments: List[ImportSegmentTuple],
             if existingObject:
                 updates.append(
                     dict(b_id=existingObject.id,
-                         b_typeId=importSegmentTypeId,
                          b_segmentJson=segmentJson)
                 )
                 dontDeleteObjectIds.append(existingObject.id)
@@ -265,7 +176,6 @@ def _insertOrUpdateObjects(newSegments: List[ImportSegmentTuple],
                 existingObject = GraphDbSegment(
                     id=id_,
                     modelSetId=modelSetId,
-                    segmentTypeId=importSegmentTypeId,
                     key=importSegment.key,
                     importGroupHash=importSegment.importGroupHash,
                     chunkKey=makeChunkKey(importSegment.modelSetKey, importSegment.key),

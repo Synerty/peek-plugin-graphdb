@@ -9,7 +9,7 @@ from vortex.sqla_orm.OrmCrudHandler import OrmCrudHandler, OrmCrudHandlerExtensi
 logger = logging.getLogger(__name__)
 
 # This dict matches the definition in the Admin angular app.
-filtKey = {"key": "admin.Edit.SegmentTuple"}
+filtKey = {"key": "admin.Edit.GraphDbSegmentTuple"}
 filtKey.update(graphDbFilt)
 
 

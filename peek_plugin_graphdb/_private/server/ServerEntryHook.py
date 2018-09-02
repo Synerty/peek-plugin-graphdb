@@ -20,8 +20,8 @@ from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
-from peek_plugin_graphdb.tuples.SegmentTuple import SegmentTuple
-from peek_plugin_graphdb.tuples.ImportSegmentTuple import ImportSegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 from vortex.DeferUtil import vortexLogFailure
 from vortex.Payload import Payload
 from .TupleActionProcessor import makeTupleActionProcessorHandler
@@ -123,8 +123,8 @@ class ServerEntryHook(PluginServerEntryHookABC,
 
         # ----------------
         # Import Controller
-        searchObjectImportController = ImportController()
-        self._loadedObjects.append(searchObjectImportController)
+        importController = ImportController()
+        self._loadedObjects.append(importController)
 
         # ----------------
         # Setup the Action Processor
@@ -133,7 +133,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
         # ----------------
         # Setup the APIs
         # Initialise the API object that will be shared with other plugins
-        self._api = GraphDbApi(searchObjectImportController)
+        self._api = GraphDbApi(importController)
         self._loadedObjects.append(self._api)
 
         # ----------------
@@ -148,7 +148,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
         # ----------------
         # API test
         newDocs = []
-        so1 = ImportSegmentTuple(
+        so1 = GraphDbImportSegmentTuple(
             key="doc1key",
             modelSetKey="testModel",
             segmentTypeKey="objectType1",
@@ -163,7 +163,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
         )
 
         newDocs.append(so1)
-        so2 = ImportSegmentTuple(
+        so2 = GraphDbImportSegmentTuple(
             key="doc2key",
             modelSetKey="testModel",
             segmentTypeKey="objectType2",
