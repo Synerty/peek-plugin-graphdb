@@ -1,4 +1,5 @@
 import hashlib
+import json
 from typing import List
 
 from vortex.Tuple import addTupleType, TupleField, Tuple
@@ -60,3 +61,10 @@ class GraphDbImportSegmentTuple(Tuple):
         m.update(b'zeroth item padding')
         m.update(str(self).encode())
         return m.hexdigest()
+
+    def packJson(self, modelSetId: int) -> str:
+        packedJsonDict = self.toJsonDict()
+        del packedJsonDict['importGroupHash']
+        del packedJsonDict['modelSetKey']
+        packedJsonDict['_msid'] = modelSetId
+        return json.dumps(packedJsonDict, sort_keys=True, indent='')

@@ -33,3 +33,6 @@ class GraphDbVertexTuple(Tuple):
     @props.setter
     def props(self, val) -> None:
         self.p = val
+
+    def __repr__(self):
+        return '%s.%s' % (self.k, self.p)

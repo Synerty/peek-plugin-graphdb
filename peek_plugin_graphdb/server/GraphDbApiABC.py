@@ -8,13 +8,11 @@ from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSe
 class GraphDbApiABC(metaclass=ABCMeta):
 
     @abstractmethod
-    def createOrUpdateSegment(self, modelSetKey: str,
-                              graphSegmentEncodedPayload: bytes) -> Deferred:
+    def createOrUpdateSegment(self, graphSegmentEncodedPayload: bytes) -> Deferred:
         """ Create or Update Segment
 
         Add new documents to the document db
 
-        :param modelSetKey: An encoded payload containing :code:`GraphDbImportSegmentTuple`
         :param graphSegmentEncodedPayload: An encoded payload containing :code:`GraphDbImportSegmentTuple`
         :return: A deferred that fires when the creates or updates are complete
 

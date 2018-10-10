@@ -7,8 +7,6 @@ from twisted.internet.defer import Deferred
 
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
-from peek_plugin_graphdb._private.storage.GraphDbSegmentTypeTuple import \
-    GraphDbSegmentTypeTuple
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.worker.tasks._CalcChunkKey import makeChunkKey
@@ -28,6 +26,9 @@ class ClientSegmentTupleProvider(TuplesProviderABC):
     @deferToThreadWrapWithLogger(logger)
     def makeVortexMsg(self, filt: dict,
                       tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+        raise NotImplementedError("Server querying not implemented")
+
+        '''
         modelSetKey = tupleSelector.selector["modelSetKey"]
         keys = tupleSelector.selector["keys"]
 
@@ -73,8 +74,9 @@ class ClientSegmentTupleProvider(TuplesProviderABC):
 
                 newObject.key = subKey
                 newObject.modelSet = GraphDbModelSet(id=thisModelSetId)
-                newObject.segmentType = GraphDbSegmentTypeTuple(id=thisSegmentTypeId)
                 newObject.segment = objectProps
+                
 
         # Create the vortex message
         return Payload(filt, tuples=foundSegments).makePayloadEnvelope().toVortexMsg()
+        '''

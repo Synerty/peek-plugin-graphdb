@@ -16,8 +16,8 @@ class ImportController:
         pass
 
     @inlineCallbacks
-    def createOrUpdateSegments(self, modelSetKey: str, graphSegmentEncodedPayload: bytes):
-        yield createOrUpdateSegments.delay(modelSetKey, graphSegmentEncodedPayload)
+    def createOrUpdateSegments(self,  graphSegmentEncodedPayload: bytes):
+        yield createOrUpdateSegments.delay( graphSegmentEncodedPayload)
 
     def deleteSegment(self, modelSetKey: str, segmentKey: str):
         return defer.succeed(None)

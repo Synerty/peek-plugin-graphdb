@@ -1,7 +1,5 @@
-import json
 import logging
 from collections import defaultdict
-from copy import copy
 from datetime import datetime
 from typing import List, Dict, Set, Tuple
 
@@ -66,7 +64,6 @@ def createOrUpdateSegments(self, segmentEncodedPayload: bytes) -> None:
         raise self.retry(exc=e, countdown=3)
 
 
-
 def _validateNewSegments(newSegments: List[GraphDbImportSegmentTuple]) -> None:
     for segment in newSegments:
         if not segment.key:
@@ -106,7 +103,6 @@ def _makeModelSet(modelSetKey: str) -> int:
         dbSession.close()
 
 
-
 def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
                            modelSetId: int) -> None:
     """ Insert or Update Objects
@@ -127,27 +123,11 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
 
     try:
         importHashSet = set()
-        dontDeleteObjectIds=[]
-        objectIdByKey: Dict[str, int] = {}
 
-        objectKeys = [o.key for o in newSegments]
-        chunkKeysForQueue: Set[Tuple[str, str]] = set()
-
-        # Query existing objects
-        results = list(conn.execute(select(
-            columns=[segmentTable.c.id, segmentTable.c.key,
-                     segmentTable.c.chunkKey, segmentTable.c.segmentJson],
-            whereclause=and_(segmentTable.c.key.in_(objectKeys),
-                             segmentTable.c.modelSetId == modelSetId)
-        )))
-
-        foundObjectByKey = {o.key: o for o in results}
-        del results
+        chunkKeysForQueue: Set[Tuple[int, str]] = set()
 
         # Get the IDs that we need
-        newIdGen = CeleryDbConn.prefetchDeclarativeIds(
-            GraphDbSegment, len(newSegments) - len(foundObjectByKey)
-        )
+        newIdGen = CeleryDbConn.prefetchDeclarativeIds(GraphDbSegment, len(newSegments))
 
         # Create state arrays
         inserts = []
@@ -156,41 +136,24 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         # Work out which objects have been updated or need inserting
         for importSegment in newSegments:
             importHashSet.add(importSegment.importGroupHash)
+            segmentJson = importSegment.packJson(modelSetId)
 
-            existingObject = foundObjectByKey.get(importSegment.key)
+            id_ = next(newIdGen)
+            existingObject = GraphDbSegment(
+                id=id_,
+                modelSetId=modelSetId,
+                key=importSegment.key,
+                importGroupHash=importSegment.importGroupHash,
+                chunkKey=makeChunkKey(importSegment.modelSetKey, importSegment.key),
+                segmentJson=segmentJson
+            )
+            inserts.append(existingObject.tupleToSqlaBulkInsertDict())
 
-            packedJsonDict = copy(importSegment.segment)
-            packedJsonDict['_msid'] = modelSetId
-            segmentJson = json.dumps(packedJsonDict, sort_keys=True)
-
-            # Work out if we need to update the object type
-            if existingObject:
-                updates.append(
-                    dict(b_id=existingObject.id,
-                         b_segmentJson=segmentJson)
-                )
-                dontDeleteObjectIds.append(existingObject.id)
-
-            else:
-                id_ = next(newIdGen)
-                existingObject = GraphDbSegment(
-                    id=id_,
-                    modelSetId=modelSetId,
-                    key=importSegment.key,
-                    importGroupHash=importSegment.importGroupHash,
-                    chunkKey=makeChunkKey(importSegment.modelSetKey, importSegment.key),
-                    segmentJson=segmentJson
-                )
-                inserts.append(existingObject.tupleToSqlaBulkInsertDict())
-
-            objectIdByKey[existingObject.key] = existingObject.id
             chunkKeysForQueue.add((modelSetId, existingObject.chunkKey))
 
         if importHashSet:
             conn.execute(
-                segmentTable
-                    .delete(and_(~segmentTable.c.id.in_(dontDeleteObjectIds),
-                                 segmentTable.c.importGroupHash.in_(importHashSet)))
+                segmentTable.delete(segmentTable.c.importGroupHash.in_(importHashSet))
             )
 
         # Insert the GraphDb Objects

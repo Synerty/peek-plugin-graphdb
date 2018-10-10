@@ -14,13 +14,11 @@ class GraphDbApi(GraphDbApiABC):
     def shutdown(self):
         self._importController = None
 
-    def createOrUpdateSegment(self, modelSetKey: str,
-                              graphSegmentEncodedPayload: bytes) -> Deferred:
+    def createOrUpdateSegment(self, graphSegmentEncodedPayload: bytes) -> Deferred:
         
-        return defer.succeed(True)
-        # return self._importController.createOrUpdateSegments(
-        #     modelSetKey, graphSegmentEncodedPayload
-        # )
+        return self._importController.createOrUpdateSegments(
+             graphSegmentEncodedPayload
+        )
 
     def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
         return self._importController.deleteSegment(modelSetKey, segmentKey)

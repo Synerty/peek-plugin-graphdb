@@ -13,8 +13,6 @@ import {
 } from "@synerty/vortexjs";
 
 import {
-    GraphDbSegmentTypeTuple,
-    GraphDbPropertyTuple,
     GraphDbService,
     DocPropT,
     SegmentResultI,
