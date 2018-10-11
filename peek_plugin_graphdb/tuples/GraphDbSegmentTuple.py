@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List
 
 from vortex.Tuple import Tuple, addTupleType, TupleField
 
@@ -22,7 +22,7 @@ class GraphDbSegmentTuple(Tuple):
     key: str = TupleField()
 
     #:  The model set of this segment
-    modelSet: GraphDbModelSet = TupleField()
+    modelSetKey: str = TupleField()
 
     #:  The edges
     edges: List[GraphDbEdgeTuple] = TupleField([])

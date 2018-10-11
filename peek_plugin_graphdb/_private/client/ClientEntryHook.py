@@ -1,6 +1,9 @@
 import logging
 
 from twisted.internet.defer import inlineCallbacks
+from vortex.handler.TupleActionProcessorProxy import TupleActionProcessorProxy
+from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
+from vortex.handler.TupleDataObserverClient import TupleDataObserverClient
 
 from peek_plugin_base.PeekVortexUtil import peekServerName
 from peek_plugin_base.client.PluginClientEntryHookABC import PluginClientEntryHookABC
@@ -11,14 +14,13 @@ from peek_plugin_graphdb._private.client.TupleDataObservable import \
     makeClientTupleDataObservableHandler
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
+    TraceConfigCacheController
 from peek_plugin_graphdb._private.client.handlers.SegmentCacheHandler import \
     SegmentCacheHandler
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
-from vortex.handler.TupleActionProcessorProxy import TupleActionProcessorProxy
-from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
-from vortex.handler.TupleDataObserverClient import TupleDataObserverClient
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,14 @@ class ClientEntryHook(PluginClientEntryHookABC):
         self._loadedObjects.append(serverTupleObserver)
 
         # ----------------
+        # Trace Config Cache Controller
+
+        traceConfigCacheController = TraceConfigCacheController(
+            self.platform.serviceId
+        )
+        self._loadedObjects.append(traceConfigCacheController)
+
+        # ----------------
         # Segment Cache Controller
 
         segmentCacheController = SegmentCacheController(
@@ -109,11 +119,13 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # ----------------
         # Create the Tuple Observer
         makeClientTupleDataObservableHandler(tupleDataObservableProxyHandler,
-                                             segmentCacheController)
+                                             segmentCacheController,
+                                             traceConfigCacheController)
 
         # ----------------
-        # Start the compiler controllers
+        # Start the cache controllers
         yield segmentCacheController.start()
+        yield traceConfigCacheController.start()
 
         logger.debug("Started")
 

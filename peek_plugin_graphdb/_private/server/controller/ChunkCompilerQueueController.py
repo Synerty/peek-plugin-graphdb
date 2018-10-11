@@ -7,8 +7,8 @@ from sqlalchemy import asc
 from twisted.internet import task
 from twisted.internet.defer import inlineCallbacks
 
-from peek_plugin_graphdb._private.server.client_handlers.ClientChunkUpdateHandler import \
-    ClientChunkUpdateHandler
+from peek_plugin_graphdb._private.server.client_handlers.ClientSegmentChunkUpdateHandler import \
+    ClientSegmentChunkUpdateHandler
 from peek_plugin_graphdb._private.server.controller.StatusController import \
     StatusController
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
@@ -36,10 +36,10 @@ class ChunkCompilerQueueController:
 
     def __init__(self, dbSessionCreator,
                  statusController: StatusController,
-                 clientChunkUpdateHandler: ClientChunkUpdateHandler):
+                 clientChunkUpdateHandler: ClientSegmentChunkUpdateHandler):
         self._dbSessionCreator = dbSessionCreator
         self._statusController: StatusController = statusController
-        self._clientChunkUpdateHandler: ClientChunkUpdateHandler = clientChunkUpdateHandler
+        self._clientChunkUpdateHandler: ClientSegmentChunkUpdateHandler = clientChunkUpdateHandler
 
         self._pollLoopingCall = task.LoopingCall(self._poll)
         self._lastQueueId = -1

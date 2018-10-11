@@ -1,16 +1,18 @@
 import logging
 from typing import List
 
+from sqlalchemy.orm import joinedload
+from vortex.rpc.RPC import vortexRPC
+
 from peek_plugin_base.PeekVortexUtil import peekServerName, peekClientName
 from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
-from vortex.rpc.RPC import vortexRPC
+from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
 
 logger = logging.getLogger(__name__)
 
 
-class ClientChunkLoadRpc:
+class ClientTraceConfigLoadRpc:
     def __init__(self, dbSessionCreator: DbSessionCreator):
         self._dbSessionCreator = dbSessionCreator
 
@@ -23,28 +25,30 @@ class ClientChunkLoadRpc:
 
         """
 
-        yield self.loadSegmentChunks.start(funcSelf=self)
+        yield self.loadTraceConfigs.start(funcSelf=self)
         logger.debug("RPCs started")
 
     # -------------
     @vortexRPC(peekServerName, acceptOnlyFromVortex=peekClientName, timeoutSeconds=60,
                additionalFilt=graphDbFilt, deferToThread=True)
-    def loadSegmentChunks(self, offset: int, count: int) -> List[GraphDbEncodedChunk]:
-        """ Update Page Loader Status
+    def loadTraceConfigs(self, offset: int, count: int) -> List[GraphDbTraceConfig]:
+        """ Load Trace Configs
 
-        Tell the server of the latest status of the loader
+        Allow the client to incrementally load the trace configs.
 
         """
         session = self._dbSessionCreator()
         try:
-            chunks = (session
-                      .query(GraphDbEncodedChunk)
-                      .order_by(GraphDbEncodedChunk.id)
+            ormObjs = (session
+                      .query(GraphDbTraceConfig)
+                      .options(joinedload(GraphDbTraceConfig.modelSet))
+                      .options(joinedload(GraphDbTraceConfig.rules))
+                      .order_by(GraphDbTraceConfig.id)
                       .offset(offset)
                       .limit(count)
                       .yield_per(count))
 
-            return list(chunks)
+            return [ormObj.toTuple() for ormObj in ormObjs]
 
         finally:
             session.close()

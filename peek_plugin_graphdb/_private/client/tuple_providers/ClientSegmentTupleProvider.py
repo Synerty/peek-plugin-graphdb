@@ -1,37 +1,39 @@
-import json
 import logging
-from collections import defaultdict
-from typing import Union, List
+from typing import Union
 
 from twisted.internet.defer import Deferred
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+from vortex.TupleSelector import TupleSelector
+from vortex.handler.TupleDataObservableHandler import TuplesProviderABC
 
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
-from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.worker.tasks._CalcChunkKey import makeChunkKey
-from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-from vortex.Payload import Payload
-from vortex.TupleSelector import TupleSelector
-from vortex.handler.TupleDataObservableHandler import TuplesProviderABC
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
+    TraceConfigCacheController
 
 logger = logging.getLogger(__name__)
 
 
 class ClientSegmentTupleProvider(TuplesProviderABC):
-    def __init__(self, cacheHandler: SegmentCacheController):
-        self._cacheHandler = cacheHandler
+    def __init__(self, segmentCacheHandler: SegmentCacheController,
+                 traceConfigCacheHandler: TraceConfigCacheController):
+        self._segmentCacheHandler = segmentCacheHandler
+        self._traceConfigCacheHandler = traceConfigCacheHandler
 
     @deferToThreadWrapWithLogger(logger)
     def makeVortexMsg(self, filt: dict,
                       tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
-        raise NotImplementedError("Server querying not implemented")
 
-        '''
         modelSetKey = tupleSelector.selector["modelSetKey"]
-        keys = tupleSelector.selector["keys"]
+        startVertexKey = tupleSelector.selector["startVertexKey"]
+        traceConfigKey = tupleSelector.selector["traceConfigKey"]
 
+        traceConfig = self._traceConfigCacheHandler.traceConfigTuple(
+            modelSetKey=modelSetKey, traceConfigKey=traceConfigKey
+        )
+
+        raise NotImplementedError("Server querying not implemented")
+        '''
         keysByChunkKey = defaultdict(list)
 
         foundSegments: List[GraphDbSegmentTuple] = []

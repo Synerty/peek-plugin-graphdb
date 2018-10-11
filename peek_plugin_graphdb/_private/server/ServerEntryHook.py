@@ -8,10 +8,14 @@ from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
 from peek_plugin_graphdb._private.server.api.GraphDbApi import GraphDbApi
-from peek_plugin_graphdb._private.server.client_handlers.ClientChunkLoadRpc import \
-    ClientChunkLoadRpc
-from peek_plugin_graphdb._private.server.client_handlers.ClientChunkUpdateHandler import \
-    ClientChunkUpdateHandler
+from peek_plugin_graphdb._private.server.client_handlers.ClientSegmentChunkLoadRpc import \
+    ClientSegmentChunkLoadRpc
+from peek_plugin_graphdb._private.server.client_handlers.ClientSegmentChunkUpdateHandler import \
+    ClientSegmentChunkUpdateHandler
+from peek_plugin_graphdb._private.server.client_handlers.ClientTraceConfigLoadRpc import \
+    ClientTraceConfigLoadRpc
+from peek_plugin_graphdb._private.server.client_handlers.ClientTraceConfigUpdateHandler import \
+    ClientTraceConfigUpdateHandler
 from peek_plugin_graphdb._private.server.controller.ChunkCompilerQueueController import \
     ChunkCompilerQueueController
 from peek_plugin_graphdb._private.server.controller.ImportController import ImportController
@@ -72,14 +76,22 @@ class ServerEntryHook(PluginServerEntryHookABC,
         # ----------------
         # Client Handlers and RPC
 
-        self._loadedObjects += ClientChunkLoadRpc(self.dbSessionCreator).makeHandlers()
+        self._loadedObjects += ClientSegmentChunkLoadRpc(self.dbSessionCreator).makeHandlers()
+        self._loadedObjects += ClientTraceConfigLoadRpc(self.dbSessionCreator).makeHandlers()
+
+        # ----------------
+        # Client Graph Segment client update handler
+        clientSegmentChunkUpdateHandler = ClientSegmentChunkUpdateHandler(
+            self.dbSessionCreator
+        )
+        self._loadedObjects.append(clientSegmentChunkUpdateHandler)
 
         # ----------------
         # Client Search Object client update handler
-        clientChunkUpdateHandler = ClientChunkUpdateHandler(
+        clientTraceConfigUpdateHandler = ClientTraceConfigUpdateHandler(
             self.dbSessionCreator
         )
-        self._loadedObjects.append(clientChunkUpdateHandler)
+        self._loadedObjects.append(clientTraceConfigUpdateHandler)
 
         # ----------------
         # Status Controller
@@ -117,13 +129,13 @@ class ServerEntryHook(PluginServerEntryHookABC,
         searchObjectChunkCompilerQueueController = ChunkCompilerQueueController(
             dbSessionCreator=self.dbSessionCreator,
             statusController=statusController,
-            clientChunkUpdateHandler=clientChunkUpdateHandler
+            clientChunkUpdateHandler=clientSegmentChunkUpdateHandler
         )
         self._loadedObjects.append(searchObjectChunkCompilerQueueController)
 
         # ----------------
         # Import Controller
-        importController = ImportController()
+        importController = ImportController(clientTraceConfigUpdateHandler)
         self._loadedObjects.append(importController)
 
         # ----------------

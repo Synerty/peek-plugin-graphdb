@@ -1,3 +1,5 @@
+from typing import List
+
 from twisted.internet import defer
 from twisted.internet.defer import Deferred
 
@@ -22,3 +24,11 @@ class GraphDbApi(GraphDbApiABC):
 
     def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
         return self._importController.deleteSegment(modelSetKey, segmentKey)
+
+    def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
+        return self._importController.createOrUpdateTraceConfig(
+            traceEncodedPayload
+        )
+
+    def deleteTraceConfig(self, modelSetKey:str, traceConfigKeys: List[str]) -> Deferred:
+        return self._importController.deleteTraceConfig(modelSetKey, traceConfigKeys)

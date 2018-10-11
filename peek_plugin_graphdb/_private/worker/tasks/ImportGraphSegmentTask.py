@@ -19,17 +19,49 @@ from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSe
 logger = logging.getLogger(__name__)
 
 
-# We need to insert the into the following tables:
-# GraphDbSegment - or update it's details if required
-# GraphDbIndex - The index of the keywords for the object
-# GraphDbSegmentRoute - delete old importGroupHash
-# GraphDbSegmentRoute - insert the new routes
-
-
 @DeferrableTask
 @celeryApp.task(bind=True)
-def deleteSegment(self, modelSetKey: str, segmentKey: str) -> None:
-    pass
+def deleteSegment(self, modelSetKey: str, segmentKeys: List[str]) -> None:
+    startTime = datetime.now(pytz.utc)
+
+    segmentTable = GraphDbSegment.__table__
+    queueTable = GraphDbCompilerQueue.__table__
+
+    engine = CeleryDbConn.getDbEngine()
+    conn = engine.connect()
+    transaction = conn.begin()
+    try:
+        chunkKeys = {
+            makeChunkKey(modelSetKey, key) for key in segmentKeys
+        }
+
+        modelSetIdByKey = _loadModelSets()
+        modelSetId = modelSetIdByKey[modelSetKey]
+
+        conn.execute(
+            segmentTable.delete(and_(segmentTable.c.key.in_(segmentKeys),
+                                     segmentTable.c.modelSetId == modelSetId))
+        )
+
+        conn.execute(
+            queueTable.insert(),
+            [dict(modelSetId=modelSetId, chunkKey=c) for c in chunkKeys]
+        )
+
+        transaction.commit()
+
+        logger.debug("Deleted %s, queued %s chunks in %s",
+                     len(segmentKeys), len(chunkKeys),
+                     (datetime.now(pytz.utc) - startTime))
+
+    except Exception as e:
+        transaction.rollback()
+        logger.debug("Retrying import graphDb objects, %s", e)
+        raise self.retry(exc=e, countdown=3)
+
+
+    finally:
+        conn.close()
 
 
 @DeferrableTask

@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
+from typing import List
 
 from twisted.internet.defer import Deferred
-
-from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 
 
 class GraphDbApiABC(metaclass=ABCMeta):
@@ -11,10 +10,11 @@ class GraphDbApiABC(metaclass=ABCMeta):
     def createOrUpdateSegment(self, graphSegmentEncodedPayload: bytes) -> Deferred:
         """ Create or Update Segment
 
-        Add new documents to the document db
+        Add new Graph Segments to the GraphDB
 
-        :param graphSegmentEncodedPayload: An encoded payload containing :code:`GraphDbImportSegmentTuple`
-        :return: A deferred that fires when the creates or updates are complete
+        :param graphSegmentEncodedPayload: An encoded payload containing
+            :code:`GraphDbImportSegmentTuple`
+        :return: A deferred that fires when the work is complete
 
         """
 
@@ -22,10 +22,32 @@ class GraphDbApiABC(metaclass=ABCMeta):
     def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
         """ Delete Segment
 
-        Delete documents from the document db.
+        Delete a Graph Segment from the GraphDB.
+
+        :param modelSetKey: The model set key to delete Graph Segments from
+        :param segmentKey: The key of the segment to delete
+        :return: A deferred that fires when the work is complete
+
+        """
+
+    def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
+        """ Create or Update Trace Config
+
+        Add new trace configs to the GraphDB
+
+        :param traceEncodedPayload: An encoded payload containing
+            :code:`GraphDbImportTraceConfigTuple`
+        :return: A deferred that fires when the work is complete
+
+        """
+
+    def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Deferred:
+        """ Delete Trace Config
+
+        Delete a trace config from the GraphDB.
 
         :param modelSetKey: The model set key to delete documents from
-        :param segmentKey: The key of the segment to delete
-        :return: A deferred that fires when the delete is complete
+        :param traceConfigKeys: The keys of the Trace Configs to delete
+        :return: A deferred that fires when the work is complete
 
         """

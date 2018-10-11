@@ -14,7 +14,7 @@ from vortex.VortexFactory import VortexFactory, NoVortexException
 logger = logging.getLogger(__name__)
 
 
-class ClientChunkUpdateHandler:
+class ClientSegmentChunkUpdateHandler:
     """ Client Segment Update Controller
 
     This controller handles sending updates the the client.

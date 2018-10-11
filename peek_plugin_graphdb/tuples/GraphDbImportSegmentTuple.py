@@ -1,17 +1,14 @@
 import hashlib
 import json
-from typing import List
 
-from vortex.Tuple import addTupleType, TupleField, Tuple
+from vortex.Tuple import addTupleType, TupleField
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
-from peek_plugin_graphdb.tuples.GraphDbEdgeTuple import GraphDbEdgeTuple
-from peek_plugin_graphdb.tuples.GraphDbSegmentLinkTuple import GraphDbSegmentLinkTuple
-from peek_plugin_graphdb.tuples.GraphDbVertexTuple import GraphDbVertexTuple
+from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
 
 
 @addTupleType
-class GraphDbImportSegmentTuple(Tuple):
+class GraphDbImportSegmentTuple(GraphDbSegmentTuple):
     """ Import Segment Tuple
 
     This tuple is the publicly exposed Segment
@@ -19,23 +16,8 @@ class GraphDbImportSegmentTuple(Tuple):
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbImportSegmentTuple'
 
-    #:  The unique key of this segment
-    key: str = TupleField()
-
-    #:  The model set of this segment
-    modelSetKey: str = TupleField()
-
     #:  The hash of this import group
     importGroupHash: str = TupleField()
-
-    #:  The edges
-    edges: List[GraphDbEdgeTuple] = TupleField([])
-
-    #:  The edges
-    vertexes: List[GraphDbVertexTuple] = TupleField([])
-
-    #:  The edges
-    links: List[GraphDbSegmentLinkTuple] = TupleField([])
 
     def generateSegmentKey(self) -> None:
         self.edges.sort(key=lambda e: e.key)
