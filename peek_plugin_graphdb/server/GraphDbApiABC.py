@@ -36,7 +36,7 @@ class GraphDbApiABC(metaclass=ABCMeta):
         Add new trace configs to the GraphDB
 
         :param traceEncodedPayload: An encoded payload containing
-            :code:`GraphDbImportTraceConfigTuple`
+            :code:`GraphDbTraceConfigTuple`
         :return: A deferred that fires when the work is complete
 
         """

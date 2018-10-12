@@ -91,7 +91,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # Trace Config Cache Controller
 
         traceConfigCacheController = TraceConfigCacheController(
-            self.platform.serviceId
+            self.platform.serviceId, tupleDataObservableProxyHandler
         )
         self._loadedObjects.append(traceConfigCacheController)
 

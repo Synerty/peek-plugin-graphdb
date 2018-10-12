@@ -34,11 +34,14 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
     #:  What should this rule look for
     action = Column(Integer, nullable=False)
 
+    #:  Data for what ever action might be
+    actionData = Column(String)
+
     #: The name of the property to apply the rule to
     propertyName = Column(String, nullable=False)
 
     #:  A comma separated list of property values to match
-    propertyValues = Column(String, nullable=False)
+    propertyValue = Column(String, nullable=False)
 
     #:  Stop = True, Continue = False
     propertyValueType = Column(Integer, nullable=False)
@@ -58,7 +61,7 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
         self.applyTo = tupleIn.applyTo
         self.action = tupleIn.action
         self.propertyName = tupleIn.propertyName
-        self.propertyValues = tupleIn.propertyValues
+        self.propertyValue = tupleIn.propertyValue
         self.propertyValueType = tupleIn.propertyValueType
         self.comment = tupleIn.comment
         self.isEnabled = tupleIn.isEnabled
@@ -71,12 +74,10 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
             applyTo=self.applyTo,
             action=self.action,
             propertyName=self.propertyName,
-            propertyValues=self.propertyValues,
+            propertyValue=self.propertyValue,
             propertyValueType=self.propertyValueType,
             comment=self.comment,
             isEnabled=self.isEnabled
         )
-
-        traceTuple.rules = [rule.toTuple() for rule in self.rules]
 
         return traceTuple

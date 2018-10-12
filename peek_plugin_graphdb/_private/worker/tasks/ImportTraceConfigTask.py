@@ -11,12 +11,9 @@ from vortex.Payload import Payload
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
-from peek_plugin_graphdb._private.storage.GraphDbTraceConfigRule import \
-    GraphDbTraceConfigRule
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb._private.worker.tasks._CalcChunkKey import makeChunkKey
-from peek_plugin_graphdb.tuples.GraphDbImportTraceConfigTuple import \
-    GraphDbImportTraceConfigTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
+    GraphDbTraceConfigTuple
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +29,6 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
     conn = engine.connect()
     transaction = conn.begin()
     try:
-        chunkKeys = {
-            makeChunkKey(modelSetKey, key) for key in traceConfigKeys
-        }
-
         modelSetIdByKey = _loadModelSets()
         modelSetId = modelSetIdByKey[modelSetKey]
 
@@ -46,8 +39,8 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
 
         transaction.commit()
 
-        logger.debug("Deleted %s, queued %s chunks in %s",
-                     len(traceConfigKeys), len(chunkKeys),
+        logger.debug("Deleted %s trace configs in %s",
+                     len(traceConfigKeys),
                      (datetime.now(pytz.utc) - startTime))
 
     except Exception as e:
@@ -63,9 +56,9 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
 @DeferrableTask
 @celeryApp.task(bind=True)
 def createOrUpdateTraceConfigs(self, traceConfigEncodedPayload: bytes
-                               ) -> Dict[int, List[str]]:
+                               ) -> Dict[str, List[str]]:
     # Decode arguments
-    newTraceConfigs: List[GraphDbImportTraceConfigTuple] = (
+    newTraceConfigs: List[GraphDbTraceConfigTuple] = (
         Payload().fromEncodedPayload(traceConfigEncodedPayload).tuples
     )
 
@@ -75,14 +68,12 @@ def createOrUpdateTraceConfigs(self, traceConfigEncodedPayload: bytes
 
     # Do the import
     try:
-        insertedOrCreated: Dict[int, List[str]] = defaultdict(list)
+        insertedOrCreated: Dict[str, List[str]] = defaultdict(list)
 
         traceConfigByModelKey = defaultdict(list)
         for traceConfig in newTraceConfigs:
             traceConfigByModelKey[traceConfig.modelSetKey].append(traceConfig)
-
-            modelSetId = modelSetIdByKey.get(traceConfig.modelSetKey)
-            insertedOrCreated[modelSetId].append(traceConfig.importGroupHash)
+            insertedOrCreated[traceConfig.modelSetKey].append(traceConfig.key)
 
         for modelSetKey, traceConfigs in traceConfigByModelKey.items():
             modelSetId = modelSetIdByKey.get(modelSetKey)
@@ -100,7 +91,7 @@ def createOrUpdateTraceConfigs(self, traceConfigEncodedPayload: bytes
 
 
 def _validateNewTraceConfigs(
-        newTraceConfigs: List[GraphDbImportTraceConfigTuple]) -> None:
+        newTraceConfigs: List[GraphDbTraceConfigTuple]) -> None:
     for traceConfig in newTraceConfigs:
         if not traceConfig.key:
             raise Exception("key is empty for %s" % traceConfig)
@@ -142,7 +133,7 @@ def _makeModelSet(modelSetKey: str) -> int:
         dbSession.close()
 
 
-def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbImportTraceConfigTuple],
+def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbTraceConfigTuple],
                            modelSetId: int) -> None:
     """ Insert or Update Objects
 
@@ -156,14 +147,13 @@ def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbImportTraceConfigTuple],
     startTime = datetime.now(pytz.utc)
 
     dbSession = CeleryDbConn.getDbSession()
-    transaction = dbSession.begin()
 
     try:
-        importHashSet = {i.importGroupHash for i in newTraceConfigs}
+        keysToDelete = {i.key for i in newTraceConfigs}
 
         dbSession.execute(
             traceConfigTable.delete(
-                traceConfigTable.c.importGroupHash.in_(importHashSet))
+                traceConfigTable.c.key.in_(keysToDelete))
         )
 
         # Create state arrays
@@ -171,16 +161,16 @@ def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbImportTraceConfigTuple],
 
         # Create the DB Orm objects to insert
         for importTraceConfig in newTraceConfigs:
-            dbSession.add(GraphDbTraceConfig().fromTuple(importTraceConfig,modelSetId))
+            dbSession.add(GraphDbTraceConfig().fromTuple(importTraceConfig, modelSetId))
 
-        transaction.commit()
+        dbSession.commit()
 
         logger.debug("Inserted %s trace configs in %s",
                      len(inserts),
                      (datetime.now(pytz.utc) - startTime))
 
     except Exception:
-        transaction.rollback()
+        dbSession.rollback()
         raise
 
 

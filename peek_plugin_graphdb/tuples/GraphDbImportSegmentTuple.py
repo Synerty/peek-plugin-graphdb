@@ -23,7 +23,7 @@ class GraphDbImportSegmentTuple(GraphDbSegmentTuple):
         self.edges.sort(key=lambda e: e.key)
         self.vertexes.sort(key=lambda v: v.key)
 
-        m = hashlib.sha256()
+        m = hashlib.md5()
         m.update(b'zeroth item padding')
 
         for edge in self.edges:
@@ -37,9 +37,9 @@ class GraphDbImportSegmentTuple(GraphDbSegmentTuple):
     def generateSegmentHash(self) -> str:
         self.edges.sort(key=lambda e: e.key)
         self.vertexes.sort(key=lambda v: v.key)
-        self.links.sort(key=lambda l: l.vertexKey)
+        self.links.sort(key=lambda l: l.vertexKey + l.segmentKey)
 
-        m = hashlib.sha256()
+        m = hashlib.md5()
         m.update(b'zeroth item padding')
         m.update(str(self).encode())
         return m.hexdigest()

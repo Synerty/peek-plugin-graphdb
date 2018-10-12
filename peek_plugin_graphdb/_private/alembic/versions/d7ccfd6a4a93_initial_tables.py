@@ -2,14 +2,14 @@
 
 Peek Plugin Database Migration Script
 
-Revision ID: 31645ad7aa9e
+Revision ID: d7ccfd6a4a93
 Revises: 
-Create Date: 2018-10-11 22:09:04.452015
+Create Date: 2018-10-12 20:09:58.162336
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '31645ad7aa9e'
+revision = 'd7ccfd6a4a93'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -75,7 +75,6 @@ def upgrade():
     op.create_table('GraphDbTraceConfig',
     sa.Column('id', sa.Integer(), nullable=False, autoincrement=True),
     sa.Column('modelSetId', sa.Integer(), nullable=False),
-    sa.Column('importGroupHash', sa.String(), nullable=False),
     sa.Column('key', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('comment', sa.String(), nullable=True),
@@ -84,7 +83,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     schema='pl_graphdb'
     )
-    op.create_index('idx_TraceConfig_importGroupHash', 'GraphDbTraceConfig', ['importGroupHash'], unique=False, schema='pl_graphdb')
     op.create_index('idx_TraceConfig_key', 'GraphDbTraceConfig', ['modelSetId', 'key'], unique=True, schema='pl_graphdb')
     op.create_index('idx_TraceConfig_name', 'GraphDbTraceConfig', ['modelSetId', 'name'], unique=True, schema='pl_graphdb')
     op.create_table('SettingProperty',
@@ -106,8 +104,9 @@ def upgrade():
     sa.Column('order', sa.Integer(), nullable=False),
     sa.Column('applyTo', sa.Integer(), nullable=False),
     sa.Column('action', sa.Integer(), nullable=False),
+    sa.Column('actionData', sa.String(), nullable=True),
     sa.Column('propertyName', sa.String(), nullable=False),
-    sa.Column('propertyValues', sa.String(), nullable=False),
+    sa.Column('propertyValue', sa.String(), nullable=False),
     sa.Column('propertyValueType', sa.Integer(), nullable=False),
     sa.Column('comment', sa.String(), nullable=True),
     sa.Column('isEnabled', sa.Boolean(), server_default='true', nullable=False),

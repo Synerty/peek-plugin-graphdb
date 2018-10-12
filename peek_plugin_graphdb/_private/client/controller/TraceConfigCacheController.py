@@ -7,6 +7,7 @@ from vortex.PayloadEndpoint import PayloadEndpoint
 from vortex.PayloadEnvelope import PayloadEnvelope
 from vortex.PayloadFilterKeys import plDeleteKey
 from vortex.TupleSelector import TupleSelector
+from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.ClientTraceConfigLoadRpc import \
@@ -30,18 +31,15 @@ class TraceConfigCacheController:
 
     LOAD_CHUNK = 32
 
-    def __init__(self, clientId: str):
+    def __init__(self, clientId: str, tupleObservable: TupleDataObservableHandler):
         self._clientId = clientId
-        self._tupleObservable = None
+        self._tupleObservable = tupleObservable
 
         #: This stores the cache of segment data for the clients
         self._cache: Dict[str, Dict[str, GraphDbTraceConfigTuple]] = defaultdict(dict)
 
         self._endpoint = PayloadEndpoint(clientTraceConfigUpdateFromServerFilt,
                                          self._processTraceConfigPayload)
-
-    def setTupleObservable(self, tupleObservable):
-        self._tupleObservable = tupleObservable
 
     @inlineCallbacks
     def start(self):
@@ -71,7 +69,14 @@ class TraceConfigCacheController:
             if not traceConfigTuples:
                 break
 
-            self._loadTraceConfigIntoCache(traceConfigTuples)
+            traceConfigsByModelSetKey = defaultdict(list)
+            for trace in traceConfigTuples:
+                traceConfigsByModelSetKey[trace.modelSetKey].append(trace)
+
+            del traceConfigTuples
+
+            for modelSetKey, traceConfigTuples in traceConfigsByModelSetKey.items():
+                self._loadTraceConfigIntoCache(modelSetKey, traceConfigTuples)
 
             offset += self.LOAD_CHUNK
 
@@ -79,17 +84,18 @@ class TraceConfigCacheController:
     def _processTraceConfigPayload(self, payloadEnvelope: PayloadEnvelope, **kwargs):
         payload = yield payloadEnvelope.decodePayloadDefer()
 
+        dataDict = payload.tuples[0]
+
         if payload.filt.get(plDeleteKey):
-            modelSetKey = payload.tuples["modelSetKey"]
-            traceConfigKeys = payload.tuples["traceConfigKeys"]
+            modelSetKey = dataDict["modelSetKey"]
+            traceConfigKeys = dataDict["traceConfigKeys"]
             self._removeTraceConfigFromCache(modelSetKey, traceConfigKeys)
             return
 
-        modelSetKey = payload.tuples["modelSetKey"]
-        importGroupHash = payload.tuples["importGroupHash"]
+        modelSetKey = dataDict["modelSetKey"]
 
-        segmentTuples: List[GraphDbTraceConfigTuple] = payload.tuples["tuples"]
-        self._loadTraceConfigIntoCache(segmentTuples, modelSetKey, set(importGroupHash))
+        traceConfigTuples: List[GraphDbTraceConfigTuple] = dataDict["tuples"]
+        self._loadTraceConfigIntoCache(modelSetKey, traceConfigTuples)
 
     def _removeTraceConfigFromCache(self, modelSetKey: str, traceConfigKeys: List[str]):
         subCache = self._cache[modelSetKey]
@@ -104,35 +110,32 @@ class TraceConfigCacheController:
         self._tupleObservable.no(TupleSelector(GraphDbTraceConfigTuple.tupleType(),
                                                dict(modelSetKey=modelSetKey)))
 
-    def _loadTraceConfigIntoCache(self, traceConfigTuples: List[GraphDbTraceConfigTuple],
-                                  modelSetKey: str, importGroupHash: Set[str]):
+    def _loadTraceConfigIntoCache(self, modelSetKey: str,
+                                  traceConfigTuples: List[GraphDbTraceConfigTuple],
+                                  deletedTraceConfigKeys: Set[str] = set()):
         subCache = self._cache[modelSetKey]
 
         traceKeysUpdated: Set[str] = {
             traceConfig.key for traceConfig in traceConfigTuples
         }
 
-        traceKeysRemoved: Set[str] = {
-            tc.key
-            for tc in subCache.values()
-            if tc.importGroupHash in importGroupHash
-        }
-
-        traceKeysRemoved -= traceKeysUpdated
+        deletedTraceConfigKeys -= traceKeysUpdated
 
         for traceConfig in traceConfigTuples:
             subCache[traceConfig.key] = traceConfig
 
-        for traceConfigKey in traceKeysRemoved:
+        for traceConfigKey in deletedTraceConfigKeys:
             if traceConfigKey in subCache:
                 subCache.pop(traceConfigKey)
 
         logger.debug("Received TraceConfig updates from server,"
                      "%s %s removed, %s added/updated",
-                     modelSetKey, len(traceKeysRemoved), len(traceKeysUpdated))
+                     modelSetKey, len(deletedTraceConfigKeys), len(traceKeysUpdated))
 
-        self._tupleObservable.no(TupleSelector(GraphDbTraceConfigTuple.tupleType(),
-                                               dict(modelSetKey=modelSetKey)))
+        self._tupleObservable.notifyOfTupleUpdate(
+            TupleSelector(GraphDbTraceConfigTuple.tupleType(),
+                          dict(modelSetKey=modelSetKey))
+        )
 
     def traceConfigTuple(self, modelSetKey: str,
                          traceConfigKey: str) -> GraphDbTraceConfigTuple:

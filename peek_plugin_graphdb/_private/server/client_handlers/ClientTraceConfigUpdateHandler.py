@@ -73,22 +73,22 @@ class ClientTraceConfigUpdateHandler:
             logger.exception(e)
 
     def sendCreatedOrUpdatedUpdates(self, modelSetKey: str,
-                                    importGroupHashes: List[str]) -> None:
+                                    traceConfigKeys: List[str]) -> None:
         """ Send Create or Updated Updates
 
         Send grid updates to the client services
 
         :param modelSetKey: The model set key
-        :param importGroupHashes: A list of the importGroupHashs have been updated
+        :param traceConfigKeys: A list of the keys updated
         :returns: Nothing
         """
 
-        if not importGroupHashes:
+        if not traceConfigKeys:
             return
 
         if peekClientName not in VortexFactory.getRemoteVortexName():
             logger.debug("No clients are online to send the trace configs to, %s",
-                         importGroupHashes)
+                         traceConfigKeys)
             return
 
         def send(vortexMsg: bytes):
@@ -97,9 +97,9 @@ class ClientTraceConfigUpdateHandler:
                     vortexMsg, destVortexName=peekClientName
                 )
 
-        d: Deferred = self._loadTraceConfigs(modelSetKey, importGroupHashes)
+        d: Deferred = self._loadTraceConfigs(modelSetKey, traceConfigKeys)
         d.addCallback(send)
-        d.addErrback(self._sendErrback, importGroupHashes)
+        d.addErrback(self._sendErrback, traceConfigKeys)
 
     def _sendErrback(self, failure, traceConfigKeys):
 
@@ -111,16 +111,16 @@ class ClientTraceConfigUpdateHandler:
         vortexLogFailure(failure, logger)
 
     @deferToThreadWrapWithLogger(logger)
-    def _loadTraceConfigs(self, modelSetKey: str, importGroupHashes: List[str]
+    def _loadTraceConfigs(self, modelSetKey: str, traceConfigKeys: List[str]
                           ) -> Optional[bytes]:
 
         session = self._dbSessionCreator()
         try:
             results = list(
                 session.query(GraphDbTraceConfig)
-                      .options(joinedload(GraphDbTraceConfig.modelSet))
-                      .options(joinedload(GraphDbTraceConfig.rules))
-                    .filter(GraphDbTraceConfig.importGroupHash.in_(importGroupHashes))
+                    .options(joinedload(GraphDbTraceConfig.modelSet))
+                    .options(joinedload(GraphDbTraceConfig.rules))
+                    .filter(GraphDbTraceConfig.key.in_(traceConfigKeys))
                     .join(GraphDbModelSet,
                           GraphDbTraceConfig.modelSetId == GraphDbModelSet.id)
                     .filter(GraphDbModelSet.key == modelSetKey)
@@ -130,8 +130,7 @@ class ClientTraceConfigUpdateHandler:
                 return None
 
             data = dict(tuples=[ormObj.toTuple() for ormObj in results],
-                        modelSetKey=modelSetKey,
-                        importGroupHashes=importGroupHashes)
+                        modelSetKey=modelSetKey)
             return (
                 Payload(filt=clientTraceConfigUpdateFromServerFilt, tuples=data)
                     .makePayloadEnvelope().toVortexMsg()

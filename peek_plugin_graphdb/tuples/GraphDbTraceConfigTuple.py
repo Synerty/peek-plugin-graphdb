@@ -1,3 +1,4 @@
+import hashlib
 from typing import List
 
 from vortex.Tuple import addTupleType, TupleField, Tuple
@@ -33,3 +34,14 @@ class GraphDbTraceConfigTuple(Tuple):
 
     #:  Is this rule enabled [Required]
     isEnabled: bool = TupleField(True)
+
+    def generateChangedHash(self) -> str:
+        rulesStr = [str(rule) for rule in self.rules]
+        rulesStr.sort()
+
+        m = hashlib.md5()
+        m.update(str(self).encode())
+        for ruleStr in rulesStr:
+            m.update(ruleStr.encode())
+
+        return m.hexdigest()

@@ -20,20 +20,25 @@ class GraphDbTraceConfigRuleTuple(Tuple):
 
     #:  What action should be taken when this rule is met
     action: int = TupleField(1)
-    ACTION_STOP = 1
-    ACTION_CONTINUE = 2
+    ACTION_STOP_TRACE = 1
+    ACTION_CONTINUE_TRACE = 2
+    ACTION_ABORT_TRACE_WITH_MESSAGE = 3
+
+    #: Data to go with actions that require it
+    actionData: str = TupleField(1)
 
     #: The name of the property to apply the rule to
     propertyName: str = TupleField()
 
     #:  A comma separated list of property values to match
-    propertyValues: str = TupleField()
+    propertyValue: str = TupleField()
 
     #:  The type of value in the property value
     propertyValueType: int = TupleField(1)
     PROP_VAL_TYPE_SIMPLE = 1
     PROP_VAL_TYPE_COMMA_LIST = 2
     PROP_VAL_TYPE_REGEX = 3
+    PROP_VAL_TYPE_BITMASK_AND = 4
 
     #:  The comment for this rule
     comment: str = TupleField()

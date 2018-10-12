@@ -45,8 +45,7 @@ class ClientTraceConfigLoadRpc:
                       .options(joinedload(GraphDbTraceConfig.rules))
                       .order_by(GraphDbTraceConfig.id)
                       .offset(offset)
-                      .limit(count)
-                      .yield_per(count))
+                      .limit(count))
 
             return [ormObj.toTuple() for ormObj in ormObjs]
 

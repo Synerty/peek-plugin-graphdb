@@ -34,9 +34,9 @@ class ImportController:
             traceEncodedPayload
         )
 
-        for modelSetKey, importGroupHash in insertedOrCreated.items():
+        for modelSetKey, traceConfigKeys in insertedOrCreated.items():
             self._traceConfigUpdateHandler.sendCreatedOrUpdatedUpdates(
-                modelSetKey, importGroupHash
+                modelSetKey, traceConfigKeys
             )
 
     @inlineCallbacks

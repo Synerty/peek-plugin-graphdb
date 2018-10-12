@@ -8,6 +8,8 @@ from peek_plugin_graphdb._private.storage.DeclarativeBase import DeclarativeBase
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbTraceConfigRule import \
     GraphDbTraceConfigRule
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
+    GraphDbTraceConfigTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
 
 
@@ -24,9 +26,6 @@ class GraphDbTraceConfig(Tuple, DeclarativeBase):
                         ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),
                         nullable=False)
     modelSet = relationship(GraphDbModelSet)
-
-    #: The reference used when this rule was imported.
-    importGroupHash = Column(String, nullable=False)
 
     #:  The unique key of this segment
     key = Column(String, nullable=False)
@@ -46,11 +45,10 @@ class GraphDbTraceConfig(Tuple, DeclarativeBase):
     __table_args__ = (
         Index("idx_TraceConfig_key", modelSetId, key, unique=True),
         Index("idx_TraceConfig_name", modelSetId, name, unique=True),
-        Index("idx_TraceConfig_importGroupHash", importGroupHash, unique=False),
     )
 
-    def fromTuple(self, tupleIn: GraphDbTraceConfigTuple, modelSetId: int
-                  ) -> 'GraphDbTraceConfig':
+    def fromTuple(self, tupleIn: GraphDbTraceConfigTuple,
+                  modelSetId: int) -> 'GraphDbTraceConfig':
         self.modelSetId = modelSetId
         self.key = tupleIn.key
         self.name = tupleIn.name
