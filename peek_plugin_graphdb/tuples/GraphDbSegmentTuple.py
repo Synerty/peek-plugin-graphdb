@@ -27,9 +27,9 @@ class GraphDbSegmentTuple(Tuple):
     #:  The edges
     edges: List[GraphDbEdgeTuple] = TupleField([])
 
-    #:  The edges
+    #:  The vertexes
     vertexes: List[GraphDbVertexTuple] = TupleField([])
 
-    #:  The edges
+    #:  The links to the other segments
     links: List[GraphDbSegmentLinkTuple] = TupleField([])
 

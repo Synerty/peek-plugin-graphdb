@@ -12,14 +12,9 @@ import {
 
 import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
-import {PrivateSegmentLoaderService, SegmentResultI} from "./_private/segment-loader";
-import {GraphDbTupleService} from "./_private";
+import {PrivateTracerService} from "./_private/tracer-service";
+import {GraphDbTraceResultTuple} from "./GraphDbTraceResultTuple";
 
-export interface DocPropT {
-    title: string;
-    value: string;
-    order: number;
-}
 
 // ----------------------------------------------------------------------------
 /** LocationIndex Cache
@@ -34,8 +29,7 @@ export interface DocPropT {
 @Injectable()
 export class GraphDbService extends ComponentLifecycleEventEmitter {
 
-    constructor(private segmentLoader: PrivateSegmentLoaderService,
-                private tupleService: GraphDbTupleService) {
+    constructor(private tracerService: PrivateTracerService) {
         super();
 
 
@@ -47,8 +41,12 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
      * Get the objects with matching keywords from the index..
      *
      */
-    getObjects(modelSetKey: string, keys: string[]): Promise<SegmentResultI> {
-        return this.segmentLoader.getSegments(modelSetKey, keys);
+    runTrace(modelSetKey: string, traceConfigKey: string,
+             startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+
+        return this.tracerService
+            .runTrace(modelSetKey, traceConfigKey, startVertexKey);
+
     }
 
 

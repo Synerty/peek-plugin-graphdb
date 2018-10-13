@@ -4,12 +4,12 @@ from peek_plugin_graphdb._private.client.controller.SegmentCacheController impor
     SegmentCacheController
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
     TraceConfigCacheController
-from peek_plugin_graphdb._private.client.tuple_providers.ClientSegmentTupleProvider import \
-    ClientSegmentTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.ClientSegmentUpdateDateTupleProvider import \
     ClientSegmentUpdateDateTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.ClientTraceConfigTupleProvider import \
     ClientTraceConfigTupleProvider
+from peek_plugin_graphdb._private.client.tuple_providers.ClientTraceResultTupleProvider import \
+    ClientTraceResultTupleProvider
 from peek_plugin_graphdb._private.tuples.SegmentUpdateDateTuple import \
     SegmentUpdateDateTuple
 from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
@@ -32,7 +32,7 @@ def makeClientTupleDataObservableHandler(
 
     tupleObservable.addTupleProvider(
         GraphDbSegmentTuple.tupleName(),
-        ClientSegmentTupleProvider(segmentCacheHandler, traceConfigCacheHandler)
+        ClientTraceResultTupleProvider(segmentCacheHandler, traceConfigCacheHandler)
     )
 
     tupleObservable.addTupleProvider(

@@ -14,7 +14,7 @@ from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController i
 logger = logging.getLogger(__name__)
 
 
-class ClientSegmentTupleProvider(TuplesProviderABC):
+class ClientTraceResultTupleProvider(TuplesProviderABC):
     def __init__(self, segmentCacheHandler: SegmentCacheController,
                  traceConfigCacheHandler: TraceConfigCacheController):
         self._segmentCacheHandler = segmentCacheHandler

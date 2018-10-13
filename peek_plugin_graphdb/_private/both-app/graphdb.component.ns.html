@@ -1,8 +1,29 @@
-<StackLayout class="p-20">
-    <Label text="DocDB" class="h1 text-center"></Label>
-    <Label text="This plugin stores and displays arbitrary segment information."
-           class="h3 text-center"></Label>
-    <Label text="A segment is similar to a JSON object." class="h3 text-center"></Label>
+
+<StackLayout>
+    <GridLayout class="peek-nav-section"
+                rows="auto" columns="auto, *">
+        <GridLayout class="btn-group"
+                    row="0" col="0"
+                    rows="auto" columns="auto">
+            <Button class="nav-section-btn"
+                    text="View Trace"
+                    [nsRouterLink]="['/peek_plugin_graphdb/view_trace']"></Button>
+        </GridLayout>
+    </GridLayout>
+    <StackLayout class="hr"></StackLayout>
+
+    <StackLayout class="peek-information-section">
+        <Image class="information-section-icon"
+               src="~/assets/peek_plugin_graphdb/plugin_icon.png"></Image>
+
+        <label class="information-section-title"
+               text="Welcome to Graph DB"></label>
+        <label class="p"></label>
+
+        <label class="p"
+               textwrap="true"
+               text="This plugin stores, traces, queries and displays connectivity models."></label>
+        <label class="p"></label>
+
+    </StackLayout>
 </StackLayout>
-
-

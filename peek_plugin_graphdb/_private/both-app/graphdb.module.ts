@@ -24,7 +24,7 @@ import {
     graphDbActionProcessorName
 } from "@peek/peek_plugin_graphdb/_private/PluginNames";
 // Import the names we need for the
-import {ViewDocComponent} from "./view-doc/view.component";
+import {ViewTraceComponent} from "./view-trace/view.component";
 
 // Import the names we need for the
 
@@ -33,12 +33,12 @@ import {ViewDocComponent} from "./view-doc/view.component";
 // Define the child routes for this plugin
 export const pluginRoutes: Routes = [
     {
-        path: 'view_doc',
-        component: ViewDocComponent
+        path: 'view_trace',
+        component: ViewTraceComponent
     },
     {
-        path: 'view_doc/:modelSetKey/:key',
-        component: ViewDocComponent
+        path: 'view_trace/:modelSetKey/:traceConfigKey/:startVertexKey',
+        component: ViewTraceComponent
     },
     {
         path: '',
@@ -61,7 +61,7 @@ export const pluginRoutes: Routes = [
     exports: [],
     providers: [
     ],
-    declarations: [DocdbComponent, ViewDocComponent]
+    declarations: [DocdbComponent, ViewTraceComponent]
 })
 export class GraphDbModule {
 }

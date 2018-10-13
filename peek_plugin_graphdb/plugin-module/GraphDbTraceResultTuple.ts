@@ -7,14 +7,17 @@ import {GraphDbSegmentLinkTuple} from "./GraphDbSegmentLinkTuple";
 
 
 @addTupleType
-export class GraphDbSegmentTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbSegmentTuple";
+export class GraphDbTraceResultTuple extends Tuple {
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbTraceResultTuple";
 
-    //  The unique key of this segment
-    key: string;
+    //  The key of the model set that the resuslt was created with.
+    modelSetKey: string;
 
-    //  The modelSetId for this segment.
-    modelSet: GraphDbModelSetTuple;
+    //  The key of the Trace Config
+    traceConfigKey: string;
+
+    //  The key of the vertex start point of this trace
+    startVertexKey: string;
 
     //  The edges
     edges: GraphDbEdgeTuple[];
@@ -22,11 +25,7 @@ export class GraphDbSegmentTuple extends Tuple {
     //  The vertexes
     vertexes: GraphDbVertexTuple[];
 
-    //  The links to the other segments
-    links: GraphDbSegmentLinkTuple[];
-
-
     constructor() {
-        super(GraphDbSegmentTuple.tupleName)
+        super(GraphDbTraceResultTuple.tupleName)
     }
 }
