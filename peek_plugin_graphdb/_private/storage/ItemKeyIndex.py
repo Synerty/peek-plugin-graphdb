@@ -1,11 +1,10 @@
+from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from sqlalchemy import Column, Index, ForeignKey
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb._private.storage.DeclarativeBase import DeclarativeBase
-from peek_plugin_graphdb._private.storage.ItemKeyType import \
-    ItemKeyType
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from vortex.Tuple import Tuple, addTupleType
 
@@ -24,26 +23,23 @@ class ItemKeyIndex(Tuple, DeclarativeBase):
                         nullable=False)
     modelSet = relationship(GraphDbModelSet)
 
-    #:  The model set for this itemKeyIndex
-    itemKeyTypeId = Column(Integer,
-                            ForeignKey('ItemKeyType.id', ondelete='CASCADE'),
-                            nullable=False)
-    itemKeyType = relationship(ItemKeyType)
-
     importGroupHash = Column(String, nullable=False)
-
-    #:  The unique key of this itemKeyIndex
-    key = Column(String, nullable=False)
 
     #:  The chunk that this itemKeyIndex fits into
     chunkKey = Column(String, nullable=False)
 
-    #:  The JSON ready for the Compiler to use
-    packedJson = Column(String, nullable=False)
+    #:  The unique key of this itemKeyIndex
+    itemKey = Column(String, nullable=False)
+
+    #:  The unique key of this itemKeyIndex
+    itemType = Column(Integer, nullable=False)
+    ITEM_TYPE_VERTEX = ItemKeyTuple.ITEM_TYPE_VERTEX
+    ITEM_TYPE_EDGE = ItemKeyTuple.ITEM_TYPE_EDGE
+
+    #:  The key of the segment where it's stored
+    segmentKey = Column(String, nullable=False)
 
     __table_args__ = (
-        Index("idx_ItemKeyIndex_key", modelSetId, key, unique=True),
-        Index("idx_ItemKeyIndex_item_keyType", itemKeyTypeId, unique=False),
-        Index("idx_ItemKeyIndex_gridKey", chunkKey, unique=False),
+        Index("idx_ItemKeyIndex_chunkKey", chunkKey, unique=False),
         Index("idx_ItemKeyIndex_importGroupHash", importGroupHash, unique=False),
     )

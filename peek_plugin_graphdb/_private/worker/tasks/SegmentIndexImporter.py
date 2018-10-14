@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Set, Tuple
 
 import pytz
-from sqlalchemy import select, bindparam, and_
+from sqlalchemy import select, and_
 from txcelery.defer import DeferrableTask
 from vortex.Payload import Payload
 
@@ -12,8 +12,12 @@ from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
+from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import makeChunkKey
+from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import \
+    ItemKeyImportTuple, loadItemKeys
+from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import \
+    makeChunkKey
 from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 
 logger = logging.getLogger(__name__)
@@ -89,7 +93,7 @@ def createOrUpdateSegments(self, segmentEncodedPayload: bytes) -> None:
                 modelSetId = _makeModelSet(modelSetKey)
                 modelSetIdByKey[modelSetKey] = modelSetId
 
-            _insertOrUpdateObjects(segments, modelSetId)
+            _insertOrUpdateObjects(segments, modelSetId, modelSetKey)
 
     except Exception as e:
         logger.debug("Retrying import graphDb objects, %s", e)
@@ -136,7 +140,7 @@ def _makeModelSet(modelSetKey: str) -> int:
 
 
 def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
-                           modelSetId: int) -> None:
+                           modelSetId: int, modelSetKey: str) -> None:
     """ Insert or Update Objects
 
     1) Find objects and update them
@@ -163,7 +167,8 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
 
         # Create state arrays
         inserts = []
-        updates = []
+
+        newItemKeys = []
 
         # Work out which objects have been updated or need inserting
         for importSegment in newSegments:
@@ -183,6 +188,22 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
 
             chunkKeysForQueue.add((modelSetId, existingObject.chunkKey))
 
+            for edge in importSegment.edges:
+                newItemKeys.append(ItemKeyImportTuple(
+                    importGroupHash=importSegment.importGroupHash,
+                    itemKey=edge.key,
+                    itemType=ItemKeyTuple.ITEM_TYPE_EDGE,
+                    segmentKey=importSegment.key
+                ))
+
+            for vertex in importSegment.vertexes:
+                newItemKeys.append(ItemKeyImportTuple(
+                    importGroupHash=importSegment.importGroupHash,
+                    itemKey=vertex.key,
+                    itemType=ItemKeyTuple.ITEM_TYPE_VERTEX,
+                    segmentKey=importSegment.key
+                ))
+
         if importHashSet:
             conn.execute(
                 segmentTable.delete(segmentTable.c.importGroupHash.in_(importHashSet))
@@ -192,28 +213,21 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         if inserts:
             conn.execute(segmentTable.insert(), inserts)
 
-        if updates:
-            stmt = (
-                segmentTable.update()
-                    .where(segmentTable.c.id == bindparam('b_id'))
-                    .values(segmentTypeId=bindparam('b_typeId'),
-                            segmentJson=bindparam('b_segmentJson'))
-            )
-            conn.execute(stmt, updates)
-
         if chunkKeysForQueue:
             conn.execute(
                 queueTable.insert(),
                 [dict(modelSetId=m, chunkKey=c) for m, c in chunkKeysForQueue]
             )
 
-        if inserts or updates or chunkKeysForQueue:
+        loadItemKeys(conn, newItemKeys, modelSetId, modelSetKey)
+
+        if inserts or chunkKeysForQueue or newItemKeys:
             transaction.commit()
         else:
             transaction.rollback()
 
         logger.debug("Inserted %s updated %s queued %s chunks in %s",
-                     len(inserts), len(updates), len(chunkKeysForQueue),
+                     len(inserts), len(chunkKeysForQueue),
                      (datetime.now(pytz.utc) - startTime))
 
     except Exception:

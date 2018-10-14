@@ -1,29 +1,25 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
 import {graphDbTuplePrefix} from "./_private/PluginNames";
-import {ItemKeyTypeTuple} from "./ItemKeyTypeTuple";
-import {GraphDbModelSetTuple} from "./GraphDbModelSetTuple";
+import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
 
 
 @addTupleType
 export class ItemKeyTuple extends Tuple {
     public static readonly tupleName = graphDbTuplePrefix + "ItemKeyTuple";
 
-    //  The unique key of this itemKeyIndex
-    key: string;
-
     //  The modelSetId for this itemKeyIndex.
     modelSet: GraphDbModelSetTuple = new GraphDbModelSetTuple();
 
+    // The key of the vertex or edge
+    itemKey: string;
+
     // This ItemKeyIndex Type ID
-    itemKeyType: ItemKeyTypeTuple = new ItemKeyTypeTuple();
+    itemType: number;
+    readonly ITEM_TYPE_VERTEX = 1;
+    readonly ITEM_TYPE_EDGE = 2;
 
-    // A string value of the itemKey
-    valueStr: string;
-
-    // An int value of the itemKey
-    valueInt: number;
-
-    // Add more values here
+    // The key of the segment where it's stored
+    segmentKeys: string[];
 
     constructor() {
         super(ItemKeyTuple.tupleName)
@@ -34,27 +30,20 @@ export class ItemKeyTuple extends Tuple {
         let objectProps: {} = JSON.parse(packedJson);
 
         // Get out the object type
-        let thisItemKeyTypeId = objectProps['_tid'];
-        delete objectProps['_tid'];
-
-        // Get out the object type
         let thisModelSetId = objectProps['_msid'];
         delete objectProps['_msid'];
 
         // Create the new object
         let newSelf = new ItemKeyTuple();
 
-        newSelf.key = key;
-
         // These objects get replaced later in the UI
         newSelf.modelSet = new GraphDbModelSetTuple();
-        newSelf.modelSet.id__ = thisModelSetId;
-        newSelf.itemKeyType = new ItemKeyTypeTuple();
-        newSelf.itemKeyType.id__ = thisItemKeyTypeId;
+        newSelf.modelSet.id = thisModelSetId;
 
         // Unpack the custom data here
-        newSelf.valueStr = objectProps["valueStr"];
-        newSelf.valueInt = objectProps["valueInt"];
+        newSelf.itemKey = key;
+        newSelf.itemType = objectProps["itemType"];
+        newSelf.segmentKeys = objectProps["segmentKeys"];
 
         return newSelf;
 

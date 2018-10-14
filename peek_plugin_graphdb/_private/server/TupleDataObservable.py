@@ -1,14 +1,9 @@
 from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.PluginNames import graphDbObservableName
-from peek_plugin_graphdb._private.server.controller.ItemKeyIndexStatusController import \
-    ItemKeyIndexStatusController
-from peek_plugin_graphdb._private.server.tuple_providers.ItemKeyTypeTupleProvider import \
-    ItemKeyTypeTupleProvider
 from peek_plugin_graphdb._private.server.tuple_providers.ModelSetTupleProvider import \
     ModelSetTupleProvider
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.tuples.ItemKeyTypeTuple import ItemKeyTypeTuple
 from peek_plugin_graphdb._private.tuples.ServerStatusTuple import ServerStatusTuple
 from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
@@ -42,9 +37,5 @@ def makeTupleDataObservableHandler(dbSessionCreator: DbSessionCreator,
     # Model Set Tuple
     tupleObservable.addTupleProvider(GraphDbModelSet.tupleName(),
                                      ModelSetTupleProvider(dbSessionCreator))
-
-    # ItemKeyIndex Type Tuple
-    tupleObservable.addTupleProvider(ItemKeyTypeTuple.tupleName(),
-                                     ItemKeyTypeTupleProvider(dbSessionCreator))
 
     return tupleObservable

@@ -9,15 +9,15 @@ from typing import List, Dict
 import pytz
 from sqlalchemy import select
 from txcelery.defer import DeferrableTask
+from vortex.Payload import Payload
 
 from peek_plugin_base.worker import CeleryDbConn
+from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
 from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
     ItemKeyIndexCompilerQueue
-from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
     ItemKeyIndexEncodedChunk
 from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
-from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def compileItemKeyIndexChunk(self, queueItems) -> List[int]:
 
 
 def _compileItemKeyIndexChunk(modelSetId: int,
-                          queueItems: List[ItemKeyIndexCompilerQueue]) -> None:
+                              queueItems: List[ItemKeyIndexCompilerQueue]) -> None:
     chunkKeys = list(set([i.chunkKey for i in queueItems]))
 
     queueTable = ItemKeyIndexCompilerQueue.__table__
@@ -160,19 +160,23 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
 
     try:
         indexQry = (
-            session.query(ItemKeyIndex.chunkKey, ItemKeyIndex.key,
-                          ItemKeyIndex.packedJson)
+            session.query(ItemKeyIndex.chunkKey, ItemKeyIndex.itemKey,
+                          # ItemKeyIndex.itemType,
+                          ItemKeyIndex.segmentKey)
                 .filter(ItemKeyIndex.chunkKey.in_(chunkKeys))
-                .order_by(ItemKeyIndex.key)
+                .order_by(ItemKeyIndex.itemKey, ItemKeyIndex.segmentKey)
                 .yield_per(1000)
                 .all()
         )
 
         # Create the ChunkKey -> {id -> packedJson, id -> packedJson, ....]
-        packagedJsonByObjIdByChunkKey = defaultdict(dict)
+        packagedJsonByObjIdByChunkKey = defaultdict(lambda: defaultdict(list))
 
         for item in indexQry:
-            packagedJsonByObjIdByChunkKey[item.chunkKey][item.key] = item.packedJson
+            (
+                packagedJsonByObjIdByChunkKey[item.chunkKey][item.itemKey]
+                    .append(item.segmentKey)
+            )
 
         encPayloadByChunkKey = {}
 
@@ -181,7 +185,7 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
             tuples = json.dumps(packedJsonByKey, sort_keys=True)
 
             # Create the blob data for this index.
-            # It will be graphdbd by a binary sort
+            # It could/will be found by a binary sort
             encPayloadByChunkKey[chunkKey] = Payload(tuples=tuples).toEncodedPayload()
 
         return encPayloadByChunkKey

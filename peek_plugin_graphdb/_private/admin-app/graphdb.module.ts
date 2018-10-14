@@ -25,7 +25,6 @@ import {
 // import {EditPropertyComponent} from "./edit-property-table/edit.component";
 // import {EditSegmentTypeComponent} from "./edit-object-type-table/edit.component";
 // import {ViewSegmentComponent} from "./view-segment/view-segment";
-import {EditItemKeyTypeComponent} from "./edit-item-key-type/edit.component";
 
 
 export function tupleActionPushNameServiceFactory() {
@@ -76,8 +75,7 @@ export const pluginRoutes: Routes = [
     declarations: [GraphDbComponent,
         // ViewSegmentComponent,
         EditSettingComponent,
-        StatusComponent,
-        EditItemKeyTypeComponent
+        StatusComponent
         // ,
         // EditPropertyComponent,
         // EditSegmentTypeComponent

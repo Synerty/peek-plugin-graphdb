@@ -1,8 +1,6 @@
 import json
-from typing import Dict
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
-from peek_plugin_graphdb._private.tuples.ItemKeyTypeTuple import ItemKeyTypeTuple
 from vortex.Tuple import Tuple, addTupleType, TupleField
 
 
@@ -26,15 +24,15 @@ class ItemKeyTuple(Tuple):
     modelSet: GraphDbModelSetTuple = TupleField()
 
     #:  The itemKeyIndex type
-    itemKeyType: ItemKeyTypeTuple = TupleField()
+    itemType: int = TupleField()
+    ITEM_TYPE_VERTEX = 1
+    ITEM_TYPE_EDGE = 2
 
-    #:  A string value of the itemKey
-    valueStr: Dict = TupleField()
+    #:  The key of the vertex or edge
+    itemKey: str = TupleField()
 
-    #:  An int value of the itemKey
-    valueInt: Dict = TupleField()
-
-    # Add more values here
+    #:  The key of the segment where it's stored
+    segmentKey: str = TupleField()
 
     @classmethod
     def unpackJson(self, key: str, packedJson: str):
@@ -42,22 +40,18 @@ class ItemKeyTuple(Tuple):
         objectProps: {} = json.loads(packedJson)
 
         # Get out the object type
-        thisItemKeyTypeId = objectProps['_tid']
-
-        # Get out the object type
         thisModelSetId = objectProps['_msid']
 
         # Create the new object
         newSelf = ItemKeyTuple()
 
-        newSelf.key = key
-
         # These objects get replaced with the full object in the UI
-        newSelf.modelSet = GraphDbModelSetTuple(id__=thisModelSetId)
-        newSelf.itemKeyType = ItemKeyTypeTuple(id__=thisItemKeyTypeId)
+        newSelf.modelSet = GraphDbModelSetTuple(id=thisModelSetId)
 
         # Unpack the custom data here
-        newSelf.valueStr = objectProps.get('valueStr')
-        newSelf.valueInt = objectProps.get('valueInt')
+
+        newSelf.itemKey = key
+        newSelf.itemType = objectProps.get('itemType')
+        newSelf.segmentKeys = objectProps.get('segmentKeys')
 
         return newSelf
