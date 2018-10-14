@@ -1,7 +1,7 @@
 export {SegmentResultI} from "./segment-loader/PrivateSegmentLoaderService";
 
 export {SettingPropertyTuple} from "./admin/SettingPropertyTuple";
-export {AdminStatusTuple} from "./admin/AdminStatusTuple";
+export {ServerStatusTuple} from "./admin/ServerStatusTuple";
 export * from "./PluginNames";
 
 

@@ -57,6 +57,11 @@
                 "persistent": true
             },
             {
+                "file": "_private/item-key-index-loader/ItemKeyIndexLoaderService",
+                "class": "ItemKeyIndexLoaderService",
+                "persistent": true
+            },
+            {
                 "file": "_private/tracer-service/PrivateTracerService",
                 "class": "PrivateTracerService"
             },
@@ -83,6 +88,11 @@
             {
                 "file": "_private/segment-loader/PrivateSegmentLoaderService",
                 "class": "PrivateSegmentLoaderService",
+                "persistent": true
+            },
+            {
+                "file": "_private/item-key-index-loader/ItemKeyIndexLoaderService",
+                "class": "ItemKeyIndexLoaderService",
                 "persistent": true
             },
             {

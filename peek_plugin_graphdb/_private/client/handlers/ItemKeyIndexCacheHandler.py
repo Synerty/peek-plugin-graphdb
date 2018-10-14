@@ -5,10 +5,10 @@ from typing import List, Dict
 from twisted.internet.defer import DeferredList, inlineCallbacks, Deferred
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    SegmentCacheController
-from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
-    SegmentIndexUpdateDateTuple
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
+    ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import \
+    ItemKeyIndexUpdateDateTuple
 from vortex.DeferUtil import vortexLogFailure
 from vortex.Payload import Payload
 from vortex.PayloadEndpoint import PayloadEndpoint
@@ -18,26 +18,26 @@ from vortex.VortexFactory import VortexFactory
 
 logger = logging.getLogger(__name__)
 
-clientSegmentWatchUpdateFromDeviceFilt = {
-    'key': "clientSegmentWatchUpdateFromDevice"
+clientItemKeyIndexWatchUpdateFromDeviceFilt = {
+    'key': "clientItemKeyIndexWatchUpdateFromDevice"
 }
-clientSegmentWatchUpdateFromDeviceFilt.update(graphDbFilt)
+clientItemKeyIndexWatchUpdateFromDeviceFilt.update(graphDbFilt)
 
 
 # ModelSet HANDLER
-class SegmentCacheHandler(object):
-    def __init__(self, cacheController: SegmentCacheController,
+class ItemKeyIndexCacheHandler(object):
+    def __init__(self, cacheController: ItemKeyIndexCacheController,
                  clientId: str):
-        """ App Segment Handler
+        """ App ItemKeyIndex Handler
 
-        This class handles the custom needs of the desktop/mobile apps observing segments.
+        This class handles the custom needs of the desktop/mobile apps observing itemKeyIndexs.
 
         """
         self._cacheController = cacheController
         self._clientId = clientId
 
         self._epObserve = PayloadEndpoint(
-            clientSegmentWatchUpdateFromDeviceFilt, self._processObserve
+            clientItemKeyIndexWatchUpdateFromDeviceFilt, self._processObserve
         )
 
         self._uuidsObserving = set()
@@ -49,10 +49,10 @@ class SegmentCacheHandler(object):
     # ---------------
     # Process update from the server
 
-    def notifyOfSegmentUpdate(self, chunkKeys: List[str]):
-        """ Notify of Segment Updates
+    def notifyOfItemKeyIndexUpdate(self, chunkKeys: List[str]):
+        """ Notify of ItemKeyIndex Updates
 
-        This method is called by the client.SegmentCacheController when it receives updates
+        This method is called by the client.ItemKeyIndexCacheController when it receives updates
         from the server.
 
         """
@@ -62,18 +62,18 @@ class SegmentCacheHandler(object):
         payloadsByVortexUuid = defaultdict(Payload)
 
         for chunkKey in chunkKeys:
-            encodedSegmentChunk = self._cacheController.segmentChunk(chunkKey)
+            encodedItemKeyIndexChunk = self._cacheController.itemKeyIndexChunk(chunkKey)
 
             # Queue up the required client notifications
             for vortexUuid in vortexUuids:
-                logger.debug("Sending unsolicited segment %s to vortex %s",
+                logger.debug("Sending unsolicited itemKeyIndex %s to vortex %s",
                              chunkKey, vortexUuid)
-                payloadsByVortexUuid[vortexUuid].tuples.append(encodedSegmentChunk)
+                payloadsByVortexUuid[vortexUuid].tuples.append(encodedItemKeyIndexChunk)
 
         # Send the updates to the clients
         dl = []
         for vortexUuid, payload in list(payloadsByVortexUuid.items()):
-            payload.filt = clientSegmentWatchUpdateFromDeviceFilt
+            payload.filt = clientItemKeyIndexWatchUpdateFromDeviceFilt
 
             # Serialise in thread, and then send.
             d = payload.makePayloadEnvelopeDefer()
@@ -95,7 +95,7 @@ class SegmentCacheHandler(object):
 
         payload = yield payloadEnvelope.decodePayloadDefer()
 
-        updateDatesTuples: SegmentIndexUpdateDateTuple = payload.tuples[0]
+        updateDatesTuples: ItemKeyIndexUpdateDateTuple = payload.tuples[0]
 
         self._uuidsObserving.add(vortexUuid)
 
@@ -109,51 +109,51 @@ class SegmentCacheHandler(object):
 
     @inlineCallbacks
     def _replyToObserve(self, filt,
-                        lastUpdateBySegmentKey: Dict[str, str],
+                        lastUpdateByItemKeyIndexKey: Dict[str, str],
                         sendResponse: SendVortexMsgResponseCallable,
                         vortexUuid: str) -> None:
         """ Reply to Observe
 
-        The client has told us that it's observing a new set of segments, and the lastUpdate
-        it has for each of those segments. We will send them the segments that are out of date
+        The client has told us that it's observing a new set of itemKeyIndexs, and the lastUpdate
+        it has for each of those itemKeyIndexs. We will send them the itemKeyIndexs that are out of date
         or missing.
 
         :param filt: The payload filter to respond to.
-        :param lastUpdateBySegmentKey: The dict of segmentKey:lastUpdate
+        :param lastUpdateByItemKeyIndexKey: The dict of itemKeyIndexKey:lastUpdate
         :param sendResponse: The callable provided by the Vortex (handy)
         :returns: None
 
         """
         yield None
 
-        segmentTuplesToSend = []
+        itemKeyIndexTuplesToSend = []
 
         # Check and send any updates
-        for segmentKey, lastUpdate in lastUpdateBySegmentKey.items():
+        for itemKeyIndexKey, lastUpdate in lastUpdateByItemKeyIndexKey.items():
             if vortexUuid not in VortexFactory.getRemoteVortexUuids():
                 logger.debug("Vortex %s is offline, stopping update")
                 return
 
             # NOTE: lastUpdate can be null.
-            encodedSegmentTuple = self._cacheController.segmentChunk(segmentKey)
-            if not encodedSegmentTuple:
-                logger.debug("Segment %s is not in the cache" % segmentKey)
+            encodedItemKeyIndexTuple = self._cacheController.itemKeyIndexChunk(itemKeyIndexKey)
+            if not encodedItemKeyIndexTuple:
+                logger.debug("ItemKeyIndex %s is not in the cache" % itemKeyIndexKey)
                 continue
 
             # We are king, If it's it's not our version, it's the wrong version ;-)
             logger.debug("%s, %s,  %s",
-                         encodedSegmentTuple.lastUpdate == lastUpdate,
-                         encodedSegmentTuple.lastUpdate, lastUpdate)
+                         encodedItemKeyIndexTuple.lastUpdate == lastUpdate,
+                         encodedItemKeyIndexTuple.lastUpdate, lastUpdate)
 
-            if encodedSegmentTuple.lastUpdate == lastUpdate:
-                logger.debug("Segment %s matches the cache" % segmentKey)
+            if encodedItemKeyIndexTuple.lastUpdate == lastUpdate:
+                logger.debug("ItemKeyIndex %s matches the cache" % itemKeyIndexKey)
                 continue
 
-            segmentTuplesToSend.append(encodedSegmentTuple)
-            logger.debug("Sending segment %s from the cache" % segmentKey)
+            itemKeyIndexTuplesToSend.append(encodedItemKeyIndexTuple)
+            logger.debug("Sending itemKeyIndex %s from the cache" % itemKeyIndexKey)
 
         # Send the payload to the frontend
-        payload = Payload(filt=filt, tuples=segmentTuplesToSend)
+        payload = Payload(filt=filt, tuples=itemKeyIndexTuplesToSend)
         d: Deferred = payload.makePayloadEnvelopeDefer()
         d.addCallback(lambda payloadEnvelope: payloadEnvelope.toVortexMsgDefer())
         d.addCallback(sendResponse)

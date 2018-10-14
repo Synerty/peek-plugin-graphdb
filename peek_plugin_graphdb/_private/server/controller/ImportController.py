@@ -3,16 +3,16 @@ from typing import List
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 
-from peek_plugin_graphdb._private.server.client_handlers.ClientTraceConfigUpdateHandler import \
-    ClientTraceConfigUpdateHandler
-from peek_plugin_graphdb._private.worker.tasks import ImportGraphSegmentTask
-from peek_plugin_graphdb._private.worker.tasks import ImportTraceConfigTask
+from peek_plugin_graphdb._private.server.client_handlers.TraceConfigUpdateHandler import \
+    TraceConfigUpdateHandler
+from peek_plugin_graphdb._private.worker.tasks import SegmentIndexImporter
+from peek_plugin_graphdb._private.worker.tasks import TraceConfigImporter
 
 logger = logging.getLogger(__name__)
 
 
 class ImportController:
-    def __init__(self, traceConfigUpdateHandler: ClientTraceConfigUpdateHandler):
+    def __init__(self, traceConfigUpdateHandler: TraceConfigUpdateHandler):
         self._traceConfigUpdateHandler = traceConfigUpdateHandler
 
     def shutdown(self):
@@ -20,17 +20,17 @@ class ImportController:
 
     @inlineCallbacks
     def createOrUpdateSegments(self, graphSegmentEncodedPayload: bytes):
-        yield ImportGraphSegmentTask.createOrUpdateSegments.delay(
+        yield SegmentIndexImporter.createOrUpdateSegments.delay(
             graphSegmentEncodedPayload
         )
 
     @inlineCallbacks
     def deleteSegment(self, modelSetKey: str, segmentKeys: List[str]):
-        yield ImportGraphSegmentTask.deleteSegment.delay(modelSetKey, segmentKeys)
+        yield SegmentIndexImporter.deleteSegment.delay(modelSetKey, segmentKeys)
 
     @inlineCallbacks
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
-        insertedOrCreated = yield ImportTraceConfigTask.createOrUpdateTraceConfigs.delay(
+        insertedOrCreated = yield TraceConfigImporter.createOrUpdateTraceConfigs.delay(
             traceEncodedPayload
         )
 
@@ -41,7 +41,7 @@ class ImportController:
 
     @inlineCallbacks
     def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Deferred:
-        yield ImportTraceConfigTask.deleteTraceConfig.delay(
+        yield TraceConfigImporter.deleteTraceConfig.delay(
             modelSetKey, traceConfigKeys
         )
 

@@ -1,5 +1,9 @@
 import logging
 
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
+    ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import \
+    ItemKeyIndexCacheHandler
 from twisted.internet.defer import inlineCallbacks
 from vortex.handler.TupleActionProcessorProxy import TupleActionProcessorProxy
 from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
@@ -10,7 +14,7 @@ from peek_plugin_base.client.PluginClientEntryHookABC import PluginClientEntryHo
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt, \
     graphDbActionProcessorName
 from peek_plugin_graphdb._private.PluginNames import graphDbObservableName
-from peek_plugin_graphdb._private.client.TupleDataObservable import \
+from peek_plugin_graphdb._private.client.ClientTupleObservable import \
     makeClientTupleDataObservableHandler
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
@@ -113,6 +117,23 @@ class ClientEntryHook(PluginClientEntryHookABC):
         self._loadedObjects.append(segmentHandler)
 
         # ----------------
+        # ItemKeyIndex Cache Controller
+
+        itemKeyIndexCacheController = ItemKeyIndexCacheController(
+            self.platform.serviceId
+        )
+        self._loadedObjects.append(itemKeyIndexCacheController)
+
+        # ----------------
+        # ItemKeyIndex Cache Handler
+
+        itemKeyIndexHandler = ItemKeyIndexCacheHandler(
+            cacheController=itemKeyIndexCacheController,
+            clientId=self.platform.serviceId
+        )
+        self._loadedObjects.append(itemKeyIndexHandler)
+
+        # ----------------
         # Set the caches reference to the handler
         segmentCacheController.setSegmentCacheHandler(segmentHandler)
 
@@ -120,12 +141,14 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # Create the Tuple Observer
         makeClientTupleDataObservableHandler(tupleDataObservableProxyHandler,
                                              segmentCacheController,
+                                             itemKeyIndexCacheController,
                                              traceConfigCacheController)
 
         # ----------------
         # Start the cache controllers
         yield segmentCacheController.start()
         yield traceConfigCacheController.start()
+        yield itemKeyIndexCacheController.start()
 
         logger.debug("Started")
 

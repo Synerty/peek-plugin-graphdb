@@ -6,6 +6,10 @@ import {
     PrivateSegmentLoaderService,
     PrivateSegmentLoaderStatusTuple
 } from "@peek/peek_plugin_graphdb/_private/segment-loader";
+import {
+    ItemKeyIndexLoaderService,
+    ItemKeyIndexLoaderStatusTuple
+} from "@peek/peek_plugin_graphdb/_private/item-key-index-loader";
 
 
 @Component({
@@ -13,22 +17,30 @@ import {
     templateUrl: 'graphdb-cfg.component.web.html',
     moduleId: module.id
 })
-export class DocdbCfgComponent extends ComponentLifecycleEventEmitter {
+export class GraphDbCfgComponent extends ComponentLifecycleEventEmitter {
 
-    lastStatus: PrivateSegmentLoaderStatusTuple = new PrivateSegmentLoaderStatusTuple();
+    segmentIndexStatus: PrivateSegmentLoaderStatusTuple = new PrivateSegmentLoaderStatusTuple();
+
+    itemKeyIndexStatus: ItemKeyIndexLoaderStatusTuple = new ItemKeyIndexLoaderStatusTuple();
 
     offlineConfig: OfflineConfigTuple = new OfflineConfigTuple();
 
     private offlineTs = new TupleSelector(OfflineConfigTuple.tupleName, {});
 
-    constructor(private segmentLoader: PrivateSegmentLoaderService,
+    constructor(private itemKeyIndexLoader: ItemKeyIndexLoaderService,
+                private segmentLoader: PrivateSegmentLoaderService,
                 private tupleService: GraphDbTupleService) {
         super();
 
-        this.lastStatus = this.segmentLoader.status();
+        this.segmentIndexStatus = this.segmentLoader.status();
         this.segmentLoader.statusObservable()
             .takeUntil(this.onDestroyEvent)
-            .subscribe(value => this.lastStatus = value);
+            .subscribe(value => this.segmentIndexStatus = value);
+
+        this.itemKeyIndexStatus = this.itemKeyIndexLoader.status();
+        this.itemKeyIndexLoader.statusObservable()
+            .takeUntil(this.onDestroyEvent)
+            .subscribe(value => this.itemKeyIndexStatus = value);
 
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(this.offlineTs, false, false, true)

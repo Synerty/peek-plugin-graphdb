@@ -9,12 +9,28 @@
     <StackLayout class="peek-information-section">
 
         <button class="btn"
-                [class.bg-success]="lastStatus.cacheForOfflineEnabled"
-                [text]="lastStatus.cacheForOfflineEnabled ? 'Disable Offline Support':'Enable Offline Support'"
+                [class.bg-success]="segmentIndexStatus.cacheForOfflineEnabled"
+                [text]="segmentIndexStatus.cacheForOfflineEnabled ? 'Disable Offline Support':'Enable Offline Support'"
                 (tap)="toggleOfflineMode()"></button>
-        <label text="Load Complete : {{lastStatus.initialLoadComplete}}" textWrap="true"></label>
-        <label text="Load Progress : {{lastStatus.loadProgress}}/{{lastStatus.loadTotal}}" textWrap="true"></label>
-        <label text="Last Check : {{lastStatus.lastCheck}}" textWrap="true"></label>
+
+        <StackLayout class="hr"></StackLayout>
+        <label text="Segment Index Status" textWrap="true"></label>
+        <label text="Load Complete : {{segmentIndexStatus.initialLoadComplete}}"
+               textWrap="true"></label>
+        <label text="Load Progress : {{segmentIndexStatus.loadProgress}}/{{segmentIndexStatus.loadTotal}}"
+               textWrap="true"></label>
+        <label text="Last Check : {{segmentIndexStatus.lastCheck}}"
+               textWrap="true"></label>
+        <StackLayout class="hr"></StackLayout>
+
+        <label text="Item Key Index Status"
+               textWrap="true"></label>
+        <label text="Load Complete : {{itemKeyIndexStatus.initialLoadComplete}}"
+               textWrap="true"></label>
+        <label text="Load Progress : {{itemKeyIndexStatus.loadProgress}}/{{itemKeyIndexStatus.loadTotal}}"
+               textWrap="true"></label>
+        <label text="Last Check : {{itemKeyIndexStatus.lastCheck}}"
+               textWrap="true"></label>
 
     </StackLayout>
 </StackLayout>

@@ -2,18 +2,17 @@ import logging
 from collections import defaultdict
 from typing import Dict, List, Set
 
+from peek_plugin_graphdb._private.PluginNames import graphDbFilt
+from peek_plugin_graphdb._private.server.client_handlers.TraceConfigLoadRpc import \
+    TraceConfigLoadRpc
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
+    GraphDbTraceConfigTuple
 from twisted.internet.defer import inlineCallbacks
 from vortex.PayloadEndpoint import PayloadEndpoint
 from vortex.PayloadEnvelope import PayloadEnvelope
 from vortex.PayloadFilterKeys import plDeleteKey
 from vortex.TupleSelector import TupleSelector
-from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
-
-from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.server.client_handlers.ClientTraceConfigLoadRpc import \
-    ClientTraceConfigLoadRpc
-from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
-    GraphDbTraceConfigTuple
+from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class TraceConfigCacheController:
 
     LOAD_CHUNK = 32
 
-    def __init__(self, clientId: str, tupleObservable: TupleDataObservableHandler):
+    def __init__(self, clientId: str, tupleObservable: TupleDataObservableProxyHandler):
         self._clientId = clientId
         self._tupleObservable = tupleObservable
 
@@ -63,7 +62,7 @@ class TraceConfigCacheController:
                 "Loading TraceConfig %s to %s" % (offset, offset + self.LOAD_CHUNK)
             )
             traceConfigTuples: List[GraphDbTraceConfigTuple] = (
-                yield ClientTraceConfigLoadRpc.loadTraceConfigs(offset, self.LOAD_CHUNK)
+                yield TraceConfigLoadRpc.loadTraceConfigs(offset, self.LOAD_CHUNK)
             )
 
             if not traceConfigTuples:

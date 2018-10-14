@@ -4,7 +4,7 @@ import {Routes} from "@angular/router";
 // Import a small abstraction library to switch between nativescript and web
 import {PeekModuleFactory} from "@synerty/peek-util-web";
 // Import the default route component
-import {DocdbCfgComponent} from "./graphdb-cfg.component";
+import {GraphDbCfgComponent} from "./graphdb-cfg.component";
 // Import global modules, for example, the canvas extensions.
 
 
@@ -12,12 +12,12 @@ import {DocdbCfgComponent} from "./graphdb-cfg.component";
 export const pluginRoutes: Routes = [
     // {
     //     path: 'showDiagram',
-    //     component: DocdbCfgComponent
+    //     component: GraphDbCfgComponent
     // },
     {
         path: '',
         pathMatch: 'full',
-        component: DocdbCfgComponent
+        component: GraphDbCfgComponent
     }
 
 ];
@@ -34,7 +34,7 @@ export const pluginRoutes: Routes = [
     ],
     exports: [],
     providers: [],
-    declarations: [DocdbCfgComponent]
+    declarations: [GraphDbCfgComponent]
 })
 export class DocDBCfgModule {
 }

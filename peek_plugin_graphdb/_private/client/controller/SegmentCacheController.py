@@ -5,8 +5,8 @@ from typing import Dict, List
 from twisted.internet.defer import inlineCallbacks
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.server.client_handlers.ClientSegmentChunkLoadRpc import \
-    ClientSegmentChunkLoadRpc
+from peek_plugin_graphdb._private.server.client_handlers.SegmentIndexChunkLoadRpc import \
+    SegmentIndexChunkLoadRpc
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import \
     GraphDbEncodedChunk
 from vortex.PayloadEndpoint import PayloadEndpoint
@@ -62,7 +62,7 @@ class SegmentCacheController:
             logger.info(
                 "Loading SegmentChunk %s to %s" % (offset, offset + self.LOAD_CHUNK))
             encodedChunkTuples: List[GraphDbEncodedChunk] = (
-                yield ClientSegmentChunkLoadRpc.loadSegmentChunks(offset, self.LOAD_CHUNK)
+                yield SegmentIndexChunkLoadRpc.loadSegmentChunks(offset, self.LOAD_CHUNK)
             )
 
             if not encodedChunkTuples:

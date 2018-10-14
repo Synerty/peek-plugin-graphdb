@@ -4,7 +4,7 @@ import {
     TupleDataObserverService,
     TupleSelector
 } from "@synerty/vortexjs";
-import {AdminStatusTuple, graphDbFilt} from "@peek/peek_plugin_graphdb/_private";
+import {ServerStatusTuple, graphDbFilt} from "@peek/peek_plugin_graphdb/_private";
 import {Ng2BalloonMsgService} from "@synerty/ng2-balloon-msg";
 
 
@@ -14,16 +14,16 @@ import {Ng2BalloonMsgService} from "@synerty/ng2-balloon-msg";
 })
 export class StatusComponent extends ComponentLifecycleEventEmitter {
 
-    item: AdminStatusTuple = new AdminStatusTuple();
+    item: ServerStatusTuple = new ServerStatusTuple();
 
     constructor(private balloonMsg: Ng2BalloonMsgService,
                 private tupleObserver: TupleDataObserverService) {
         super();
 
-        let ts = new TupleSelector(AdminStatusTuple.tupleName, {});
+        let ts = new TupleSelector(ServerStatusTuple.tupleName, {});
         this.tupleObserver.subscribeToTupleSelector(ts)
             .takeUntil(this.onDestroyEvent)
-            .subscribe((tuples: AdminStatusTuple[]) => {
+            .subscribe((tuples: ServerStatusTuple[]) => {
                 this.item = tuples[0];
             });
 
