@@ -1,20 +1,38 @@
 import hashlib
 import json
-
-from vortex.Tuple import addTupleType, TupleField
+from typing import List
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
-from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbImportEdgeTuple import GraphDbImportEdgeTuple
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentLinkTuple import \
+    GraphDbImportSegmentLinkTuple
+from peek_plugin_graphdb.tuples.GraphDbImportVertexTuple import GraphDbImportVertexTuple
+from vortex.Tuple import addTupleType, TupleField, Tuple
 
 
 @addTupleType
-class GraphDbImportSegmentTuple(GraphDbSegmentTuple):
+class GraphDbImportSegmentTuple(Tuple):
     """ Import Segment Tuple
 
     This tuple is the publicly exposed Segment
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbImportSegmentTuple'
+
+    #:  The unique key of this segment
+    key: str = TupleField()
+
+    #:  The model set of this segment
+    modelSetKey: str = TupleField()
+
+    #:  The edges
+    edges: List[GraphDbImportEdgeTuple] = TupleField([])
+
+    #:  The vertexes
+    vertexes: List[GraphDbImportVertexTuple] = TupleField([])
+
+    #:  The links to the other segments
+    links: List[GraphDbImportSegmentLinkTuple] = TupleField([])
 
     #:  The hash of this import group
     importGroupHash: str = TupleField()
@@ -44,9 +62,10 @@ class GraphDbImportSegmentTuple(GraphDbSegmentTuple):
         m.update(str(self).encode())
         return m.hexdigest()
 
-    def packJson(self, modelSetId: int) -> str:
-        packedJsonDict = self.toJsonDict()
-        del packedJsonDict['importGroupHash']
-        del packedJsonDict['modelSetKey']
-        packedJsonDict['_msid'] = modelSetId
-        return json.dumps(packedJsonDict, sort_keys=True, indent='')
+    def packJson(self) -> str:
+        jsonDict = dict(
+            edges=[i.packJsonDict() for i in self.edges],
+            links=[i.packJsonDict() for i in self.links],
+            vertexes=[i.packJsonDict() for i in self.vertexes]
+        )
+        return json.dumps(jsonDict, sort_keys=True, indent='')

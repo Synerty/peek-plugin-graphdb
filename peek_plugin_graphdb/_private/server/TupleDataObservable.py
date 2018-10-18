@@ -5,6 +5,7 @@ from peek_plugin_graphdb._private.server.tuple_providers.ModelSetTupleProvider i
     ModelSetTupleProvider
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.tuples.ServerStatusTuple import ServerStatusTuple
+from peek_plugin_graphdb.tuples.GraphDbModelSetTuple import GraphDbModelSetTuple
 from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
 from .controller.SegmentIndexStatusController import SegmentIndexStatusController
@@ -35,7 +36,7 @@ def makeTupleDataObservableHandler(dbSessionCreator: DbSessionCreator,
     )
 
     # Model Set Tuple
-    tupleObservable.addTupleProvider(GraphDbModelSet.tupleName(),
+    tupleObservable.addTupleProvider(GraphDbModelSetTuple.tupleName(),
                                      ModelSetTupleProvider(dbSessionCreator))
 
     return tupleObservable

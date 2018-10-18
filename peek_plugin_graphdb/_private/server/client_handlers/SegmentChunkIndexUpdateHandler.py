@@ -1,15 +1,15 @@
 import logging
 from typing import List, Optional
 
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    clientSegmentUpdateFromServerFilt
 from twisted.internet.defer import Deferred
-
-from peek_plugin_base.PeekVortexUtil import peekClientName
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 from vortex.DeferUtil import vortexLogFailure, deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.VortexFactory import VortexFactory, NoVortexException
+
+from peek_plugin_base.PeekVortexUtil import peekClientName
+from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
+    clientSegmentUpdateFromServerFilt
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +75,11 @@ class SegmentChunkIndexUpdateHandler:
 
         session = self._dbSessionCreator()
         try:
-            results = list(
-                session.query(GraphDbEncodedChunk)
+            results = [
+                o.toTuple()
+                for o in session.query(GraphDbEncodedChunk)
                     .filter(GraphDbEncodedChunk.chunkKey.in_(chunkKeys))
-            )
+            ]
 
             if not results:
                 return None

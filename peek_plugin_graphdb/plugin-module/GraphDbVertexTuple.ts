@@ -5,7 +5,7 @@ import {GraphDbModelSetTuple} from "./GraphDbModelSetTuple";
 
 @addTupleType
 export class GraphDbVertexTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbVertexTuple";
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbLinkedVertex";
 
     //  The unique key of this edge
     k: string;

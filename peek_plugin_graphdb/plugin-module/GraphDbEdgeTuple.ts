@@ -4,7 +4,7 @@ import {graphDbTuplePrefix} from "./_private/PluginNames";
 
 @addTupleType
 export class GraphDbEdgeTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbEdgeTuple";
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbImportEdgeTuple";
 
     //  The unique key of this edge
     k: string;

@@ -1,14 +1,16 @@
+import json
 import logging
-from collections import defaultdict
 from typing import Dict, List
-
-from twisted.internet.defer import inlineCallbacks
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRpc import \
     ItemKeyIndexChunkLoadRpc
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
     ItemKeyIndexEncodedChunk
+from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
+    makeChunkKeyForItemKey
+from twisted.internet.defer import inlineCallbacks
+from vortex.Payload import Payload
 from vortex.PayloadEndpoint import PayloadEndpoint
 from vortex.PayloadEnvelope import PayloadEnvelope
 
@@ -62,7 +64,8 @@ class ItemKeyIndexCacheController:
             logger.info(
                 "Loading ItemKeyIndexChunk %s to %s" % (offset, offset + self.LOAD_CHUNK))
             encodedChunkTuples: List[ItemKeyIndexEncodedChunk] = (
-                yield ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks(offset, self.LOAD_CHUNK)
+                yield ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks(offset,
+                                                                      self.LOAD_CHUNK)
             )
 
             if not encodedChunkTuples:
@@ -79,7 +82,7 @@ class ItemKeyIndexCacheController:
         self._loadItemKeyIndexIntoCache(itemKeyIndexTuples)
 
     def _loadItemKeyIndexIntoCache(self,
-                                  encodedChunkTuples: List[ItemKeyIndexEncodedChunk]):
+                                   encodedChunkTuples: List[ItemKeyIndexEncodedChunk]):
         chunkKeysUpdated: List[str] = []
 
         for t in encodedChunkTuples:
@@ -98,3 +101,31 @@ class ItemKeyIndexCacheController:
 
     def itemKeyIndexKeys(self) -> List[int]:
         return list(self._cache)
+
+    def getSegmentKeys(self, modelSetKey: str, vertexKey: str) -> List[str]:
+
+        chunkKey = makeChunkKeyForItemKey(modelSetKey, vertexKey)
+
+        chunk: ItemKeyIndexEncodedChunk = (
+            self.itemKeyIndexChunk(chunkKey)
+        )
+
+        if not chunk:
+            logger.warning("ItemKeyIndex chunk %s is missing from cache", chunkKey)
+            return []
+
+        resultsByKeyStr = Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        resultsByKey = json.loads(resultsByKeyStr)
+
+        if vertexKey not in resultsByKey:
+            logger.warning(
+                "ItemKey %s is missing from index, chunkKey %s",
+                vertexKey, chunkKey
+            )
+            return []
+
+        packedJson = resultsByKey[vertexKey]
+
+        segmentKeys = json.loads(packedJson)
+
+        return segmentKeys

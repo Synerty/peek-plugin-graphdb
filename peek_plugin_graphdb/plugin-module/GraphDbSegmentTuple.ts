@@ -8,7 +8,7 @@ import {GraphDbSegmentLinkTuple} from "./GraphDbSegmentLinkTuple";
 
 @addTupleType
 export class GraphDbSegmentTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbSegmentTuple";
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbLinkedSegment";
 
     //  The unique key of this segment
     key: string;

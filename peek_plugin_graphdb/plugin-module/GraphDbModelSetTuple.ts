@@ -4,16 +4,19 @@ import {graphDbTuplePrefix} from "./_private/PluginNames";
 
 @addTupleType
 export class GraphDbModelSetTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbModelSet";
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbModelSetTuple";
 
-    //  The unique key of this segment
-    id: number;
+    //  A private variable
+    id__: number;
 
     //  The unique key of this segment
     key: string;
 
-    //  The unique key of this segment
+    //  The unique name of this segment
     name: string;
+
+    comment: string;
+    propsJson: {};
 
     constructor() {
         super(GraphDbModelSetTuple.tupleName)

@@ -1,18 +1,17 @@
-from typing import Dict
-
-from vortex.Tuple import Tuple, addTupleType
+from typing import Dict, Any
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
+from vortex.Tuple import Tuple, addTupleType
 
 
 @addTupleType
-class GraphDbEdgeTuple(Tuple):
+class GraphDbImportEdgeTuple(Tuple):
     """ Graph DB Edge Tuple
 
     This tuple represents a connection between two vertices.
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbEdgeTuple'
+    __tupleType__ = graphDbTuplePrefix + 'GraphDbImportEdgeTuple'
     __slots__ = ("k", "sk", "dk", "p")
     __rawJonableFields__ = ["p"]
 
@@ -42,7 +41,7 @@ class GraphDbEdgeTuple(Tuple):
 
     @property
     def props(self) -> Dict[str, str]:
-        if not self.p:
+        if self.p is None:
             self.p = {}
         return self.p
 
@@ -52,3 +51,11 @@ class GraphDbEdgeTuple(Tuple):
 
     def __repr__(self):
         return '%s.%s.%s.%s' % (self.k, self.sk, self.dk, self.p)
+
+    def packJsonDict(self) -> Dict[str, Any]:
+        return dict(
+            k=self.k,
+            sk=self.sk,
+            dk=self.dk,
+            p=self.p
+        )

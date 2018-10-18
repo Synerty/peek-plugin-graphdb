@@ -11,7 +11,7 @@ from peek_plugin_graphdb._private.storage.ItemKeyIndex import \
 from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
     ItemKeyIndexCompilerQueue
 from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
-    makeChunkKey
+    makeChunkKeyForItemKey
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def loadItemKeys(conn,
             itemType=importItemKey.itemType,
             itemKey=importItemKey.itemKey,
             segmentKey=importItemKey.segmentKey,
-            chunkKey=makeChunkKey(modelSetKey, importItemKey.itemKey)
+            chunkKey=makeChunkKeyForItemKey(modelSetKey, importItemKey.itemKey)
         )
         inserts.append(insertObject.tupleToSqlaBulkInsertDict())
 

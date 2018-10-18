@@ -1,14 +1,13 @@
 import logging
-from collections import defaultdict
 from typing import Dict, List
-
-from twisted.internet.defer import inlineCallbacks
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.SegmentIndexChunkLoadRpc import \
     SegmentIndexChunkLoadRpc
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import \
-    GraphDbEncodedChunk
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
+    GraphDbEncodedChunkTuple
+from twisted.internet.defer import inlineCallbacks
+from vortex.DeferUtil import vortexLogFailure
 from vortex.PayloadEndpoint import PayloadEndpoint
 from vortex.PayloadEnvelope import PayloadEnvelope
 
@@ -31,15 +30,19 @@ class SegmentCacheController:
     def __init__(self, clientId: str):
         self._clientId = clientId
         self._webAppHandler = None
+        self._fastGraphDb = None
 
         #: This stores the cache of segment data for the clients
-        self._cache: Dict[int, GraphDbEncodedChunk] = {}
+        self._cache: Dict[str, GraphDbEncodedChunkTuple] = {}
 
         self._endpoint = PayloadEndpoint(clientSegmentUpdateFromServerFilt,
                                          self._processSegmentPayload)
 
     def setSegmentCacheHandler(self, handler):
         self._webAppHandler = handler
+
+    def setFastGraphDb(self, fastGraphDb):
+        self._fastGraphDb = fastGraphDb
 
     @inlineCallbacks
     def start(self):
@@ -61,7 +64,7 @@ class SegmentCacheController:
         while True:
             logger.info(
                 "Loading SegmentChunk %s to %s" % (offset, offset + self.LOAD_CHUNK))
-            encodedChunkTuples: List[GraphDbEncodedChunk] = (
+            encodedChunkTuples: List[GraphDbEncodedChunkTuple] = (
                 yield SegmentIndexChunkLoadRpc.loadSegmentChunks(offset, self.LOAD_CHUNK)
             )
 
@@ -75,26 +78,31 @@ class SegmentCacheController:
     @inlineCallbacks
     def _processSegmentPayload(self, payloadEnvelope: PayloadEnvelope, **kwargs):
         paylod = yield payloadEnvelope.decodePayloadDefer()
-        segmentTuples: List[GraphDbEncodedChunk] = paylod.tuples
+        segmentTuples: List[GraphDbEncodedChunkTuple] = paylod.tuples
         self._loadSegmentIntoCache(segmentTuples)
 
     def _loadSegmentIntoCache(self,
-                                  encodedChunkTuples: List[GraphDbEncodedChunk]):
-        chunkKeysUpdated: List[str] = []
+                              encodedChunkTuples: List[GraphDbEncodedChunkTuple]):
+        chunkKeysUpdatedByModelSet: Dict[str, str] = {}
 
         for t in encodedChunkTuples:
 
             if (not t.chunkKey in self._cache or
                     self._cache[t.chunkKey].lastUpdate != t.lastUpdate):
                 self._cache[t.chunkKey] = t
-                chunkKeysUpdated.append(t.chunkKey)
+                chunkKeysUpdatedByModelSet[t.modelSetKey] = t.chunkKey
 
-        logger.debug("Received segment updates from server, %s", chunkKeysUpdated)
+        for modelSetKey, updatedChunkKeys in chunkKeysUpdatedByModelSet.items():
+            logger.debug("Received segment updates from server, %s", updatedChunkKeys)
 
-        self._webAppHandler.notifyOfSegmentUpdate(chunkKeysUpdated)
+            d = self._webAppHandler.notifyOfSegmentUpdate(updatedChunkKeys)
+            d.errback(vortexLogFailure, logger, consumeError=True)
 
-    def segmentChunk(self, chunkKey) -> GraphDbEncodedChunk:
+            d = self._fastGraphDb.notifyOfSegmentUpdate(modelSetKey, updatedChunkKeys)
+            d.errback(vortexLogFailure, logger, consumeError=True)
+
+    def segmentChunk(self, chunkKey) -> GraphDbEncodedChunkTuple:
         return self._cache.get(chunkKey)
 
-    def segmentKeys(self) -> List[int]:
+    def segmentKeys(self) -> List[str]:
         return list(self._cache)

@@ -1,7 +1,10 @@
 import logging
 
+from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
     ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.client.controller.TracerController import \
+    TracerController
 from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import \
     ItemKeyIndexCacheHandler
 from twisted.internet.defer import inlineCallbacks
@@ -117,6 +120,12 @@ class ClientEntryHook(PluginClientEntryHookABC):
         self._loadedObjects.append(segmentHandler)
 
         # ----------------
+        # Fast GraphDb Controller
+
+        fastGraphDB = FastGraphDb(cacheController=segmentCacheController)
+        self._loadedObjects.append(fastGraphDB)
+
+        # ----------------
         # ItemKeyIndex Cache Controller
 
         itemKeyIndexCacheController = ItemKeyIndexCacheController(
@@ -134,15 +143,25 @@ class ClientEntryHook(PluginClientEntryHookABC):
         self._loadedObjects.append(itemKeyIndexHandler)
 
         # ----------------
+        # Run Trace Cache Controller
+
+        tracerController = TracerController(
+            fastGraphDB, itemKeyIndexCacheController, traceConfigCacheController
+        )
+        self._loadedObjects.append(tracerController)
+
+        # ----------------
         # Set the caches reference to the handler
         segmentCacheController.setSegmentCacheHandler(segmentHandler)
+        segmentCacheController.setFastGraphDb(fastGraphDB)
 
         # ----------------
         # Create the Tuple Observer
         makeClientTupleDataObservableHandler(tupleDataObservableProxyHandler,
                                              segmentCacheController,
                                              itemKeyIndexCacheController,
-                                             traceConfigCacheController)
+                                             traceConfigCacheController,
+                                             tracerController)
 
         # ----------------
         # Start the cache controllers

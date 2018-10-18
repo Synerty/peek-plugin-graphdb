@@ -1,5 +1,7 @@
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
     ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.client.controller.TracerController import \
+    TracerController
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
@@ -16,43 +18,45 @@ from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import \
     ItemKeyIndexUpdateDateTuple
 from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
     SegmentIndexUpdateDateTuple
-from peek_plugin_graphdb.tuples.GraphDbSegmentTuple import GraphDbSegmentTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
-from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
+from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
+from vortex.handler.TupleDataObservableProxyController import \
+    TupleDataObservableProxyController
 
 
-def makeClientTupleDataObservableHandler(
-        tupleObservable: TupleDataObservableProxyHandler,
-        segmentCacheHandler: SegmentCacheController,
-        itemKeyCacheHandler: ItemKeyIndexCacheController,
-        traceConfigCacheHandler: TraceConfigCacheController):
-    """" Make CLIENT Tuple Data Observable Handler
+def makeClientTupleDataObservableController(
+        tupleObservable: TupleDataObservableProxyController,
+        segmentCacheController: SegmentCacheController,
+        itemKeyCacheController: ItemKeyIndexCacheController,
+        traceConfigCacheController: TraceConfigCacheController,
+        tracerController: TracerController):
+    """" Make CLIENT Tuple Data Observable Controller
 
     This method registers the tuple providers for the proxy, that are served locally.
 
-    :param segmentCacheHandler:
-    :param traceConfigCacheHandler:
+    :param tracerController:
+    :param itemKeyCacheController:
+    :param segmentCacheController:
+    :param traceConfigCacheController:
     :param tupleObservable: The tuple observable proxy
 
     """
 
     tupleObservable.addTupleProvider(
-        GraphDbSegmentTuple.tupleName(),
-        TraceResultTupleProvider(segmentCacheHandler,
-                                 itemKeyCacheHandler,
-                                 traceConfigCacheHandler)
+        GraphDbTraceResultTuple.tupleName(),
+        TraceResultTupleProvider(tracerController)
     )
 
     tupleObservable.addTupleProvider(
         SegmentIndexUpdateDateTuple.tupleName(),
-        SegmentUpdateDateTupleProvider(segmentCacheHandler)
+        SegmentUpdateDateTupleProvider(segmentCacheController)
     )
 
     tupleObservable.addTupleProvider(
         GraphDbTraceConfigTuple.tupleName(),
-        TraceConfigTupleProvider(traceConfigCacheHandler)
+        TraceConfigTupleProvider(traceConfigCacheController)
     )
 
     tupleObservable.addTupleProvider(ItemKeyIndexUpdateDateTuple.tupleName(),
                                      ItemKeyIndexUpdateDateTupleProvider(
-                                         itemKeyCacheHandler))
+                                         itemKeyCacheController))

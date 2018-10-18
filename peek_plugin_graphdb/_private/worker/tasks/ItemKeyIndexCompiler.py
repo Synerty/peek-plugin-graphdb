@@ -161,6 +161,7 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
     try:
         indexQry = (
             session.query(ItemKeyIndex.chunkKey, ItemKeyIndex.itemKey,
+                          ItemKeyIndex.itemKey,
                           # ItemKeyIndex.itemType,
                           ItemKeyIndex.segmentKey)
                 .filter(ItemKeyIndex.chunkKey.in_(chunkKeys))
@@ -178,10 +179,18 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
                     .append(item.segmentKey)
             )
 
+
         encPayloadByChunkKey = {}
 
         # Sort each bucket by the key
-        for chunkKey, packedJsonByKey in packagedJsonByObjIdByChunkKey.items():
+        for chunkKey, segmentKeysByItemKey in packagedJsonByObjIdByChunkKey.items():
+            # Convert the list to a json string, this reduces the memory footprint when
+            # searching the index.
+            packedJsonByKey = {
+                itemKey: json.dumps(segmentKeys)
+                for itemKey, segmentKeys in segmentKeysByItemKey.items()
+            }
+
             tuples = json.dumps(packedJsonByKey, sort_keys=True)
 
             # Create the blob data for this index.

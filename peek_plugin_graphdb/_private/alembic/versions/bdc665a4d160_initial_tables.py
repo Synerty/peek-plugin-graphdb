@@ -46,7 +46,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', 'chunkKey'),
     schema='pl_graphdb'
     )
-    op.create_table('GraphDbEncodedChunkTuple',
+    op.create_table('GraphDbEncodedChunk',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('modelSetId', sa.Integer(), nullable=False),
     sa.Column('chunkKey', sa.String(), nullable=False),
@@ -57,7 +57,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     schema='pl_graphdb'
     )
-    op.create_index('idx_Chunk_modelSetId_chunkKey', 'GraphDbEncodedChunkTuple', ['modelSetId', 'chunkKey'], unique=False, schema='pl_graphdb')
+    op.create_index('idx_Chunk_modelSetId_chunkKey', 'GraphDbEncodedChunk', ['modelSetId', 'chunkKey'], unique=False, schema='pl_graphdb')
     op.create_table('GraphDbSegment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('modelSetId', sa.Integer(), nullable=False),
@@ -169,8 +169,8 @@ def downgrade():
     op.drop_index('idx_Segment_importGroupHash', table_name='GraphDbSegment', schema='pl_graphdb')
     op.drop_index('idx_Segment_gridKey', table_name='GraphDbSegment', schema='pl_graphdb')
     op.drop_table('GraphDbSegment', schema='pl_graphdb')
-    op.drop_index('idx_Chunk_modelSetId_chunkKey', table_name='GraphDbEncodedChunkTuple', schema='pl_graphdb')
-    op.drop_table('GraphDbEncodedChunkTuple', schema='pl_graphdb')
+    op.drop_index('idx_Chunk_modelSetId_chunkKey', table_name='GraphDbEncodedChunk', schema='pl_graphdb')
+    op.drop_table('GraphDbEncodedChunk', schema='pl_graphdb')
     op.drop_table('GraphDbChunkQueue', schema='pl_graphdb')
     op.drop_table('Setting', schema='pl_graphdb')
     op.drop_table('GraphDbModelSet', schema='pl_graphdb')

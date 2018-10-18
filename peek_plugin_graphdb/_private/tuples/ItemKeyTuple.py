@@ -4,9 +4,6 @@ from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType, TupleField
 
 
-class GraphDbModelSetTuple(object):
-    pass
-
 
 @addTupleType
 class ItemKeyTuple(Tuple):

@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 
 BUCKET_COUNT = 8192
 
-def makeChunkKey(modelSetKey: str, key: str) -> str:
+def makeChunkKeyForSegmentKey(modelSetKey: str, key: str) -> str:
     """ Make Chunk Key
 
     This is simple, and provides a reasonable distribution

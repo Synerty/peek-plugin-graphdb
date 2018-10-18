@@ -17,7 +17,7 @@ from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import \
     ItemKeyImportTuple, loadItemKeys
 from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import \
-    makeChunkKey
+    makeChunkKeyForSegmentKey
 from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def deleteSegment(self, modelSetKey: str, segmentKeys: List[str]) -> None:
     transaction = conn.begin()
     try:
         chunkKeys = {
-            makeChunkKey(modelSetKey, key) for key in segmentKeys
+            makeChunkKeyForSegmentKey(modelSetKey, key) for key in segmentKeys
         }
 
         modelSetIdByKey = _loadModelSets()
@@ -173,7 +173,7 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         # Work out which objects have been updated or need inserting
         for importSegment in newSegments:
             importHashSet.add(importSegment.importGroupHash)
-            segmentJson = importSegment.packJson(modelSetId)
+            segmentJson = importSegment.packJson()
 
             id_ = next(newIdGen)
             existingObject = GraphDbSegment(
@@ -181,7 +181,7 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
                 modelSetId=modelSetId,
                 key=importSegment.key,
                 importGroupHash=importSegment.importGroupHash,
-                chunkKey=makeChunkKey(importSegment.modelSetKey, importSegment.key),
+                chunkKey=makeChunkKeyForSegmentKey(importSegment.modelSetKey, importSegment.key),
                 segmentJson=segmentJson
             )
             inserts.append(existingObject.tupleToSqlaBulkInsertDict())
@@ -226,7 +226,7 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         else:
             transaction.rollback()
 
-        logger.debug("Inserted %s updated %s queued %s chunks in %s",
+        logger.debug("Inserted %s queued %s chunks in %s",
                      len(inserts), len(chunkKeysForQueue),
                      (datetime.now(pytz.utc) - startTime))
 

@@ -1,8 +1,9 @@
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
+from peek_plugin_graphdb.tuples.GraphDbModelSetTuple import GraphDbModelSetTuple
 from sqlalchemy import Column
 from sqlalchemy import Integer, String
 from vortex.Tuple import addTupleType, Tuple
 
-from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
 
 
@@ -17,6 +18,15 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
 
     comment = Column(String)
     propsJson = Column(String)
+
+    def tuTuple(self) -> GraphDbModelSetTuple:
+        return GraphDbModelSetTuple(
+            id__=self.id,
+            key=self.key,
+            name=self.name,
+            comment=self.comment,
+            propsJson=self.propsJson
+        )
 
 
 def getOrCreateGraphDbModelSet(session, modelSetName: str) -> GraphDbModelSet:

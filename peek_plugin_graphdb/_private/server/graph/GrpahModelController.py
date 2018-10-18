@@ -24,7 +24,7 @@ class GraphModelController(object):
     def modelSet(self) -> GraphDbModelSet:
         return self._modelSet
 
-    # def edgesForSegmentHash(self, segmentHash: str) -> List[GraphDbEdgeTuple]:
+    # def edgesForSegmentHash(self, segmentHash: str) -> List[GraphDbImportEdgeTuple]:
     #     return list(self._edgesBySegmentHash.get(segmentHash, []))
 
     # ---------------

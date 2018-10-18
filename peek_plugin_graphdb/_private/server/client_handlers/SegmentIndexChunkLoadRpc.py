@@ -7,6 +7,9 @@ from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 from vortex.rpc.RPC import vortexRPC
 
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
+    GraphDbEncodedChunkTuple
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +32,7 @@ class SegmentIndexChunkLoadRpc:
     # -------------
     @vortexRPC(peekServerName, acceptOnlyFromVortex=peekClientName, timeoutSeconds=60,
                additionalFilt=graphDbFilt, deferToThread=True)
-    def loadSegmentChunks(self, offset: int, count: int) -> List[GraphDbEncodedChunk]:
+    def loadSegmentChunks(self, offset: int, count: int) -> List[GraphDbEncodedChunkTuple]:
         """ Load Segment Chunks
 
         Allow the client to incrementally load the chunks.
@@ -44,7 +47,7 @@ class SegmentIndexChunkLoadRpc:
                       .limit(count)
                       .yield_per(count))
 
-            return list(chunks)
+            return [o.toTuple() for o in chunks]
 
         finally:
             session.close()

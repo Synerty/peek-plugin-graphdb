@@ -1,9 +1,8 @@
 import logging
 from typing import Union
 
-from twisted.internet.defer import Deferred
-
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
+from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -22,7 +21,7 @@ class ModelSetTupleProvider(TuplesProviderABC):
 
         session = self._ormSessionCreator()
         try:
-            tuples = session.query(GraphDbModelSet).all()
+            tuples = [ormObj.toTuple() for ormObj in session.query(GraphDbModelSet)]
 
             # Create the vortex message
             return Payload(filt, tuples=tuples).makePayloadEnvelope().toVortexMsg()
