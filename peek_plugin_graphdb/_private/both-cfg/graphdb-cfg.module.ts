@@ -36,6 +36,6 @@ export const pluginRoutes: Routes = [
     providers: [],
     declarations: [GraphDbCfgComponent]
 })
-export class DocDBCfgModule {
+export class GraphDbCfgModule {
 }
 

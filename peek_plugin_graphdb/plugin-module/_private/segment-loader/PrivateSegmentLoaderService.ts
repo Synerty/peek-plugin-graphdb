@@ -20,17 +20,19 @@ import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
 import {EncodedSegmentChunkTuple} from "./EncodedSegmentChunkTuple";
 import {SegmentUpdateDateTuple} from "./SegmentUpdateDateTuple";
-import {GraphDbSegmentTuple} from "../../GraphDbSegmentTuple";
+import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
 import {GraphDbTupleService} from "../GraphDbTupleService";
 import {PrivateSegmentLoaderStatusTuple} from "./PrivateSegmentLoaderStatusTuple";
 
 import {OfflineConfigTuple} from "../tuples/OfflineConfigTuple";
 import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
+import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
+import {GraphDbPackedSegmentTuple} from "./GraphDbPackedSegmentTuple";
 
 // ----------------------------------------------------------------------------
 
 export interface SegmentResultI {
-    [key: string]: GraphDbSegmentTuple
+    [key: string]: GraphDbLinkedSegment
 }
 
 // ----------------------------------------------------------------------------
@@ -132,11 +134,6 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
     private _statusSubject = new Subject<PrivateSegmentLoaderStatusTuple>();
     private _status = new PrivateSegmentLoaderStatusTuple();
 
-    private _hasDocTypeLoaded = false;
-
-    private modelSetByIds: { [id: number]: GraphDbModelSetTuple } = {};
-    private _hasModelSetLoaded = false;
-
     private offlineConfig: OfflineConfigTuple = new OfflineConfigTuple();
 
 
@@ -156,19 +153,6 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
                 if (this.offlineConfig.cacheChunksForOffline)
                     this.initialLoad();
                 this._notifyStatus();
-            });
-
-        let modelSetTs = new TupleSelector(GraphDbModelSetTuple.tupleName, {});
-        this.tupleService.offlineObserver
-            .subscribeToTupleSelector(modelSetTs)
-            .takeUntil(this.onDestroyEvent)
-            .subscribe((tuples: GraphDbModelSetTuple[]) => {
-                this.modelSetByIds = {};
-                for (let item of tuples) {
-                    this.modelSetByIds[item.id] = item;
-                }
-                this._hasModelSetLoaded = true;
-                this._notifyReady();
             });
 
         this.storage = new TupleOfflineStorageService(
@@ -202,7 +186,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
     }
 
     private _notifyReady(): void {
-        if (this._hasDocTypeLoaded && this._hasModelSetLoaded && this._hasLoaded)
+        if (this._hasLoaded)
             this._hasLoadedSubject.next();
     }
 
@@ -246,7 +230,8 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
     private setupVortexSubscriptions(): void {
 
         // Services don't have destructors, I'm not sure how to unsubscribe.
-        this.vortexService.createEndpointObservable(this, clientSegmentWatchUpdateFromDeviceFilt)
+        this.vortexService
+            .createEndpointObservable(this, clientSegmentWatchUpdateFromDeviceFilt)
             .takeUntil(this.onDestroyEvent)
             .subscribe((payloadEnvelope: PayloadEnvelope) => {
                 this.processSegmentsFromServer(payloadEnvelope);
@@ -448,7 +433,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
         }
 
         if (!this.offlineConfig.cacheChunksForOffline) {
-            let ts = new TupleSelector(GraphDbSegmentTuple.tupleName, {
+            let ts = new TupleSelector(GraphDbPackedSegmentTuple.tupleName, {
                 "modelSetKey": modelSetKey,
                 "keys": keys
             });
@@ -462,18 +447,28 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
 
             return isOnlinePromise
                 .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
-                .then((docs: GraphDbSegmentTuple[]) => this._populateAndIndexObjectTypes(docs));
+                .then((packedSegments:GraphDbPackedSegmentTuple[]) => {
+                    let linkedSegments = [];
+                    for (let packed of packedSegments) {
+                        // Create the new object
+                        let newObject = new GraphDbLinkedSegment();
+                        newObject.unpackJson(packed.packedJson, packed.key, modelSetKey);
+                        linkedSegments.push(newObject);
+                    }
+                    return linkedSegments;
+                })
+                .then((segments: GraphDbLinkedSegment[]) => this._makeDictFromSegments(segments));
         }
 
         if (this.isReady())
             return this.getSegmentsWhenReady(modelSetKey, keys)
-                .then(docs => this._populateAndIndexObjectTypes(docs));
+                .then(segments => this._makeDictFromSegments(segments));
 
         return this.isReadyObservable()
             .first()
             .toPromise()
             .then(() => this.getSegmentsWhenReady(modelSetKey, keys))
-            .then(docs => this._populateAndIndexObjectTypes(docs));
+            .then(segments => this._makeDictFromSegments(segments));
     }
 
 
@@ -483,7 +478,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
      *
      */
     private getSegmentsWhenReady(
-        modelSetKey: string, keys: string[]): Promise<GraphDbSegmentTuple[]> {
+        modelSetKey: string, keys: string[]): Promise<GraphDbLinkedSegment[]> {
 
         let keysByChunkKey: { [key: string]: string[]; } = {};
         let chunkKeys: string[] = [];
@@ -501,13 +496,13 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
         for (let chunkKey of chunkKeys) {
             let keysForThisChunk = keysByChunkKey[chunkKey];
             promises.push(
-                this.getSegmentsForKeys(keysForThisChunk, chunkKey)
+                this.getSegmentsForKeys(modelSetKey, keysForThisChunk, chunkKey)
             );
         }
 
         return Promise.all(promises)
-            .then((promiseResults: GraphDbSegmentTuple[][]) => {
-                let objects: GraphDbSegmentTuple[] = [];
+            .then((promiseResults: GraphDbLinkedSegment[][]) => {
+                let objects: GraphDbLinkedSegment[] = [];
                 for (let results of  promiseResults) {
                     for (let result of results) {
                         objects.push(result);
@@ -523,8 +518,9 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
      * Get the objects with matching keywords from the index..
      *
      */
-    private getSegmentsForKeys(keys: string[],
-                               chunkKey: string): Promise<GraphDbSegmentTuple[]> {
+    private getSegmentsForKeys(modelSetKey: string,
+                               keys: string[],
+                               chunkKey: string): Promise<GraphDbLinkedSegment[]> {
 
         if (!this.index.updateDateByChunkKey.hasOwnProperty(chunkKey)) {
             console.log(`ObjectIDs: ${keys} doesn't appear in the index`);
@@ -543,7 +539,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
                     .then((payload: Payload) => JSON.parse(<any>payload.tuples))
                     .then((chunkData: { [key: number]: string; }) => {
 
-                        let foundSegments: GraphDbSegmentTuple[] = [];
+                        let foundSegments: GraphDbLinkedSegment[] = [];
 
                         for (let key of keys) {
                             // Find the keyword, we're just iterating
@@ -555,27 +551,10 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
                                 continue;
                             }
 
-                            // Reconstruct the data
-                            let objectProps: {} = JSON.parse(chunkData[key]);
-
-                            // Get out the object type
-                            let thisSegmentTypeId = objectProps['_dtid'];
-                            delete objectProps['_dtid'];
-
-                            // Get out the object type
-                            let thisModelSetId = objectProps['_msid'];
-                            delete objectProps['_msid'];
-
                             // Create the new object
-                            let newObject = new GraphDbSegmentTuple();
+                            let newObject = new GraphDbLinkedSegment();
+                            newObject.unpackJson(chunkData[key], key, modelSetKey);
                             foundSegments.push(newObject);
-
-                            newObject.key = key;
-                            newObject.modelSet = new GraphDbModelSetTuple();
-                            newObject.modelSet.id = thisModelSetId;
-                            // newObject.segmentType = new GraphDbSegmentTypeTuple();
-                            // newObject.segmentType.id = thisSegmentTypeId;
-                            // newObject.segment = objectProps;
 
                         }
 
@@ -588,13 +567,11 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
 
     }
 
-    private _populateAndIndexObjectTypes(docs: GraphDbSegmentTuple[]): SegmentResultI {
+    private _makeDictFromSegments(segments: GraphDbLinkedSegment[]): SegmentResultI {
 
-        let objects: { [key: string]: GraphDbSegmentTuple } = {};
-        for (let doc of  docs) {
+        let objects: { [key: string]: GraphDbLinkedSegment } = {};
+        for (let doc of  segments) {
             objects[doc.key] = doc;
-            // doc.segmentType = this.objectTypesByIds[doc.segmentType.id];
-            doc.modelSet = this.modelSetByIds[doc.modelSet.id];
         }
         return objects;
     }

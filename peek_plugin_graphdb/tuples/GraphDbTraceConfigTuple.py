@@ -20,7 +20,7 @@ class GraphDbTraceConfigTuple(Tuple):
     #:  The model set of this segment [Required]
     modelSetKey: str = TupleField()
 
-    #:  The unique key of this segment [Required]
+    #:  The unique key of this trace config [Required]
     key: str = TupleField()
 
     #:  The name for this trace config [Required]

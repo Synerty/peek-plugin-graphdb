@@ -15,8 +15,8 @@ export class ItemKeyTuple extends Tuple {
 
     // This ItemKeyIndex Type ID
     itemType: number;
-    readonly ITEM_TYPE_VERTEX = 1;
-    readonly ITEM_TYPE_EDGE = 2;
+    static readonly ITEM_TYPE_VERTEX = 1;
+    static readonly ITEM_TYPE_EDGE = 2;
 
     // The key of the segment where it's stored
     segmentKeys: string[];

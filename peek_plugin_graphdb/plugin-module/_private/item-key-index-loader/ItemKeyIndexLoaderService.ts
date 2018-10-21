@@ -13,30 +13,19 @@ import {
     VortexStatusService
 } from "@synerty/vortexjs";
 
-import {
-    graphDbCacheStorageName,
-    graphDbFilt,
-    graphDbTuplePrefix
-} from "../PluginNames";
+import {graphDbCacheStorageName, graphDbFilt, graphDbTuplePrefix} from "../PluginNames";
 
 
 import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
 import {ItemKeyIndexEncodedChunkTuple} from "./ItemKeyIndexEncodedChunkTuple";
 import {ItemKeyIndexUpdateDateTuple} from "./ItemKeyIndexUpdateDateTuple";
-import {ItemKeyTuple} from "../../ItemKeyTuple";
-import {ItemKeyIndexTupleService} from "../ItemKeyIndexTupleService";
-import {ItemKeyTypeTuple} from "../../ItemKeyTypeTuple";
+import {ItemKeyTuple} from "./ItemKeyTuple";
 import {ItemKeyIndexLoaderStatusTuple} from "./ItemKeyIndexLoaderStatusTuple";
 
 import {OfflineConfigTuple} from "../tuples/OfflineConfigTuple";
 import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
-
-// ----------------------------------------------------------------------------
-
-export interface ItemKeyIndexResultI {
-    [key: string]: ItemKeyTuple
-}
+import {GraphDbTupleService} from "../GraphDbTupleService";
 
 // ----------------------------------------------------------------------------
 
@@ -149,7 +138,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
     constructor(private vortexService: VortexService,
                 private vortexStatusService: VortexStatusService,
                 storageFactory: TupleStorageFactoryService,
-                private tupleService: ItemKeyIndexTupleService) {
+                private tupleService: GraphDbTupleService) {
         super();
 
         this.tupleService.offlineObserver
@@ -164,31 +153,6 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
                 this._notifyStatus();
             });
 
-        let objTypeTs = new TupleSelector(ItemKeyTypeTuple.tupleName, {});
-        this.tupleService.offlineObserver
-            .subscribeToTupleSelector(objTypeTs)
-            .takeUntil(this.onDestroyEvent)
-            .subscribe((tuples: ItemKeyTypeTuple[]) => {
-                this.objectTypesByIds = {};
-                for (let item of tuples) {
-                    this.objectTypesByIds[item.id__] = item;
-                }
-                this._hasDocTypeLoaded = true;
-                this._notifyReady();
-            });
-
-        let modelSetTs = new TupleSelector(GraphDbModelSetTuple.tupleName, {});
-        this.tupleService.offlineObserver
-            .subscribeToTupleSelector(modelSetTs)
-            .takeUntil(this.onDestroyEvent)
-            .subscribe((tuples: GraphDbModelSetTuple[]) => {
-                this.modelSetByIds = {};
-                for (let item of tuples) {
-                    this.modelSetByIds[item.id__] = item;
-                }
-                this._hasModelSetLoaded = true;
-                this._notifyReady();
-            });
 
         this.storage = new TupleOfflineStorageService(
             storageFactory,
@@ -456,12 +420,34 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
     }
 
 
-    /** Get ItemKeyIndexs
+    /** Get Segment Keys
      *
      * Get the objects with matching keywords from the index..
      *
      */
-    getItemKeys(modelSetKey: string, keys: string[]): Promise<ItemKeyIndexResultI> {
+    getSegmentKeys(modelSetKey: string, key: string,
+                   itemType: number = ItemKeyTuple.ITEM_TYPE_VERTEX): Promise<string[]> {
+        return this.getItemKeys(modelSetKey, [key])
+            .then((tuples: ItemKeyTuple[]) => {
+                let keys = [];
+                for (let tuple of tuples) {
+                    if (tuple.itemType == itemType) {
+                        for (let segmentKey of tuple.segmentKeys) {
+                            keys.push(segmentKey);
+                        }
+                    }
+                }
+                return keys;
+            });
+    }
+
+
+    /** Get Segment Keys
+     *
+     * Get the objects with matching keywords from the index..
+     *
+     */
+    private getItemKeys(modelSetKey: string, keys: string[]): Promise<ItemKeyTuple[]> {
         if (modelSetKey == null || modelSetKey.length == 0) {
             Promise.reject("We've been passed a null/empty modelSetKey");
         }
@@ -486,21 +472,18 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
                     .toPromise();
 
             return isOnlinePromise
-                .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
-                .then((docs: ItemKeyTuple[]) => this._populateAndIndexObjectTypes(docs));
+                .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false));
         }
 
 
         // If we do have offline support
         if (this.isReady())
-            return this.getItemKeysWhenReady(modelSetKey, keys)
-                .then(docs => this._populateAndIndexObjectTypes(docs));
+            return this.getItemKeysWhenReady(modelSetKey, keys);
 
         return this.isReadyObservable()
             .first()
             .toPromise()
-            .then(() => this.getItemKeysWhenReady(modelSetKey, keys))
-            .then(docs => this._populateAndIndexObjectTypes(docs));
+            .then(() => this.getItemKeysWhenReady(modelSetKey, keys));
     }
 
 
@@ -595,17 +578,6 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
 
         return retPromise;
 
-    }
-
-    private _populateAndIndexObjectTypes(results: ItemKeyTuple[]): ItemKeyIndexResultI {
-
-        let objects: { [key: string]: ItemKeyTuple } = {};
-        for (let result of results) {
-            objects[result.key] = result;
-            result.itemKeyType = this.objectTypesByIds[result.itemKeyType.id__];
-            result.modelSet = this.modelSetByIds[result.modelSet.id__];
-        }
-        return objects;
     }
 
 

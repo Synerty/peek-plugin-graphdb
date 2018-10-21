@@ -14,6 +14,8 @@ import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
 import {PrivateTracerService} from "./_private/tracer-service";
 import {GraphDbTraceResultTuple} from "./GraphDbTraceResultTuple";
+import {GraphDbLinkedModel} from "./GraphDbLinkedModel";
+import {GraphDbTraceResultTuple} from "./_private";
 
 
 // ----------------------------------------------------------------------------
@@ -36,16 +38,31 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
     }
 
 
-    /** Get Locations
+    /** Get Trace Result
      *
-     * Get the objects with matching keywords from the index..
+     * Trace the graph with a pre-defined trace rule, and return a flat model
      *
      */
-    runTrace(modelSetKey: string, traceConfigKey: string,
-             startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+    getTraceResult(modelSetKey: string, traceConfigKey: string,
+                   startVertexKey: string): Promise<GraphDbTraceResultTuple> {
 
         return this.tracerService
             .runTrace(modelSetKey, traceConfigKey, startVertexKey);
+    }
+
+    /** Get Trace Model
+     *
+     * Trace the graph with a pre-defined trace rule, and return a linked model
+     *
+     */
+    getTraceModel(modelSetKey: string, traceConfigKey: string,
+                  startVertexKey: string): Promise<GraphDbLinkedModel> {
+
+        return this.tracerService
+            .runTrace(modelSetKey, traceConfigKey, startVertexKey)
+            .then((result: GraphDbTraceResultTuple) => {
+                return GraphDbLinkedModel.createFromTraceResult(result);
+            });
 
     }
 

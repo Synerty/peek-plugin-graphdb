@@ -1,9 +1,7 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
-import {graphDbTuplePrefix} from "./_private/PluginNames";
-import {GraphDbModelSetTuple} from "./GraphDbModelSetTuple";
-import {GraphDbEdgeTuple} from "./GraphDbEdgeTuple";
-import {GraphDbVertexTuple} from "./GraphDbVertexTuple";
-import {GraphDbSegmentLinkTuple} from "./GraphDbSegmentLinkTuple";
+import {graphDbTuplePrefix} from "../PluginNames";
+import {GraphDbTraceResultVertexTuple} from "./GraphDbTraceResultVertexTuple";
+import {GraphDbTraceResultEdgeTuple} from "./GraphDbTraceResultEdgeTuple";
 
 
 @addTupleType
@@ -20,10 +18,13 @@ export class GraphDbTraceResultTuple extends Tuple {
     startVertexKey: string;
 
     //  The edges
-    edges: GraphDbEdgeTuple[];
+    edges: GraphDbTraceResultEdgeTuple[];
 
     //  The vertexes
-    vertexes: GraphDbVertexTuple[];
+    vertexes: GraphDbTraceResultVertexTuple[];
+
+    //  Trace Aborted Message
+    traceAbortedMessage: string;
 
     constructor() {
         super(GraphDbTraceResultTuple.tupleName)

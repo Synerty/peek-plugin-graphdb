@@ -1,7 +1,6 @@
 from collections import defaultdict
-from typing import List, Dict
+from typing import Dict
 
-from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb.tuples.GraphDbLinkedEdge import GraphDbLinkedEdge
 from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 
@@ -12,8 +11,6 @@ class GraphDbLinkedSegment:
     This tuple is the publicly exposed Segment
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbLinkedSegment'
-
     #:  The unique key of this segment
     key: str = None
 
@@ -39,7 +36,6 @@ class GraphDbLinkedSegment:
             newVertex = GraphDbLinkedVertex()
             newVertex.k = jsonVertex["k"]
             newVertex.p = jsonVertex["p"]
-            newVertex.e = jsonVertex["e"]
             if newVertex.key in linksToSegmentKeysByVertexKey:
                 newVertex.sk = linksToSegmentKeysByVertexKey[newVertex.key]
             self.vertexByKey[newVertex.key] = newVertex

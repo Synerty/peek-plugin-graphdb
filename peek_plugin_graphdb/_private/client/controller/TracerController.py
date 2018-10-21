@@ -7,6 +7,8 @@ import logging
 import re
 from typing import List, Dict, Optional
 
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb, \
     FastGraphDbModel
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
@@ -19,8 +21,11 @@ from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import \
     GraphDbTraceConfigRuleTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultEdgeTuple import \
+    GraphDbTraceResultEdgeTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
-from vortex.DeferUtil import deferToThreadWrapWithLogger
+from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import \
+    GraphDbTraceResultVertexTuple
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +57,7 @@ class TracerController:
         # Prepossess some trace rules
         traceConfig = traceConfig.tupleClone()
         for rule in traceConfig.rules:
-            if rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST:
-                rule.propertyValue = set(rule.propertyValue.split(','))
-
-            elif rule.propertyValueType == rule.PROP_VAL_TYPE_REGEX:
-                rule.propertyValue = re.compile(rule.propertyValue)
+            rule.prepare()
 
         startSegmentKeys = self._itemKeyCacheController.getSegmentKeys(
             modelSetKey=modelSetKey, vertexKey=startVertexKey
@@ -64,12 +65,21 @@ class TracerController:
 
         fastGraphDbModel = self._fastGraphDb.graphForModelSet(modelSetKey)
 
-        return _RunTrace(traceConfig, fastGraphDbModel,
-                         startVertexKey, startSegmentKeys).run()
+        result = GraphDbTraceResultTuple(
+            modelSetKey=modelSetKey,
+            traceConfigKey=traceConfigKey,
+            startVertexKey=startVertexKey
+        )
+
+        _RunTrace(result, traceConfig, fastGraphDbModel,
+                  startVertexKey, startSegmentKeys).run()
+
+        return result
 
 
 class _RunTrace:
-    def __init__(self, traceConfig: GraphDbTraceConfigTuple,
+    def __init__(self, result: GraphDbTraceResultTuple,
+                 traceConfig: GraphDbTraceConfigTuple,
                  fastDb: FastGraphDbModel,
                  startVertexKey: str, startSegmentKeys: List[str]) -> None:
 
@@ -79,9 +89,9 @@ class _RunTrace:
         self._startSegmentKeys = startSegmentKeys
 
         self._alreadyTracedSet = set()
-        self._result = GraphDbTraceResultTuple()
+        self._result = result
 
-    def run(self) -> GraphDbTraceResultTuple:
+    def run(self) -> None:
 
         try:
             for segmentKey in self._startSegmentKeys:
@@ -89,8 +99,6 @@ class _RunTrace:
 
         except _TraceAbortedWithMessageException:
             pass
-
-        return self._result
 
     def _traceSegment(self, vertexKey: str, segmentKey: str) -> None:
         if self._checkAlreadyTraced(vertexKey, None, segmentKey):
@@ -147,6 +155,8 @@ class _RunTrace:
             if rule.action == rule.ACTION_STOP_TRACE:
                 return
 
+        self._addEdge(edge)
+
         toVertex = edge.getOtherVertex(fromVertex.key)
         self._traceVertex(toVertex, segment)
 
@@ -154,14 +164,22 @@ class _RunTrace:
     # Add to result
 
     def _addVertex(self, vertex: GraphDbLinkedVertex):
-        # TODO Handle the case when the vertex is added that belongs in both segments
-        pass
+        self._result.vertexes.append(GraphDbTraceResultVertexTuple(
+            key=vertex.key,
+            props=vertex.props
+        ))
 
     def _addEdge(self, edge: GraphDbLinkedEdge):
-        pass
+        self._result.edges.append(GraphDbTraceResultEdgeTuple(
+            key=edge.key,
+            srcVertexKey=edge.srcVertex.key,
+            dstVertexKey=edge.dstVertex.key,
+            props=edge.props
+        ))
 
     def _setTraceAborted(self, message: str):
-        pass
+        self._result.traceAbortedMessage = message
+        raise _TraceAbortedWithMessageException()
 
     # ---------------
     # Already Traced State
@@ -205,16 +223,18 @@ class _RunTrace:
                 return True
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST:
-            return propVal in rule.propertyValue
+            return propVal in rule.preparedValueSet
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_REGEX:
-            return rule.propertyValue.match(propVal)
+            return rule.preparedRegex.match(propVal)
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_BITMASK_AND:
             try:
-                if int(propVal) & int(rule.propertyValue):
-                    return True
-            except:
-                return False
+                return bool(int(propVal) & int(rule.propertyValue))
+
+            except ValueError:
+                pass
+
+            return False
 
         raise NotImplementedError()

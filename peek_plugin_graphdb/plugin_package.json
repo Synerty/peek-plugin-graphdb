@@ -39,7 +39,7 @@
     },
     "mobile": {
         "cfgDir": "_private/both-cfg",
-        "cfgModule": "graphdb-cfg.module#DocDBCfgModule",
+        "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": true,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
@@ -50,6 +50,11 @@
             {
                 "file": "_private/GraphDbTupleService",
                 "class": "GraphDbTupleService"
+            },
+            {
+                "file": "_private/GraphDbOfflineTupleCacherService",
+                "class": "GraphDbOfflineTupleCacherService",
+                "persistent": true
             },
             {
                 "file": "_private/segment-loader/PrivateSegmentLoaderService",
@@ -73,7 +78,7 @@
     },
     "desktop": {
         "cfgDir": "_private/both-cfg",
-        "cfgModule": "graphdb-cfg.module#DocDBCfgModule",
+        "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": true,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
@@ -84,6 +89,11 @@
             {
                 "file": "_private/GraphDbTupleService",
                 "class": "GraphDbTupleService"
+            },
+            {
+                "file": "_private/GraphDbOfflineTupleCacherService",
+                "class": "GraphDbOfflineTupleCacherService",
+                "persistent": true
             },
             {
                 "file": "_private/segment-loader/PrivateSegmentLoaderService",

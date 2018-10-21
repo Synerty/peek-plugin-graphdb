@@ -1,3 +1,6 @@
+import re
+from typing import Set, Optional
+
 from vortex.Tuple import addTupleType, TupleField, Tuple
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
@@ -25,7 +28,7 @@ class GraphDbTraceConfigRuleTuple(Tuple):
     ACTION_ABORT_TRACE_WITH_MESSAGE = 3
 
     #: Data to go with actions that require it
-    actionData: str = TupleField(1)
+    actionData: str = TupleField()
 
     #: The name of the property to apply the rule to
     propertyName: str = TupleField()
@@ -45,3 +48,15 @@ class GraphDbTraceConfigRuleTuple(Tuple):
 
     #:  Is this rule enabled
     isEnabled: bool = TupleField(True)
+
+    # Prepared property values, these are used for matching the this.
+    preparedRegex: Optional[re] = None
+    preparedValueSet: Optional[Set[str]] = None
+
+    def prepare(self):
+
+        if self.propertyValueType == self.PROP_VAL_TYPE_COMMA_LIST:
+            self.preparedValueSet = set(self.propertyValue.split(','))
+
+        elif self.propertyValueType == self.PROP_VAL_TYPE_REGEX:
+            self.preparedRegex = re.compile(self.propertyValue)

@@ -3,8 +3,10 @@ from typing import List, Optional
 from vortex.Tuple import Tuple, addTupleType, TupleField
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
-from peek_plugin_graphdb.tuples.GraphDbImportEdgeTuple import GraphDbImportEdgeTuple
-from peek_plugin_graphdb.tuples.GraphDbImportVertexTuple import GraphDbImportVertexTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultEdgeTuple import \
+    GraphDbTraceResultEdgeTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import \
+    GraphDbTraceResultVertexTuple
 
 
 @addTupleType
@@ -26,10 +28,10 @@ class GraphDbTraceResultTuple(Tuple):
     startVertexKey: str = TupleField()
 
     #:  The edges
-    edges: List[GraphDbEdgeTuple] = TupleField([])
+    edges: List[GraphDbTraceResultEdgeTuple] = TupleField([])
 
     #:  The vertexes
-    vertexes: List[GraphDbImportVertexTuple] = TupleField([])
+    vertexes: List[GraphDbTraceResultVertexTuple] = TupleField([])
 
     #:  The message if the trace was aborted
     traceAbortedMessage: Optional[str] = TupleField()
