@@ -34,20 +34,22 @@ class GraphDbLinkedSegment:
 
         for jsonVertex in jsonDict["vertexes"]:
             newVertex = GraphDbLinkedVertex()
-            newVertex.k = jsonVertex["k"]
-            newVertex.p = jsonVertex["p"]
+            newVertex._k = jsonVertex["k"]
+            newVertex._p = jsonVertex["p"]
+            newVertex._e = []
+            newVertex._sk = []
             if newVertex.key in linksToSegmentKeysByVertexKey:
-                newVertex.sk = linksToSegmentKeysByVertexKey[newVertex.key]
+                newVertex._sk = linksToSegmentKeysByVertexKey[newVertex.key]
             self.vertexByKey[newVertex.key] = newVertex
 
         for jsonEdge in jsonDict["edges"]:
             newEdge = GraphDbLinkedEdge()
-            newEdge.k = jsonEdge["k"]
-            newEdge.p = jsonEdge["p"]
-            newEdge.s = self.vertexByKey[jsonEdge["sk"]]
-            newEdge.d = self.vertexByKey[jsonEdge["dk"]]
-            newEdge.srcVertex.e.append(newEdge)
-            newEdge.dstVertex.e.append(newEdge)
+            newEdge._k = jsonEdge["k"]
+            newEdge._p = jsonEdge["p"]
+            newEdge._s = self.vertexByKey[jsonEdge["sk"]]
+            newEdge._d = self.vertexByKey[jsonEdge["dk"]]
+            newEdge.srcVertex._e.append(newEdge)
+            newEdge.dstVertex._e.append(newEdge)
             self.edgeByKey[newEdge.key] = newEdge
 
         return self

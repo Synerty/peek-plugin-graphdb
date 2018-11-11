@@ -112,7 +112,7 @@ function keyChunk(modelSetKey: string, key: string): string {
  */
 @Injectable()
 export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
-    private UPDATE_CHUNK_FETCH_SIZE = 5;
+    private UPDATE_CHUNK_FETCH_SIZE = 32;
     private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000; // 15 minutes
 
     private index = new ItemKeyIndexUpdateDateTuple();
@@ -125,9 +125,6 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
 
     private _statusSubject = new Subject<ItemKeyIndexLoaderStatusTuple>();
     private _status = new ItemKeyIndexLoaderStatusTuple();
-
-    private objectTypesByIds: { [id: number]: ItemKeyTypeTuple } = {};
-    private _hasDocTypeLoaded = false;
 
     private modelSetByIds: { [id: number]: GraphDbModelSetTuple } = {};
     private _hasModelSetLoaded = false;
@@ -185,7 +182,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
     }
 
     private _notifyReady(): void {
-        if (this._hasDocTypeLoaded && this._hasModelSetLoaded && this._hasLoaded)
+        if (this._hasModelSetLoaded && this._hasLoaded)
             this._hasLoadedSubject.next();
     }
 

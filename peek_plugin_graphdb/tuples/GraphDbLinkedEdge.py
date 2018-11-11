@@ -9,25 +9,25 @@ class GraphDbLinkedEdge:
     This tuple is a connection between two vertices.
 
     """
-    __slots__ = ("k", "s", "d", "p")
+    __slots__ = ("_k", "_s", "_d", "_p")
 
     @property
     def key(self) -> str:
-        return self.k
+        return self._k
 
     @property
     def srcVertex(self) -> GraphDbLinkedVertex:
-        return self.s
+        return self._s
 
     @property
     def dstVertex(self) -> GraphDbLinkedVertex:
-        return self.d
+        return self._d
 
     @property
     def props(self) -> Dict[str, str]:
-        if self.p is None:
-            self.p = {}
-        return self.p
+        if self._p is None:
+            self._p = {}
+        return self._p
 
     def getOtherVertex(self, vertexKey:str) -> GraphDbLinkedVertex:
         if self.srcVertex.key == vertexKey:

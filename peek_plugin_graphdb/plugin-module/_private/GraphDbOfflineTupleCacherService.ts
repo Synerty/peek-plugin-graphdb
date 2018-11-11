@@ -4,9 +4,9 @@ import {
     TupleSelector,
     VortexStatusService
 } from "@synerty/vortexjs";
-import {GraphDbTupleService} from "../GraphDbTupleService";
-import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
-import {GraphDbTraceConfigTuple} from "./GraphDbTraceConfigTuple";
+import {GraphDbTupleService} from "./GraphDbTupleService";
+import {GraphDbModelSetTuple} from "../GraphDbModelSetTuple";
+import {GraphDbTraceConfigTuple} from "./tuples/GraphDbTraceConfigTuple";
 
 
 /** Diagram Lookups offline cacher

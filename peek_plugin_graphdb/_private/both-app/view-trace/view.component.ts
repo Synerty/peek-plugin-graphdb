@@ -54,7 +54,7 @@ export class ViewTraceComponent extends ComponentLifecycleEventEmitter implement
                 if (typeof window !== 'undefined') {
                     window.location.href.replace(
                         /[?&]+([^=&]+)=([^&]*)/gi,
-                        (m, key, value) => vars[key] = value
+                        (m, key, value) => vars[key] = decodeURIComponent(value)
                     );
                 }
 
@@ -93,7 +93,7 @@ export class ViewTraceComponent extends ComponentLifecycleEventEmitter implement
         this.error = '';
 
         this.graphDbService
-            .runTrace(this.modelSetKey, this.traceConfigKey, this.startVertexKey)
+            .getTraceResult(this.modelSetKey, this.traceConfigKey, this.startVertexKey)
             .then((result: GraphDbTraceResultTuple) => this.traceResult = result)
             .catch(e => {
                 this.balloonMsg.showError(e);

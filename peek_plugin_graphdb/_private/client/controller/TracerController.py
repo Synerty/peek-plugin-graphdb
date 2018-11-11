@@ -94,17 +94,18 @@ class _RunTrace:
     def run(self) -> None:
 
         try:
-            for segmentKey in self._startSegmentKeys:
-                self._traceSegment(self._startVertexKey, segmentKey)
+            self._traceSegments(self._startVertexKey, self._startSegmentKeys)
 
         except _TraceAbortedWithMessageException:
             pass
 
+    def _traceSegments(self, vertexKey: str, segmentKeys: List[str]) -> None:
+            for segmentKey in segmentKeys:
+                self._traceSegment(vertexKey, segmentKey)
+
     def _traceSegment(self, vertexKey: str, segmentKey: str) -> None:
         if self._checkAlreadyTraced(vertexKey, None, segmentKey):
             return
-
-        self._addToAlreadyTraced(vertexKey, None, segmentKey)
 
         segment = self._fastDb.getSegment(segmentKey)
         if not segment:
@@ -139,8 +140,7 @@ class _RunTrace:
             self._traceEdge(edge, vertex, segment)
 
         if vertex.linksToSegmentKeys:
-            for segmentKey in vertex.linksToSegmentKeys:
-                self._traceSegment(vertex.key, segmentKey)
+            self._traceSegments(vertex.key, vertex.linksToSegmentKeys)
 
     def _traceEdge(self, edge: GraphDbLinkedEdge,
                    fromVertex: GraphDbLinkedVertex,

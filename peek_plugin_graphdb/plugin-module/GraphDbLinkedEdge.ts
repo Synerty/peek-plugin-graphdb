@@ -1,4 +1,3 @@
-import {addTupleType, Tuple} from "@synerty/vortexjs";
 import {GraphDbLinkedVertex} from "./GraphDbLinkedVertex";
 
 

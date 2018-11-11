@@ -7,7 +7,7 @@ class GraphDbLinkedVertex:
     This tuple is a vertex in the GraphDb plugin.
 
     """
-    __slots__ = ("k", "p", "e", "sk")
+    __slots__ = ("_k", "_p", "_e", "_sk")
 
     @property
     def key(self) -> str:
@@ -15,24 +15,24 @@ class GraphDbLinkedVertex:
 
         The unique ID of this vertex
         """
-        return self.k
+        return self._k
 
     @property
     def props(self) -> Dict[str, str]:
         """ Properties
         """
-        if self.p is None:
-            self.p = {}
-        return self.p
+        if self._p is None:
+            self._p = {}
+        return self._p
 
     @property
     def edges(self) -> List:
         """ Edges
             @:rtype List[GraphDbLinkedEdge]
         """
-        if self.e is None:
-            self.e = []
-        return self.e
+        if self._e is None:
+            self._e = []
+        return self._e
 
 
     @property
@@ -41,6 +41,6 @@ class GraphDbLinkedVertex:
 
         The keys of the other segments that this vertex links to.
         """
-        if self.e is None:
-            self.e = []
-        return self.e
+        if self._sk is None:
+            self._sk = []
+        return self._sk

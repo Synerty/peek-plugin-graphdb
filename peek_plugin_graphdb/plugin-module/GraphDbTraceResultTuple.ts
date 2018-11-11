@@ -1,5 +1,5 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
-import {graphDbTuplePrefix} from "../PluginNames";
+import {graphDbTuplePrefix} from "./_private/PluginNames";
 import {GraphDbTraceResultVertexTuple} from "./GraphDbTraceResultVertexTuple";
 import {GraphDbTraceResultEdgeTuple} from "./GraphDbTraceResultEdgeTuple";
 

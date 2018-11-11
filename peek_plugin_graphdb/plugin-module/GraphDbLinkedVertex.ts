@@ -1,5 +1,3 @@
-import {addTupleType, Tuple} from "@synerty/vortexjs";
-
 
 export class GraphDbLinkedVertex {
 

@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from typing import Dict, List
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
@@ -83,23 +84,24 @@ class SegmentCacheController:
 
     def _loadSegmentIntoCache(self,
                               encodedChunkTuples: List[GraphDbEncodedChunkTuple]):
-        chunkKeysUpdatedByModelSet: Dict[str, str] = {}
+        chunkKeysUpdatedByModelSet: Dict[str, List[str]] = defaultdict(list)
 
         for t in encodedChunkTuples:
 
             if (not t.chunkKey in self._cache or
                     self._cache[t.chunkKey].lastUpdate != t.lastUpdate):
                 self._cache[t.chunkKey] = t
-                chunkKeysUpdatedByModelSet[t.modelSetKey] = t.chunkKey
+                chunkKeysUpdatedByModelSet[t.modelSetKey].append(t.chunkKey)
 
         for modelSetKey, updatedChunkKeys in chunkKeysUpdatedByModelSet.items():
             logger.debug("Received segment updates from server, %s", updatedChunkKeys)
 
             d = self._webAppHandler.notifyOfSegmentUpdate(updatedChunkKeys)
-            d.errback(vortexLogFailure, logger, consumeError=True)
+            d.addErrback(vortexLogFailure, logger, consumeError=True)
 
-            d = self._fastGraphDb.notifyOfSegmentUpdate(modelSetKey, updatedChunkKeys)
-            d.errback(vortexLogFailure, logger, consumeError=True)
+            fastGraphDbModel = self._fastGraphDb.graphForModelSet(modelSetKey)
+            d = fastGraphDbModel.notifyOfSegmentUpdate(updatedChunkKeys)
+            d.addErrback(vortexLogFailure, logger, consumeError=True)
 
     def segmentChunk(self, chunkKey) -> GraphDbEncodedChunkTuple:
         return self._cache.get(chunkKey)

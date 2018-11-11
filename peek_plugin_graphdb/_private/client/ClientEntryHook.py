@@ -152,6 +152,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
 
         # ----------------
         # Set the caches reference to the handler
+        itemKeyIndexCacheController.setItemKeyIndexCacheHandler(itemKeyIndexHandler)
         segmentCacheController.setSegmentCacheHandler(segmentHandler)
         segmentCacheController.setFastGraphDb(fastGraphDB)
 

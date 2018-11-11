@@ -5,16 +5,17 @@ This module stores a memory resident model of a graph network.
 """
 import json
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Set
+
+from twisted.internet.defer import inlineCallbacks
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+from vortex.Payload import Payload
 
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
 from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
     GraphDbEncodedChunkTuple
 from peek_plugin_graphdb.tuples.GraphDbLinkedSegment import GraphDbLinkedSegment
-from twisted.internet.defer import inlineCallbacks
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +33,25 @@ class FastGraphDb:
 
         return self._graphsByModelSetKey[modelSetKey]
 
+    def shutdown(self):
+        self._cacheController = None
+        for model in self._graphsByModelSetKey.values():
+            model.shutdown()
+
+        self._graphsByModelSetKey = {}
+
 
 class FastGraphDbModel:
     def __init__(self, modelSetKey: str, cacheController: SegmentCacheController):
         self._cacheController = cacheController
         self._modelSetKey = modelSetKey
-        self._segmentsByKey = {}
+        self._segmentsByKey: Dict[str, GraphDbLinkedSegment] = {}
+        self._segmentKeysByChunkKey: Dict[str, Set[str]] = {}
 
     def shutdown(self):
         self._cacheController = None
         self._segmentsByKey = {}
+        self._segmentKeysByChunkKey = {}
 
     def getSegment(self, segmentKey: str) -> Optional[GraphDbLinkedSegment]:
         return self._segmentsByKey.get(segmentKey)
@@ -57,20 +67,25 @@ class FastGraphDbModel:
         for chunkKey in chunkKeys:
             graphDbEncodedChunkTuple = self._cacheController.segmentChunk(chunkKey)
 
-            segmentKeysToRemove = set([
-                s.key
-                for s in self._segmentsByKey.values()
-                if s.chunkKey == chunkKey
-            ])
-
             segments = yield self._unpackSegmentsFromChunk(graphDbEncodedChunkTuple)
-            segmentKeysToRemove -= set([s.key for s in segments])
+            segmentKeys = set([s.key for s in segments])
 
-            for key in segmentKeysToRemove:
-                self._segmentsByKey.pop(key)
+            if chunkKey in self._segmentKeysByChunkKey:
+                # Old keys from this chunk
+                segmentKeysToRemove = self._segmentKeysByChunkKey[chunkKey]
+                # New keys from this chunk
+                segmentKeysToRemove -= segmentKeys
 
+                # Remove the segments that are no longer present in this chunk
+                for key in segmentKeysToRemove:
+                    self._segmentsByKey.pop(key)
+
+            # Make note of the new segment keys in this chunk
+            self._segmentKeysByChunkKey[chunkKey] = segmentKeys
+
+            # Add or update the segments in the model
             for segment in segments:
-                self._segmentsByKey[segment.key] = key
+                self._segmentsByKey[segment.key] = segment
 
     @deferToThreadWrapWithLogger(logger)
     def _unpackSegmentsFromChunk(self, encodedChunkTuple: GraphDbEncodedChunkTuple

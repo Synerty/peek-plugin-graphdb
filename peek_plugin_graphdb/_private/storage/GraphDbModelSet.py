@@ -21,7 +21,7 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
 
     def tuTuple(self) -> GraphDbModelSetTuple:
         return GraphDbModelSetTuple(
-            id__=self.id,
+            id=self.id,
             key=self.key,
             name=self.name,
             comment=self.comment,

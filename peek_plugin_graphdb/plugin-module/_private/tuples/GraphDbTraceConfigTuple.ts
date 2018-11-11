@@ -8,9 +8,6 @@ import {GraphDbTraceConfigRuleTuple} from "./GraphDbTraceConfigRuleTuple";
 export class GraphDbTraceConfigTuple extends Tuple {
     public static readonly tupleName = graphDbTuplePrefix + "GraphDbLinkedTraceConfig";
 
-    //  The unique key of this segment
-    key: string;
-
     //  The modelSetId for this segment.
     modelSet: GraphDbModelSetTuple;
 

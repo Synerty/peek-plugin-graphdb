@@ -19,14 +19,12 @@ import {graphDbCacheStorageName, graphDbFilt, graphDbTuplePrefix} from "../Plugi
 import {Subject} from "rxjs/Subject";
 import {Observable} from "rxjs/Observable";
 import {EncodedSegmentChunkTuple} from "./EncodedSegmentChunkTuple";
-import {SegmentUpdateDateTuple} from "./SegmentUpdateDateTuple";
+import {SegmentIndexUpdateDateTuple} from "./SegmentIndexUpdateDateTuple";
 import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
 import {GraphDbTupleService} from "../GraphDbTupleService";
 import {PrivateSegmentLoaderStatusTuple} from "./PrivateSegmentLoaderStatusTuple";
 
 import {OfflineConfigTuple} from "../tuples/OfflineConfigTuple";
-import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
-import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
 import {GraphDbPackedSegmentTuple} from "./GraphDbPackedSegmentTuple";
 
 // ----------------------------------------------------------------------------
@@ -68,7 +66,7 @@ class SegmentChunkTupleSelector extends TupleSelector {
  */
 class UpdateDateTupleSelector extends TupleSelector {
     constructor() {
-        super(SegmentUpdateDateTuple.tupleName, {});
+        super(SegmentIndexUpdateDateTuple.tupleName, {});
     }
 }
 
@@ -120,11 +118,11 @@ function keyChunk(modelSetKey: string, key: string): string {
  */
 @Injectable()
 export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter {
-    private UPDATE_CHUNK_FETCH_SIZE = 5;
+    private UPDATE_CHUNK_FETCH_SIZE = 10;
     private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000; // 15 minutes
 
-    private index = new SegmentUpdateDateTuple();
-    private askServerChunks: SegmentUpdateDateTuple[] = [];
+    private index = new SegmentIndexUpdateDateTuple();
+    private askServerChunks: SegmentIndexUpdateDateTuple[] = [];
 
     private _hasLoaded = false;
 
@@ -209,7 +207,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
 
         this.storage.loadTuples(new UpdateDateTupleSelector())
             .then((tuplesAny: any[]) => {
-                let tuples: SegmentUpdateDateTuple[] = tuplesAny;
+                let tuples: SegmentIndexUpdateDateTuple[] = tuplesAny;
                 if (tuples.length != 0) {
                     this.index = tuples[0];
 
@@ -269,7 +267,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
         this.tupleService.observer
             .pollForTuples(new UpdateDateTupleSelector())
             .then((tuplesAny: any) => {
-                let serverIndex: SegmentUpdateDateTuple = tuplesAny[0];
+                let serverIndex: SegmentIndexUpdateDateTuple = tuplesAny[0];
                 let keys = Object.keys(serverIndex.updateDateByChunkKey);
                 let keysNeedingUpdate: string[] = [];
 
@@ -300,7 +298,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
         this.askServerChunks = [];
 
         let count = 0;
-        let indexChunk = new SegmentUpdateDateTuple();
+        let indexChunk = new SegmentIndexUpdateDateTuple();
 
         for (let key of keysNeedingUpdate) {
             indexChunk.updateDateByChunkKey[key] = this.index.updateDateByChunkKey[key];
@@ -309,7 +307,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
             if (count == this.UPDATE_CHUNK_FETCH_SIZE) {
                 this.askServerChunks.push(indexChunk);
                 count = 0;
-                indexChunk = new SegmentUpdateDateTuple();
+                indexChunk = new SegmentIndexUpdateDateTuple();
             }
         }
 
@@ -327,7 +325,7 @@ export class PrivateSegmentLoaderService extends ComponentLifecycleEventEmitter 
         if (this.askServerChunks.length == 0)
             return;
 
-        let indexChunk: SegmentUpdateDateTuple = this.askServerChunks.pop();
+        let indexChunk: SegmentIndexUpdateDateTuple = this.askServerChunks.pop();
         let filt = extend({}, clientSegmentWatchUpdateFromDeviceFilt);
         filt[cacheAll] = true;
         let pl = new Payload(filt, [indexChunk]);

@@ -7,7 +7,7 @@ export class GraphDbModelSetTuple extends Tuple {
     public static readonly tupleName = graphDbTuplePrefix + "GraphDbModelSetTuple";
 
     //  A private variable
-    id__: number;
+    id: number;
 
     //  The unique key of this segment
     key: string;

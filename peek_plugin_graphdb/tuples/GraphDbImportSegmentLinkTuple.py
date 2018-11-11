@@ -12,7 +12,6 @@ class GraphDbImportSegmentLinkTuple(Tuple):
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbImportSegmentLinkTuple'
-    __slots__ = ("vk", "sk")
 
     #:  The key of the vertex that joins the two segments
     vertexKey: str = TupleField()
@@ -20,24 +19,8 @@ class GraphDbImportSegmentLinkTuple(Tuple):
     #:  The segment that this segment links to
     segmentKey: str = TupleField()
 
-    @property
-    def vertexKey(self) -> str:
-        return self.vk
-
-    @vertexKey.setter
-    def vertexKey(self, val) -> None:
-        self.vk = val
-
-    @property
-    def segmentKey(self) -> str:
-        return self.sk
-
-    @segmentKey.setter
-    def segmentKey(self, val) -> None:
-        self.sk = val
-
     def packJsonDict(self) -> Dict[str, Any]:
         return dict(
-            vk=self.vk,
-            sk=self.sk
+            vk=self.vertexKey,
+            sk=self.segmentKey
         )

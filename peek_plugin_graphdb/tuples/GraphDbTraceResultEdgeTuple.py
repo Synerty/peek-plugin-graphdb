@@ -14,8 +14,8 @@ class GraphDbTraceResultEdgeTuple(Tuple):
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceResultEdgeTuple'
 
-    #:  The key of the model set that the result was created with.
-    modelSetKey: str = TupleField()
+    #:  The key of edge
+    key: str = TupleField()
 
     #:  The key of the source vertex
     srcVertexKey: str = TupleField()

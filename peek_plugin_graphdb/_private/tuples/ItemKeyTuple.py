@@ -3,13 +3,14 @@ import json
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType, TupleField
 
+from peek_plugin_graphdb.tuples.GraphDbModelSetTuple import GraphDbModelSetTuple
 
 
 @addTupleType
 class ItemKeyTuple(Tuple):
-    """ ItemKeyIndex Tuple
+    """ Item Key Tuple
 
-    This tuple is the publicly exposed ItemKeyIndex
+    This tuple provides the segment keys of a vertex or edge within the GraphDB model.
 
     """
     __tupleType__ = graphDbTuplePrefix + 'ItemKeyTuple'

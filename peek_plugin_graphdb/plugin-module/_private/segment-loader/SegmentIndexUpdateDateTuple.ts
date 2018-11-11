@@ -3,8 +3,8 @@ import {graphDbTuplePrefix} from "../PluginNames";
 
 
 @addTupleType
-export class SegmentUpdateDateTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "SegmentUpdateDateTuple";
+export class SegmentIndexUpdateDateTuple extends Tuple {
+    public static readonly tupleName = graphDbTuplePrefix + "SegmentIndexUpdateDateTuple";
 
     // Improve performance of the JSON serialisation
     protected _rawJonableFields = ['initialLoadComplete', 'updateDateByChunkKey'];
@@ -13,6 +13,6 @@ export class SegmentUpdateDateTuple extends Tuple {
     updateDateByChunkKey: {} = {};
 
     constructor() {
-        super(SegmentUpdateDateTuple.tupleName)
+        super(SegmentIndexUpdateDateTuple.tupleName)
     }
 }

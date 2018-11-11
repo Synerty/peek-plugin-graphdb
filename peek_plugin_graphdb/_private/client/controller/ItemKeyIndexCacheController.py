@@ -28,7 +28,7 @@ class ItemKeyIndexCacheController:
 
     """
 
-    LOAD_CHUNK = 32
+    LOAD_CHUNK = 64
 
     def __init__(self, clientId: str):
         self._clientId = clientId

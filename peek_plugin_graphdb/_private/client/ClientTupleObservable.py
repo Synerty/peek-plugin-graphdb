@@ -1,11 +1,13 @@
+from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
+
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
     ItemKeyIndexCacheController
-from peek_plugin_graphdb._private.client.controller.TracerController import \
-    TracerController
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     SegmentCacheController
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
     TraceConfigCacheController
+from peek_plugin_graphdb._private.client.controller.TracerController import \
+    TracerController
 from peek_plugin_graphdb._private.client.tuple_providers.ItemKeyIndexUpdateDateTupleProvider import \
     ItemKeyIndexUpdateDateTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.PackedSegmentTupleProvider import \
@@ -24,12 +26,10 @@ from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
     SegmentIndexUpdateDateTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
-from vortex.handler.TupleDataObservableProxyController import \
-    TupleDataObservableProxyController
 
 
-def makeClientTupleDataObservableController(
-        tupleObservable: TupleDataObservableProxyController,
+def makeClientTupleDataObservableHandler(
+        tupleObservable: TupleDataObservableProxyHandler,
         segmentCacheController: SegmentCacheController,
         itemKeyCacheController: ItemKeyIndexCacheController,
         traceConfigCacheController: TraceConfigCacheController,

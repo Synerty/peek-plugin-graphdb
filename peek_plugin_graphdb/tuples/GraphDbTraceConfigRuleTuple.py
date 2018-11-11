@@ -1,5 +1,5 @@
 import re
-from typing import Set, Optional
+from typing import Set, Optional, Pattern
 
 from vortex.Tuple import addTupleType, TupleField, Tuple
 
@@ -50,7 +50,7 @@ class GraphDbTraceConfigRuleTuple(Tuple):
     isEnabled: bool = TupleField(True)
 
     # Prepared property values, these are used for matching the this.
-    preparedRegex: Optional[re] = None
+    preparedRegex: Optional[Pattern] = None
     preparedValueSet: Optional[Set[str]] = None
 
     def prepare(self):

@@ -15,7 +15,6 @@ import {Observable} from "rxjs/Observable";
 import {PrivateTracerService} from "./_private/tracer-service";
 import {GraphDbTraceResultTuple} from "./GraphDbTraceResultTuple";
 import {GraphDbLinkedModel} from "./GraphDbLinkedModel";
-import {GraphDbTraceResultTuple} from "./_private";
 
 
 // ----------------------------------------------------------------------------

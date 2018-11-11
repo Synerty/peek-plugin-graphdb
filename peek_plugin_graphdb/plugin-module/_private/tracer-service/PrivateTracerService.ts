@@ -27,9 +27,10 @@ import {GraphDbLinkedVertex} from "../../GraphDbLinkedVertex";
 import {GraphDbLinkedEdge} from "../../GraphDbLinkedEdge";
 import {GraphDbTraceConfigTuple} from "../tuples/GraphDbTraceConfigTuple";
 import {ItemKeyIndexLoaderService} from "../item-key-index-loader";
-import {GraphDbTraceResultTuple} from "../tuples/GraphDbTraceResultTuple";
+import {GraphDbTraceResultTuple} from "../../GraphDbTraceResultTuple";
 import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
-import {GraphDbTraceResultEdgeTuple, GraphDbTraceResultVertexTuple} from "..";
+import {GraphDbTraceResultVertexTuple} from "../../GraphDbTraceResultVertexTuple";
+import {GraphDbTraceResultEdgeTuple} from "../../GraphDbTraceResultEdgeTuple";
 import {GraphDbTraceConfigRuleTuple} from "../tuples/GraphDbTraceConfigRuleTuple";
 
 // ----------------------------------------------------------------------------
@@ -110,7 +111,8 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
             return Promise.reject("We've been passed a null/empty startVertexKey");
         }
 
-        if (!this.offlineConfig.cacheChunksForOffline) {
+        if (!this.offlineConfig.cacheChunksForOffline
+            || this.vortexStatusService.snapshot.isOnline) {
             return this.runServerTrace(modelSetKey, traceConfigKey, startVertexKey);
         }
 
@@ -148,7 +150,7 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
 
         let runTrace = new _RunTrace(result, this.segmentLoader);
 
-        let promise = this.loadTraceConfig(modelSetKey, traceConfigKey)
+        let promise: any = this.loadTraceConfig(modelSetKey, traceConfigKey)
         // Prepare the trace config
             .then((traceConfig: GraphDbTraceConfigTuple) => {
                 // Assign the trace config to _RunTrace class
@@ -182,27 +184,32 @@ class _RunTrace {
 
     }
 
-    run(startVertexKey: string, startSegmentKeys: string[]): Promise {
+    run(startVertexKey: string, startSegmentKeys: string[]): Promise<any> {
 
-        let promises = [];
         try {
-            for (let segmentKey of startSegmentKeys) {
-                promises.push(
-                    this._traceSegment(startVertexKey, segmentKey)
-                );
-            }
+            return this._traceSegments(startVertexKey, startSegmentKeys);
 
         } catch (_TraceAbortedWithMessageError) {
         }
 
-        return Promise.all(promises);
+        return Promise.resolve();
+
     }
 
-    private _traceSegment(vertexKey: string, segmentKey: string): Promise {
-        if (this._checkAlreadyTraced(vertexKey, null, segmentKey))
-            return;
+    private _traceSegments(vertexKey: string, segmentKeys: string[]): Promise<void> | null {
+        let promises = [];
+        for (let segmentKey of segmentKeys) {
+            let optionalPromise = this._traceSegment(vertexKey, segmentKey);
+            if (optionalPromise != null)
+                promises.push(optionalPromise);
+        }
+        return Promise.all(promises)
+            .then(() => null);
+    }
 
-        this._addToAlreadyTraced(vertexKey, null, segmentKey);
+    private _traceSegment(vertexKey: string, segmentKey: string): Promise<void> | null {
+        if (this._checkAlreadyTraced(vertexKey, null, segmentKey))
+            return null;
 
         return this.segmentLoader
             .getSegments(this.result.modelSetKey, [segmentKey])
@@ -220,14 +227,14 @@ class _RunTrace {
                     );
                 }
 
-                this._traceVertex(vertex, segment);
+                return this._traceVertex(vertex, segment);
             });
     }
 
     private _traceVertex(vertex: GraphDbLinkedVertex,
-                         segment: GraphDbLinkedSegment) {
+                         segment: GraphDbLinkedSegment): Promise<void> | null {
         if (this._checkAlreadyTraced(vertex.key, null, segment.key))
-            return;
+            return null;
 
         this._addToAlreadyTraced(vertex.key, null, segment.key);
 
@@ -237,27 +244,37 @@ class _RunTrace {
         if (rule != null) {
             if (rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE) {
                 this._setTraceAborted(rule.actionData);
-                return;
+                return null;
             }
 
             if (rule.action == rule.ACTION_STOP_TRACE) {
-                return;
+                return null;
             }
         }
 
+        let promises = [];
         for (let edge of vertex.edges) {
-            this._traceEdge(edge, vertex, segment);
+            let optionalPromise = this._traceEdge(edge, vertex, segment);
+            if (optionalPromise != null)
+                promises.push(optionalPromise);
         }
 
-        if (vertex.linksToSegmentKeys) {
-            for (let segmentKey of vertex.linksToSegmentKeys)
-                this._traceSegment(vertex.key, segmentKey);
-        }
+        if (promises.length == 0 && vertex.linksToSegmentKeys.length == 0)
+            return null;
+
+        return Promise.all(promises)
+            .then(() => {
+
+                if (vertex.linksToSegmentKeys.length == 0)
+                    return null;
+
+                return this._traceSegments(vertex.key, vertex.linksToSegmentKeys);
+            });
     }
 
     private _traceEdge(edge: GraphDbLinkedEdge,
                        fromVertex: GraphDbLinkedVertex,
-                       segment: GraphDbLinkedSegment) {
+                       segment: GraphDbLinkedSegment): Promise<void> | null {
         let rule = this._matchEdgeTraceRules(edge);
         if (rule != null) {
             if (rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE) {
@@ -273,7 +290,7 @@ class _RunTrace {
         this._addEdge(edge);
 
         let toVertex = edge.getOtherVertex(fromVertex.key);
-        this._traceVertex(toVertex, segment);
+        return this._traceVertex(toVertex, segment);
     }
 
     // ---------------
@@ -363,7 +380,7 @@ class _RunTrace {
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_BITMASK_AND) {
             try {
-                return (parseInt(propVal) & parseInt(rule.propertyValue) !== 0);
+                return ((parseInt(propVal) & parseInt(rule.propertyValue)) !== 0);
 
             } catch {
             }

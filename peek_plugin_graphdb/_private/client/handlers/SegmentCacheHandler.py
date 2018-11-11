@@ -81,9 +81,7 @@ class SegmentCacheHandler(object):
             d.addCallback(VortexFactory.sendVortexMsg, destVortexUuid=vortexUuid)
             dl.append(d)
 
-        # Log the errors, otherwise we don't care about them
-        dl = DeferredList(dl, fireOnOneErrback=True)
-        dl.addErrback(vortexLogFailure, logger, consumeError=True)
+        return DeferredList(dl, fireOnOneErrback=True)
 
     # ---------------
     # Process observes from the devices
