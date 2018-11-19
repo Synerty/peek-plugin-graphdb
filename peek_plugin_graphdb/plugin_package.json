@@ -2,7 +2,7 @@
     "plugin": {
         "title": "Graph DB",
         "packageName": "peek_plugin_graphdb",
-        "version": "0.0.0",
+    "version":"1.2.0a3",
         "buildNumber": "#PLUGIN_BUILD#",
         "buildDate": "#BUILD_DATE#",
         "creator": "Synerty Pty Ltd",
