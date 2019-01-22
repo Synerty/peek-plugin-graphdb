@@ -15,5 +15,6 @@ that has a topology.
     :caption: Contents:
 
     overview
+    status/status
     admin_tasks
 
