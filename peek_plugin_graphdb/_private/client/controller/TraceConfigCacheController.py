@@ -1,18 +1,19 @@
-import logging
 from collections import defaultdict
-from typing import Dict, List, Set
+
+import logging
+from twisted.internet.defer import inlineCallbacks
+from typing import Dict, List, Set, Optional
+from vortex.PayloadEndpoint import PayloadEndpoint
+from vortex.PayloadEnvelope import PayloadEnvelope
+from vortex.PayloadFilterKeys import plDeleteKey
+from vortex.TupleSelector import TupleSelector
+from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.TraceConfigLoadRpc import \
     TraceConfigLoadRpc
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
     GraphDbTraceConfigTuple
-from twisted.internet.defer import inlineCallbacks
-from vortex.PayloadEndpoint import PayloadEndpoint
-from vortex.PayloadEnvelope import PayloadEnvelope
-from vortex.PayloadFilterKeys import plDeleteKey
-from vortex.TupleSelector import TupleSelector
-from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 logger = logging.getLogger(__name__)
 
@@ -140,5 +141,12 @@ class TraceConfigCacheController:
                          traceConfigKey: str) -> GraphDbTraceConfigTuple:
         return self._cache[modelSetKey][traceConfigKey]
 
-    def traceConfigTuples(self, modelSetKey: str) -> List[GraphDbTraceConfigTuple]:
-        return list(self._cache[modelSetKey].values())
+    def traceConfigTuples(self, modelSetKey: Optional[str]
+                          ) -> List[GraphDbTraceConfigTuple]:
+        if modelSetKey:
+            return list(self._cache[modelSetKey].values())
+
+        configs = []
+        for configsByKey in self._cache.values():
+            configs += configsByKey.values()
+        return configs

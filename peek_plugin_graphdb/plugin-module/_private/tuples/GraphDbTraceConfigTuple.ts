@@ -6,7 +6,7 @@ import {GraphDbTraceConfigRuleTuple} from "./GraphDbTraceConfigRuleTuple";
 
 @addTupleType
 export class GraphDbTraceConfigTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbLinkedTraceConfig";
+    public static readonly tupleName = graphDbTuplePrefix + "GraphDbTraceConfigTuple";
 
     //  The modelSetId for this segment.
     modelSet: GraphDbModelSetTuple;

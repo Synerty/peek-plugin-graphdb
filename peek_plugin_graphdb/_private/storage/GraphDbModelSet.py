@@ -19,7 +19,7 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
     comment = Column(String)
     propsJson = Column(String)
 
-    def tuTuple(self) -> GraphDbModelSetTuple:
+    def toTuple(self) -> GraphDbModelSetTuple:
         return GraphDbModelSetTuple(
             id=self.id,
             key=self.key,

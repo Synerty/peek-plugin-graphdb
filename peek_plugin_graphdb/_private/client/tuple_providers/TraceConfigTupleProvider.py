@@ -1,7 +1,6 @@
 import logging
-from typing import Union
-
 from twisted.internet.defer import Deferred
+from typing import Union
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -20,7 +19,8 @@ class TraceConfigTupleProvider(TuplesProviderABC):
     @deferToThreadWrapWithLogger(logger)
     def makeVortexMsg(self, filt: dict,
                       tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
-        modelSetKey = tupleSelector.selector["modelSetKey"]
+        # the UI doesn't supply the model set at present.
+        modelSetKey = tupleSelector.selector.get("modelSetKey")
 
         data = self._cacheHandler.traceConfigTuples(modelSetKey=modelSetKey)
 
