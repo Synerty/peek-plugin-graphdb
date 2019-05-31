@@ -258,6 +258,8 @@ def globalSetting(ormSession, key=None, value=None):
     return _getSetting(ormSession, "Global", globalProperties, key=key, value=value)
 
 
-# PROPERTY1 = PropertyKey('Property1', 'value1', propertyDict=globalProperties)
-#
-# PROPERTY2 = PropertyKey('Property2', 'value2', propertyDict=globalProperties)
+SEGMENT_COMPILER_ENABLED = PropertyKey('Segment Compiler Enabled', True,
+                                    propertyDict=globalProperties)
+
+ITEM_KEY_COMPILER_ENABLED = PropertyKey('Item Key Compiler Enabled', True,
+                                    propertyDict=globalProperties)

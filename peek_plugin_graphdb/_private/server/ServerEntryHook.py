@@ -31,8 +31,11 @@ from peek_plugin_graphdb._private.server.controller.SegmentIndexStatusController
     SegmentIndexStatusController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
+from peek_plugin_graphdb._private.storage.Setting import globalSetting, \
+    SEGMENT_COMPILER_ENABLED, ITEM_KEY_COMPILER_ENABLED, globalProperties
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
+from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 from .TupleActionProcessor import makeTupleActionProcessorHandler
 from .TupleDataObservable import makeTupleDataObservableHandler
@@ -181,8 +184,15 @@ class ServerEntryHook(PluginServerEntryHookABC,
 
         # ----------------
         # Start the compiler controllers
-        segmentIndexCompilerController.start()
-        itemKeyIndexCompilerController.start()
+
+        settings = yield self._loadSettings()
+
+        if settings[SEGMENT_COMPILER_ENABLED]:
+            segmentIndexCompilerController.start()
+
+        if settings[ITEM_KEY_COMPILER_ENABLED]:
+            itemKeyIndexCompilerController.start()
+
 
         # self._test()
 
@@ -267,3 +277,14 @@ class ServerEntryHook(PluginServerEntryHookABC,
     def celeryApp(self) -> Celery:
         from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
         return celeryApp
+
+    @deferToThreadWrapWithLogger(logger)
+    def _loadSettings(self):
+        dbSession = self.dbSessionCreator()
+        try:
+            return {globalProperties[p.key]: p.value
+                    for p in globalSetting(dbSession).propertyObjects}
+
+        finally:
+            dbSession.close()
+
