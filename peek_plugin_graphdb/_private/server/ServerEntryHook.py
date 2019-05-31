@@ -35,6 +35,7 @@ from peek_plugin_graphdb._private.storage.Setting import globalSetting, \
     SEGMENT_COMPILER_ENABLED, ITEM_KEY_COMPILER_ENABLED, globalProperties
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
+from twisted.internet.defer import inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 from .TupleActionProcessor import makeTupleActionProcessorHandler
@@ -74,6 +75,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
     def dbMetadata(self):
         return DeclarativeBase.metadata
 
+    @inlineCallbacks
     def start(self):
         """ Start
 
