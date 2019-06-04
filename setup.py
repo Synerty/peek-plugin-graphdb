@@ -11,7 +11,7 @@ author = "Synerty"
 author_email = 'contact@synerty.com'
 py_package_name = "peek_plugin_graphdb"
 pip_package_name = py_package_name.replace('_', '-')
-package_version = '1.2.2'
+package_version = '1.3.0'
 description = 'Peek Plugin GraphDB - My first enhancement.'
 
 download_url = 'https://bitbucket.org/synerty/%s/get/%s.zip'
