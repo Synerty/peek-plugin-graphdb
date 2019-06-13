@@ -25,7 +25,7 @@ import {extend} from "@synerty/vortexjs/src/vortex/UtilMisc";
 })
 export class ViewTraceComponent extends ComponentLifecycleEventEmitter implements OnInit {
 
-    modelSetKey: string = "pofGraph";
+    modelSetKey: string = "pofDiagram";
     traceConfigKey: string = "";
     startVertexKey: string = "";
 

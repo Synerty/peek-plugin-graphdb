@@ -1,19 +1,18 @@
-from collections import defaultdict
-
 import logging
-from twisted.internet.defer import inlineCallbacks
+from collections import defaultdict
 from typing import Dict, List, Set, Optional
-from vortex.PayloadEndpoint import PayloadEndpoint
-from vortex.PayloadEnvelope import PayloadEnvelope
-from vortex.PayloadFilterKeys import plDeleteKey
-from vortex.TupleSelector import TupleSelector
-from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.TraceConfigLoadRpc import \
     TraceConfigLoadRpc
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
     GraphDbTraceConfigTuple
+from twisted.internet.defer import inlineCallbacks
+from vortex.PayloadEndpoint import PayloadEndpoint
+from vortex.PayloadEnvelope import PayloadEnvelope
+from vortex.PayloadFilterKeys import plDeleteKey
+from vortex.TupleSelector import TupleSelector
+from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +106,10 @@ class TraceConfigCacheController:
             if traceConfigKey in subCache:
                 subCache.pop(traceConfigKey)
 
-        self._tupleObservable.no(TupleSelector(GraphDbTraceConfigTuple.tupleType(),
-                                               dict(modelSetKey=modelSetKey)))
+        self._tupleObservable.notifyOfTupleUpdate(
+            TupleSelector(GraphDbTraceConfigTuple.tupleType(),
+                          dict(modelSetKey=modelSetKey))
+        )
 
     def _loadTraceConfigIntoCache(self, modelSetKey: str,
                                   traceConfigTuples: List[GraphDbTraceConfigTuple],

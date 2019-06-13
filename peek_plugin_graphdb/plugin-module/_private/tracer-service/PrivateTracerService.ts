@@ -136,7 +136,8 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
                 .toPromise();
 
         return isOnlinePromise
-            .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false));
+            .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
+            .then((tuples) => tuples[0]);
     }
 
     private runLocalTrace(modelSetKey: string, traceConfigKey: string,

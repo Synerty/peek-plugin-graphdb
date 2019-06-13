@@ -2,12 +2,14 @@ import hashlib
 import json
 from typing import List
 
+import ujson
+from vortex.Tuple import addTupleType, TupleField, Tuple
+
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb.tuples.GraphDbImportEdgeTuple import GraphDbImportEdgeTuple
 from peek_plugin_graphdb.tuples.GraphDbImportSegmentLinkTuple import \
     GraphDbImportSegmentLinkTuple
 from peek_plugin_graphdb.tuples.GraphDbImportVertexTuple import GraphDbImportVertexTuple
-from vortex.Tuple import addTupleType, TupleField, Tuple
 
 
 @addTupleType
@@ -57,9 +59,23 @@ class GraphDbImportSegmentTuple(Tuple):
         self.vertexes.sort(key=lambda v: v.key)
         self.links.sort(key=lambda l: l.vertexKey + l.segmentKey)
 
+
+
         m = hashlib.md5()
         m.update(b'zeroth item padding')
-        m.update(str(self).encode())
+        for edge in self.edges:
+            m.update(ujson.dumps(edge.tupleToSqlaBulkInsertDict(), sort_keys=True).encode())
+
+        for vertex in self.vertexes:
+            m.update(ujson.dumps(vertex.tupleToSqlaBulkInsertDict(), sort_keys=True).encode())
+
+        for link in self.links:
+            m.update(ujson.dumps(link.tupleToSqlaBulkInsertDict(), sort_keys=True).encode())
+
+        m.update(self.key.encode())
+        m.update(self.modelSetKey.encode())
+        m.update(self.importGroupHash.encode())
+
         return m.hexdigest()
 
     def packJson(self) -> str:

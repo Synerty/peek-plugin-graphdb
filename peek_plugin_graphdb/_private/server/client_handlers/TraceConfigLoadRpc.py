@@ -1,6 +1,7 @@
 import logging
 from typing import List
 
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
 from sqlalchemy.orm import joinedload
 from vortex.rpc.RPC import vortexRPC
 
@@ -31,7 +32,7 @@ class TraceConfigLoadRpc:
     # -------------
     @vortexRPC(peekServerName, acceptOnlyFromVortex=peekClientName, timeoutSeconds=60,
                additionalFilt=graphDbFilt, deferToThread=True)
-    def loadTraceConfigs(self, offset: int, count: int) -> List[GraphDbTraceConfig]:
+    def loadTraceConfigs(self, offset: int, count: int) -> List[GraphDbTraceConfigTuple]:
         """ Load Trace Configs
 
         Allow the client to incrementally load the trace configs.
