@@ -9,11 +9,9 @@ import {
     TupleDataOfflineObserverService,
     TupleOfflineStorageNameService,
     TupleOfflineStorageService,
-    TupleSelector,
     TupleStorageFactoryService,
     VortexService,
-    VortexStatusService,
-    WebSqlFactoryService
+    VortexStatusService
 } from "@synerty/vortexjs";
 
 import {
