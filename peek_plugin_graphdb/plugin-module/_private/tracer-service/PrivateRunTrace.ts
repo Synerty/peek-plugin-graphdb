@@ -213,8 +213,7 @@ export class RunTrace {
         let propVal = (props[rule.propertyName] || '').toString();
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE) {
-            if (propVal == rule.propertyValue)
-                return true;
+            return propVal == rule.propertyValue;
         }
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST) {

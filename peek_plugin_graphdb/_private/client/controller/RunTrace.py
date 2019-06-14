@@ -4,17 +4,9 @@ This module stores a memory resident model of a graph network.
 
 """
 import logging
-import re
 from typing import List, Dict, Optional
 
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-
-from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb, \
-    FastGraphDbModel
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
-    ItemKeyIndexCacheController
-from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
-    TraceConfigCacheController
+from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDbModel
 from peek_plugin_graphdb.tuples.GraphDbLinkedEdge import GraphDbLinkedEdge
 from peek_plugin_graphdb.tuples.GraphDbLinkedSegment import GraphDbLinkedSegment
 from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
@@ -57,8 +49,8 @@ class RunTrace:
             pass
 
     def _traceSegments(self, vertexKey: str, segmentKeys: List[str]) -> None:
-            for segmentKey in segmentKeys:
-                self._traceSegment(vertexKey, segmentKey)
+        for segmentKey in segmentKeys:
+            self._traceSegment(vertexKey, segmentKey)
 
     def _traceSegment(self, vertexKey: str, segmentKey: str) -> None:
         if self._checkAlreadyTraced(vertexKey, None, segmentKey):
@@ -176,8 +168,7 @@ class RunTrace:
         propVal = str(props.get(rule.propertyName))
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE:
-            if propVal == rule.propertyValue:
-                return True
+            return propVal == rule.propertyValue
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST:
             return propVal in rule.preparedValueSet
@@ -194,4 +185,5 @@ class RunTrace:
 
             return False
 
-        raise NotImplementedError()
+        raise NotImplementedError("rule.propertyValueType  = %s"
+                                  % rule.propertyValueType)
