@@ -17,6 +17,9 @@ export class GraphDbTraceConfigTuple extends Tuple {
     // The name for this trace config [Required]
     name: string;
 
+    // The display title for this trace config [Required]
+    title: string;
+
     // The name for this trace config
     rules: GraphDbTraceConfigRuleTuple[];
 

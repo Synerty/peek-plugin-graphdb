@@ -18,10 +18,14 @@ class GraphDbLinkedSegment:
     modelSetKey: str = None
 
     #:  The edges
-    edgeByKey: Dict[str, GraphDbLinkedEdge] = {}
+    edgeByKey: Dict[str, GraphDbLinkedEdge] = None
 
     #:  The vertexes
-    vertexByKey: Dict[str, GraphDbLinkedVertex] = {}
+    vertexByKey: Dict[str, GraphDbLinkedVertex] = None
+
+    def __init__(self):
+        self.edgeByKey = {}
+        self.vertexByKey = {}
 
     def unpackJson(self, jsonDict: Dict, segmentKey: str,
                    modelSetKey: str) -> 'GraphDbLinkedSegment':

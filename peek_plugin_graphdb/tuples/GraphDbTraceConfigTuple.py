@@ -26,6 +26,9 @@ class GraphDbTraceConfigTuple(Tuple):
     #:  The name for this trace config [Required]
     name: str = TupleField()
 
+    #:  The title to be displayed to the user [Required]
+    title: str = TupleField()
+
     #:  The name for this trace config
     rules: List[GraphDbTraceConfigRuleTuple] = TupleField([])
 

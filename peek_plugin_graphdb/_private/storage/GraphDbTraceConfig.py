@@ -33,6 +33,9 @@ class GraphDbTraceConfig(Tuple, DeclarativeBase):
     #:  The unique name of this segment
     name = Column(String, nullable=False)
 
+    #:  The title to describe this segment
+    title = Column(String, nullable=False)
+
     #:  The comment for this config
     comment = Column(String)
 
@@ -52,6 +55,7 @@ class GraphDbTraceConfig(Tuple, DeclarativeBase):
         self.modelSetId = modelSetId
         self.key = tupleIn.key
         self.name = tupleIn.name
+        self.title = tupleIn.title
         self.comment = tupleIn.comment
         self.isEnabled = tupleIn.isEnabled
 
@@ -65,6 +69,7 @@ class GraphDbTraceConfig(Tuple, DeclarativeBase):
             modelSetKey=self.modelSet.key,
             key=self.key,
             name=self.name,
+            title=self.title,
             comment=self.comment,
             isEnabled=self.isEnabled
         )

@@ -20,6 +20,7 @@ class GraphDbTraceConfigRuleTuple(Tuple):
     applyTo: int = TupleField(1)
     APPLY_TO_VERTEX = 1
     APPLY_TO_EDGE = 2
+    APPLY_TO_START_VERTEX = 3
 
     #:  What action should be taken when this rule is met
     action: int = TupleField(1)
@@ -60,3 +61,36 @@ class GraphDbTraceConfigRuleTuple(Tuple):
 
         elif self.propertyValueType == self.PROP_VAL_TYPE_REGEX:
             self.preparedRegex = re.compile(self.propertyValue)
+
+    def appliesToStr(self):
+        if self.applyTo == self.APPLY_TO_VERTEX: return "Vertex"
+        if self.applyTo == self.APPLY_TO_EDGE: return "Edge"
+        if self.applyTo == self.APPLY_TO_START_VERTEX: return "Start Vertex"
+        raise NotImplementedError()
+
+    def actionToStr(self):
+        if self.action == self.ACTION_STOP_TRACE:
+            return "Stop:%s" % self.actionData
+
+        if self.action == self.ACTION_CONTINUE_TRACE:
+            return "Continue:%s" % self.actionData
+
+        if self.action == self.ACTION_ABORT_TRACE_WITH_MESSAGE:
+            return "Abort:%s" % self.actionData
+
+        raise NotImplementedError()
+
+    def propertyValueTypeToStr(self):
+        if self.propertyValueType == self.PROP_VAL_TYPE_SIMPLE: return "Simple"
+        if self.propertyValueType == self.PROP_VAL_TYPE_COMMA_LIST: return "CSV"
+        if self.propertyValueType == self.PROP_VAL_TYPE_REGEX: return "Regexp"
+        if self.propertyValueType == self.PROP_VAL_TYPE_BITMASK_AND: return "AND"
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return str(("Order:%s" % self.order,
+                    self.appliesToStr(),
+                    self.actionToStr(),
+                    "%s:%s:%s" % (self.propertyName,
+                                  self.propertyValue,
+                                  self.propertyValueTypeToStr())))

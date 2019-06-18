@@ -25,8 +25,8 @@ class ImportController:
         )
 
     @inlineCallbacks
-    def deleteSegment(self, modelSetKey: str, segmentKeys: List[str]):
-        yield SegmentIndexImporter.deleteSegment.delay(modelSetKey, segmentKeys)
+    def deleteSegment(self, modelSetKey: str, importGroupHashes: List[str]):
+        yield SegmentIndexImporter.deleteSegment.delay(modelSetKey, importGroupHashes)
 
     @inlineCallbacks
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:

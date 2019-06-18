@@ -60,6 +60,7 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
         self.order = tupleIn.order
         self.applyTo = tupleIn.applyTo
         self.action = tupleIn.action
+        self.actionData = tupleIn.actionData
         self.propertyName = tupleIn.propertyName
         self.propertyValue = tupleIn.propertyValue
         self.propertyValueType = tupleIn.propertyValueType
@@ -73,6 +74,7 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
             order=self.order,
             applyTo=self.applyTo,
             action=self.action,
+            actionData=self.actionData,
             propertyName=self.propertyName,
             propertyValue=self.propertyValue,
             propertyValueType=self.propertyValueType,

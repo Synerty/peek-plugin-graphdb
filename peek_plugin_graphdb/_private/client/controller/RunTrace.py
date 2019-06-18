@@ -4,7 +4,12 @@ This module stores a memory resident model of a graph network.
 
 """
 import logging
+from collections import namedtuple
+from datetime import datetime
+from functools import cmp_to_key
 from typing import List, Dict, Optional
+
+import pytz
 
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDbModel
 from peek_plugin_graphdb.tuples.GraphDbLinkedEdge import GraphDbLinkedEdge
@@ -21,6 +26,8 @@ from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import \
 
 logger = logging.getLogger(__name__)
 
+_TraceEdgeParams = namedtuple("_TraceEdgeParams", ["segment", "edge", "vertex"])
+
 
 class _TraceAbortedWithMessageException(Exception):
     pass
@@ -30,93 +37,138 @@ class RunTrace:
     def __init__(self, result: GraphDbTraceResultTuple,
                  traceConfig: GraphDbTraceConfigTuple,
                  fastDb: FastGraphDbModel,
-                 startVertexKey: str, startSegmentKeys: List[str]) -> None:
+                 startVertexOrEdgeKey: str, startSegmentKeys: List[str]) -> None:
 
         self._traceConfig = traceConfig
         self._fastDb = fastDb
-        self._startVertexKey = startVertexKey
+        self._startVertexOrEdgeKey = startVertexOrEdgeKey
         self._startSegmentKeys = startSegmentKeys
 
         self._alreadyTracedSet = set()
         self._result = result
 
+        self._traceEdgeQueue: List[_TraceEdgeParams] = []
+
     def run(self) -> None:
 
+        startTime = datetime.now(pytz.utc)
+        self._traceConfig.rules.sort(key=cmp_to_key(self._ruleSortCmp))
+
         try:
-            self._traceSegments(self._startVertexKey, self._startSegmentKeys)
+            # Queue up the starting point and any segments it's in
+            for segmentKey in self._startSegmentKeys:
+                segment = self._fastDb.getSegment(segmentKey)
+                if not segment:
+                    raise Exception("Could not find segment %s", segmentKey)
+
+                vertex = segment.vertexByKey.get(self._startVertexOrEdgeKey)
+                if vertex:
+                    self._traceVertex(segment, vertex)
+                    continue
+
+                edge = segment.edgeByKey.get(self._startVertexOrEdgeKey)
+                if edge:
+                    self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, None))
+                    continue
+
+                raise Exception("Could not find vertex/edge with key %s in segment %s",
+                                self._startVertexOrEdgeKey, segment.key)
+
+            # Drain the trace queue
+            while self._traceEdgeQueue:
+                params = self._traceEdgeQueue.pop()
+                self._traceEdge(params.segment, params.edge, params.vertex)
 
         except _TraceAbortedWithMessageException:
             pass
 
-    def _traceSegments(self, vertexKey: str, segmentKeys: List[str]) -> None:
-        for segmentKey in segmentKeys:
-            self._traceSegment(vertexKey, segmentKey)
+        if len(self._result.vertexes) and not self._result.edges:
+            self._result.traceAbortedMessage = "The trace stopped on the start device."
 
-    def _traceSegment(self, vertexKey: str, segmentKey: str) -> None:
-        if self._checkAlreadyTraced(vertexKey, None, segmentKey):
+        # Log the complete
+        logger.debug("Trace completed. Trace Config '%s', Start Vertex or Edge '%s'"
+                     " %s vertexes, %s edges, error:'%s', in %s",
+                     self._traceConfig.key, self._startVertexOrEdgeKey,
+                     len(self._result.vertexes), len(self._result.edges),
+                     self._result.traceAbortedMessage,
+                     (datetime.now(pytz.utc) - startTime))
+
+    def _ruleSortCmp(self, r1, r2):
+        R = GraphDbTraceConfigRuleTuple
+
+        # First, Order the rules that apply to the start vertex first
+        if r1.applyTo == R.APPLY_TO_START_VERTEX \
+                and r2.applyTo != R.APPLY_TO_START_VERTEX:
+            return -1
+
+        if r1.applyTo != R.APPLY_TO_START_VERTEX \
+                and r2.applyTo == R.APPLY_TO_START_VERTEX:
+            return 1
+
+        # Then just compare by order
+        if r1.order == r2.order:
+            return 0
+        return -1 if r1.order < r2.order else 1
+
+    def _traceEdge(self, segment: GraphDbLinkedSegment,
+                   edge: GraphDbLinkedEdge,
+                   fromVertex: Optional[GraphDbLinkedVertex] = None):
+
+        if self._checkAlreadyTraced(None, edge.key):
             return
 
+        if not self._matchTraceRules(edge=edge):
+            return
+
+        self._addEdge(edge)
+
+        if fromVertex:
+            toVertex = edge.getOtherVertex(fromVertex.key)
+            self._traceVertex(segment, toVertex)
+
+        else:
+            self._traceVertex(segment, edge.srcVertex)
+            self._traceVertex(segment, edge.dstVertex)
+
+    def _traceVertex(self, segment: GraphDbLinkedSegment,
+                     vertex: GraphDbLinkedVertex) -> None:
+
+        if self._checkAlreadyTraced(vertex.key, None):
+            return
+
+        if vertex.key == 'D0003be52COMP':
+            logger.debug("STOP AT OPEN POINT")
+
+        self._addVertex(vertex)
+
+        if not self._matchTraceRules(vertex=vertex):
+            return
+
+        for edge in vertex.edges:
+            self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, vertex))
+
+        for segmentKey in vertex.linksToSegmentKeys:
+            self._traceEdgesInNextSegment(vertex.key, segmentKey)
+
+    def _traceEdgesInNextSegment(self, vertexKey: str, segmentKey: str):
         segment = self._fastDb.getSegment(segmentKey)
         if not segment:
             raise Exception("Could not find segment %s", segmentKey)
 
         vertex = segment.vertexByKey.get(vertexKey)
         if not vertex:
-            raise Exception("Could not find vertex %s in segment %s",
-                            vertexKey, segment.key)
-
-        self._traceVertex(vertex, segment)
-
-    def _traceVertex(self, vertex: GraphDbLinkedVertex,
-                     segment: GraphDbLinkedSegment) -> None:
-        if self._checkAlreadyTraced(vertex.key, None, segment.key):
-            return
-
-        self._addToAlreadyTraced(vertex.key, None, segment.key)
-
-        self._addVertex(vertex)
-
-        rule = self._matchVertexTraceRules(vertex)
-        if rule:
-            if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
-                self._setTraceAborted(rule.actionData)
-                return
-
-            if rule.action == rule.ACTION_STOP_TRACE:
-                return
+            raise Exception(
+                "Vertex '%s' is not in segment '%s'" % (vertexKey, segmentKey))
 
         for edge in vertex.edges:
-            self._traceEdge(edge, vertex, segment)
-
-        if vertex.linksToSegmentKeys:
-            self._traceSegments(vertex.key, vertex.linksToSegmentKeys)
-
-    def _traceEdge(self, edge: GraphDbLinkedEdge,
-                   fromVertex: GraphDbLinkedVertex,
-                   segment: GraphDbLinkedSegment):
-        rule = self._matchEdgeTraceRules(edge)
-        if rule:
-            if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
-                self._setTraceAborted(rule.actionData)
-                return
-
-            # Don't trace further along this path.
-            if rule.action == rule.ACTION_STOP_TRACE:
-                return
-
-        self._addEdge(edge)
-
-        toVertex = edge.getOtherVertex(fromVertex.key)
-        self._traceVertex(toVertex, segment)
+            self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, vertex))
 
     # ---------------
     # Add to result
 
-    def _addVertex(self, vertex: GraphDbLinkedVertex):
-        self._result.vertexes.append(GraphDbTraceResultVertexTuple(
-            key=vertex.key,
-            props=vertex.props
-        ))
+    def _setTraceAborted(self, message: str):
+        self._result.traceAbortedMessage = message
+        raise _TraceAbortedWithMessageException()
 
     def _addEdge(self, edge: GraphDbLinkedEdge):
         self._result.edges.append(GraphDbTraceResultEdgeTuple(
@@ -126,40 +178,69 @@ class RunTrace:
             props=edge.props
         ))
 
-    def _setTraceAborted(self, message: str):
-        self._result.traceAbortedMessage = message
-        raise _TraceAbortedWithMessageException()
+    def _addVertex(self, vertex: GraphDbLinkedVertex):
+        self._result.vertexes.append(GraphDbTraceResultVertexTuple(
+            key=vertex.key,
+            props=vertex.props
+        ))
 
     # ---------------
     # Already Traced State
 
-    def _checkAlreadyTraced(self, vertexKey: Optional[str], edgeKey: Optional[str],
-                            segmentKey: str) -> bool:
-        return (vertexKey, edgeKey, segmentKey) in self._alreadyTracedSet
+    def _checkAlreadyTraced(self, vertexKey: Optional[str],
+                            edgeKey: Optional[str]) -> bool:
+        traced = (vertexKey, edgeKey) in self._alreadyTracedSet
+        if not traced:
+            self._alreadyTracedSet.add((vertexKey, edgeKey))
 
-    def _addToAlreadyTraced(self, vertexKey: Optional[str], edgeKey: Optional[str],
-                            segmentKey: str):
-        self._alreadyTracedSet.add((vertexKey, edgeKey, segmentKey))
-
-    # ---------------
-    # Match Edge Rules
-    def _matchEdgeTraceRules(self, edge: GraphDbLinkedEdge):
-        for rule in self._traceConfig.rules:
-            if rule.applyTo != rule.APPLY_TO_EDGE:
-                continue
-
-            if self._matchProps(edge.props, rule):
-                return rule
+        return traced
 
     # ---------------
     # Match Vertex Rules
-    def _matchVertexTraceRules(self, vertex: GraphDbLinkedVertex):
+    def _matchTraceRules(self, vertex: Optional[GraphDbLinkedVertex] = None,
+                         edge: Optional[GraphDbLinkedEdge] = None) -> bool:
+        isVertex = vertex is not None
+        isEdge = edge is not None
+        isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
+
+        props = vertex.props if vertex else edge.props
+
         for rule in self._traceConfig.rules:
-            if rule.applyTo != rule.APPLY_TO_VERTEX:
+            # Accept the conditions in which we'll run this rule
+            if rule.applyTo == rule.APPLY_TO_VERTEX and isVertex:
+                pass
+
+            elif rule.applyTo == rule.APPLY_TO_EDGE and isEdge:
+                pass
+
+            elif rule.applyTo == rule.APPLY_TO_START_VERTEX and isStartVertex:
+                pass
+
+            else:
+                # Else, this isn't the right rule for this thing, move onto the next
                 continue
 
-            if self._matchProps(vertex.props, rule):
-                return rule
+            # If the rule doesn't match, then continue
+            if not self._matchProps(props, rule):
+                continue
+
+            # The rule has matched.
+
+            # Apply the action - Continue
+            if rule.action == rule.ACTION_CONTINUE_TRACE:
+                return True
+
+            # Apply the action - Abort
+            if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
+                self._setTraceAborted(rule.actionData)
+                return False
+
+            # Apply the action - Stop
+            if rule.action == rule.ACTION_STOP_TRACE:
+                return False
+
+        # No rules have decided either way, continue tracing
+        return True
 
     # ---------------
     # Match The Properties

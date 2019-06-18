@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List, Set, Tuple
 
 import pytz
+from sqlalchemy import select, and_
 
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.ItemKeyIndex import \
@@ -86,3 +87,31 @@ def loadItemKeys(conn,
                  len(inserts), len(chunkKeysForQueue),
                  (datetime.now(pytz.utc) - startTime))
 
+
+def deleteItemKeys(conn, modelSetId: int, importGroupHashes: List[str]) -> None:
+    startTime = datetime.now(pytz.utc)
+
+    itemKeyIndexTable = ItemKeyIndex.__table__
+    queueTable = ItemKeyIndexCompilerQueue.__table__
+
+    chunkKeys = conn.execute(
+        select([itemKeyIndexTable.c.modelSetId, itemKeyIndexTable.c.chunkKey],
+               and_(itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
+                    itemKeyIndexTable.c.modelSetId == modelSetId))
+    ).fetchall()
+
+    if not chunkKeys:
+        return
+
+    conn.execute(
+        itemKeyIndexTable.delete(
+            and_(itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
+                 itemKeyIndexTable.c.modelSetId == modelSetId)
+        )
+    )
+
+    conn.execute(queueTable.insert(), chunkKeys)
+
+    logger.debug("Deleted %s, queued %s chunks in %s",
+                 len(importGroupHashes), len(chunkKeys),
+                 (datetime.now(pytz.utc) - startTime))

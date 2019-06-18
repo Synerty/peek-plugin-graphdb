@@ -13,6 +13,7 @@ class GraphDbTraceResultEdgeTuple(Tuple):
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceResultEdgeTuple'
+    __rawJonableFields__ = ('key', 'srcVertexKey', 'dstVertexKey', 'props')
 
     #:  The key of edge
     key: str = TupleField()

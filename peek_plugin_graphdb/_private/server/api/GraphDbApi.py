@@ -22,8 +22,8 @@ class GraphDbApi(GraphDbApiABC):
              graphSegmentEncodedPayload
         )
 
-    def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
-        return self._importController.deleteSegment(modelSetKey, segmentKey)
+    def deleteSegments(self, modelSetKey: str, importGroupHashes: List[str]) -> Deferred:
+        return self._importController.deleteSegment(modelSetKey, importGroupHashes)
 
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
         return self._importController.createOrUpdateTraceConfig(

@@ -19,13 +19,13 @@ class GraphDbApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def deleteSegment(self, modelSetKey: str, segmentKey: str) -> Deferred:
-        """ Delete Segment
+    def deleteSegments(self, modelSetKey: str, importGroupHashes: List[str]) -> Deferred:
+        """ Delete Segments
 
         Delete a Graph Segment from the GraphDB.
 
         :param modelSetKey: The model set key to delete Graph Segments from
-        :param segmentKey: The key of the segment to delete
+        :param importGroupHashes: A list of the keys of the segments to delete
         :return: A deferred that fires when the work is complete
 
         """

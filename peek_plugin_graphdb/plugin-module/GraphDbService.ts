@@ -11,6 +11,7 @@ import {Observable} from "rxjs";
 
 export interface TraceConfigListItemI {
     name: string;
+    title: string;
     key: string;
 }
 
@@ -79,9 +80,14 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
             .subscribeToTupleSelector(ts)
             .map((tuples: GraphDbTraceConfigTuple[]) => {
                 const out = [];
+                tuples.sort((a, b) =>
+                    a.title == b.title ? 0 : a.title < b.title ? -1 : 1
+                );
                 for (let tuple of tuples) {
+                    if (!tuple.isEnabled) continue;
                     out.push({
                         name: tuple.name,
+                        title: tuple.title,
                         key: tuple.key
                     })
                 }

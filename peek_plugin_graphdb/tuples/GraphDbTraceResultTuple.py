@@ -17,6 +17,8 @@ class GraphDbTraceResultTuple(Tuple):
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceResultTuple'
+    __rawJonableFields__ = ('modelSetKey', 'traceConfigKey',
+                            'startVertexKey', 'traceAbortedMessage')
 
     #:  The key of the model set that the result was created with.
     modelSetKey: str = TupleField()

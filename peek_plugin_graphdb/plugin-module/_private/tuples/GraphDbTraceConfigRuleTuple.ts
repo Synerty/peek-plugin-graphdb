@@ -13,6 +13,7 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
     applyTo: number = 1;
     readonly APPLY_TO_VERTEX = 1;
     readonly APPLY_TO_EDGE = 2;
+    readonly APPLY_TO_START_VERTEX = 3;
 
     //  What action should be taken when this rule is met
     action: number = 1;

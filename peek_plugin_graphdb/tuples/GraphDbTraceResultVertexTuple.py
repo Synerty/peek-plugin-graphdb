@@ -13,6 +13,7 @@ class GraphDbTraceResultVertexTuple(Tuple):
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceResultVertexTuple'
+    __rawJonableFields__ = ('key', 'props')
 
     #:  The key of this vertex
     key: str = TupleField()

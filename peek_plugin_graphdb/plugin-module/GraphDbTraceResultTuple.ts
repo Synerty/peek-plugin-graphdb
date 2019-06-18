@@ -24,7 +24,7 @@ export class GraphDbTraceResultTuple extends Tuple {
     vertexes: GraphDbTraceResultVertexTuple[];
 
     //  Trace Aborted Message
-    traceAbortedMessage: string;
+    traceAbortedMessage: string | null;
 
     constructor() {
         super(GraphDbTraceResultTuple.tupleName)
