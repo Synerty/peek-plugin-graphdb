@@ -2,37 +2,18 @@ import {Injectable} from "@angular/core";
 
 import {
     ComponentLifecycleEventEmitter,
-    extend,
-    Payload,
-    PayloadEnvelope,
-    TupleOfflineStorageNameService,
-    TupleOfflineStorageService,
     TupleSelector,
-    TupleStorageFactoryService,
     VortexService,
     VortexStatusService
 } from "@synerty/vortexjs";
 
-
-import {Subject} from "rxjs/Subject";
-import {Observable} from "rxjs/Observable";
-
 import {OfflineConfigTuple} from "../tuples/OfflineConfigTuple";
-import {
-    PrivateSegmentLoaderService,
-    SegmentResultI
-} from "../segment-loader/PrivateSegmentLoaderService";
+import {PrivateSegmentLoaderService} from "../segment-loader/PrivateSegmentLoaderService";
 import {GraphDbTupleService} from "../GraphDbTupleService";
-import {GraphDbLinkedVertex} from "../../GraphDbLinkedVertex";
-import {GraphDbLinkedEdge} from "../../GraphDbLinkedEdge";
 import {GraphDbTraceConfigTuple} from "../tuples/GraphDbTraceConfigTuple";
 import {ItemKeyIndexLoaderService} from "../item-key-index-loader";
 import {GraphDbTraceResultTuple} from "../../GraphDbTraceResultTuple";
-import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
-import {GraphDbTraceResultVertexTuple} from "../../GraphDbTraceResultVertexTuple";
-import {GraphDbTraceResultEdgeTuple} from "../../GraphDbTraceResultEdgeTuple";
-import {GraphDbTraceConfigRuleTuple} from "../tuples/GraphDbTraceConfigRuleTuple";
-import {RunTrace} from "./PrivateRunTrace";
+import {PrivateRunTrace} from "./PrivateRunTrace";
 
 // ----------------------------------------------------------------------------
 
@@ -149,25 +130,28 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
         result.traceConfigKey = traceConfigKey;
         result.startVertexKey = startVertexKey;
 
-
-        let runTrace = new RunTrace(result, this.segmentLoader);
+        let traceConfigParam = null;
 
         let promise: any = this.loadTraceConfig(modelSetKey, traceConfigKey)
         // Prepare the trace config
             .then((traceConfig: GraphDbTraceConfigTuple) => {
-                // Assign the trace config to RunTrace class
-                runTrace._traceConfig = traceConfig;
-                // Prepossess some trace rules
+                // Assign the trace config for the RunTrace class
+                traceConfigParam = traceConfig;
+
+                // Preprocess some trace rules
                 for (let rule of traceConfig.rules) {
                     rule.prepare();
                 }
-
             })
             .then(() => {
                 return this.itemKeyLoader.getSegmentKeys(modelSetKey, startVertexKey);
             })
             .then((startSegmentKeys: string[]) => {
-                return runTrace.run(startVertexKey, startSegmentKeys);
+                const runTrace = new PrivateRunTrace(result, traceConfigParam,
+                    this.segmentLoader, startVertexKey,
+                    startSegmentKeys);
+
+                return runTrace.run();
             })
             .then(() => result);
         return promise;

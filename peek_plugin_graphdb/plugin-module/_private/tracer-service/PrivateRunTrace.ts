@@ -1,3 +1,13 @@
+/** Run Trace
+
+ This module contains the logic to perform typescript side traces.
+
+ NOTE: THIS FILE MUST BE KEPT IN SYNC WITH THE PYTHON VERSION AT :
+ * peek_plugin_graphdb/_private/client/controller/RunTrace.py
+
+
+ */
+
 import {
     PrivateSegmentLoaderService,
     SegmentResultI
@@ -10,6 +20,7 @@ import {GraphDbLinkedSegment} from "../../GraphDbLinkedSegment";
 import {GraphDbTraceResultVertexTuple} from "../../GraphDbTraceResultVertexTuple";
 import {GraphDbTraceResultEdgeTuple} from "../../GraphDbTraceResultEdgeTuple";
 import {GraphDbTraceConfigRuleTuple} from "../tuples/GraphDbTraceConfigRuleTuple";
+import * as moment from "moment";
 
 // ----------------------------------------------------------------------------
 
@@ -18,136 +29,271 @@ export class _TraceAbortedWithMessageError extends Error {
 
 }
 
+export interface _TraceEdgeParams {
+    segment: GraphDbLinkedSegment;
+    edge: GraphDbLinkedEdge;
+    vertex: GraphDbLinkedVertex;
+}
 
-export class RunTrace {
+export class PrivateRunTrace {
 
     private _alreadyTracedSet = {};
+    private _asyncLoadInProgressCount = 0;
 
-    _traceConfig: GraphDbTraceConfigTuple;
+    private _traceEdgeQueue: _TraceEdgeParams[] = [];
 
-    constructor(private result: GraphDbTraceResultTuple,
-                private segmentLoader: PrivateSegmentLoaderService) {
+    private _completeResolve: any = null;
+    private _completeReject: any = null;
+    private _startTime: Date = null;
 
+    private _traceEnded = false;
+
+    private _traceConfigKey: string;
+    private _traceRules: GraphDbTraceConfigRuleTuple[] = [];
+
+    constructor(private _result: GraphDbTraceResultTuple,
+                traceConfig: GraphDbTraceConfigTuple,
+                private segmentLoader: PrivateSegmentLoaderService,
+                private _startVertexOrEdgeKey: string,
+                private _startSegmentKeys: string[]) {
+
+        this._traceConfigKey = traceConfig.key;
+        this._traceRules = traceConfig.rules.filter(r => r.isEnabled);
+        this._traceRules.sort(this._ruleSortCmp);
 
     }
 
-    run(startVertexKey: string, startSegmentKeys: string[]): Promise<any> {
+    run(): Promise<void> {
+        this._startTime = new Date();
+        return new Promise<void>((resolve, reject) => {
+            this._completeResolve = resolve;
+            this._completeReject = reject;
 
-        try {
-            return this._traceSegments(startVertexKey, startSegmentKeys);
+            // Queue up the starting point and any segments it's in
+            for (const segmentKey of this._startSegmentKeys) {
+                this._getSegment(segmentKey)
+                    .then((segment: GraphDbLinkedSegment) => {
+                        try {
+                            const vertex = segment.vertexByKey[this._startVertexOrEdgeKey];
+                            if (vertex) {
+                                this._traceVertex(segment, vertex);
+                                return;
+                            }
 
-        } catch (_TraceAbortedWithMessageError) {
-        }
+                            const edge = segment.edgeByKey[this._startVertexOrEdgeKey];
+                            if (edge) {
+                                this._traceEdgeQueue.push({
+                                    segment: segment,
+                                    edge: edge,
+                                    vertex: null
+                                });
+                                return;
+                            }
 
-        return Promise.resolve();
+                        } catch (e) {
+                            if (e instanceof _TraceAbortedWithMessageError) {
+                                this.handleTraceComplete();
+                                return
+                            }
+                            console.log(e);
+                            throw e;
+                        }
 
-    }
+                        throw new Error("Could not find vertex or edge"
+                            + ` ${this._startVertexOrEdgeKey} of segment ${segmentKey}`
+                        );
+                    })
+                    .then(() => this.iterate())
+                    .catch((e) => this.handlePromiseCatch(e));
 
-    private _traceSegments(vertexKey: string, segmentKeys: string[]): Promise<void> | null {
-        let promises = [];
-        for (let segmentKey of segmentKeys) {
-            let optionalPromise = this._traceSegment(vertexKey, segmentKey);
-            if (optionalPromise != null)
-                promises.push(optionalPromise);
-        }
-        return Promise.all(promises)
-            .then(() => null);
-    }
+            } // End FOR
 
-    private _traceSegment(vertexKey: string, segmentKey: string): Promise<void> | null {
-        if (this._checkAlreadyTraced(vertexKey, null, segmentKey))
-            return null;
+        });
 
-        return this.segmentLoader
-            .getSegments(this.result.modelSetKey, [segmentKey])
-            .then((segmentsByKey: SegmentResultI) => {
-                if (segmentsByKey[segmentKey] == null) {
-                    throw new Error(`Could not find segment ${segmentKey}`);
-                }
-
-                let segment = segmentsByKey[segmentKey];
-
-                let vertex = segment.vertexByKey[vertexKey];
-                if (!vertex) {
-                    throw new Error("Could not find vertex"
-                        + ` ${vertexKey} of segment ${segmentKey}`
-                    );
-                }
-
-                return this._traceVertex(vertex, segment);
-            });
-    }
-
-    private _traceVertex(vertex: GraphDbLinkedVertex,
-                         segment: GraphDbLinkedSegment): Promise<void> | null {
-        if (this._checkAlreadyTraced(vertex.key, null, segment.key))
-            return null;
-
-        this._addToAlreadyTraced(vertex.key, null, segment.key);
-
-        this._addVertex(vertex);
-
-        let rule = this._matchVertexTraceRules(vertex);
-        if (rule != null) {
-            if (rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE) {
-                this._setTraceAborted(rule.actionData);
-                return null;
-            }
-
-            if (rule.action == rule.ACTION_STOP_TRACE) {
-                return null;
-            }
-        }
-
-        let promises = [];
-        for (let edge of vertex.edges) {
-            let optionalPromise = this._traceEdge(edge, vertex, segment);
-            if (optionalPromise != null)
-                promises.push(optionalPromise);
-        }
-
-        if (promises.length == 0 && vertex.linksToSegmentKeys.length == 0)
-            return null;
-
-        return Promise.all(promises)
-            .then(() => {
-
-                if (vertex.linksToSegmentKeys.length == 0)
-                    return null;
-
-                return this._traceSegments(vertex.key, vertex.linksToSegmentKeys);
-            });
-    }
-
-    private _traceEdge(edge: GraphDbLinkedEdge,
-                       fromVertex: GraphDbLinkedVertex,
-                       segment: GraphDbLinkedSegment): Promise<void> | null {
-        let rule = this._matchEdgeTraceRules(edge);
-        if (rule != null) {
-            if (rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE) {
-                this._setTraceAborted(rule.actionData);
-                return;
-            }
-
-            // Don't trace further along this path.
-            if (rule.action == rule.ACTION_STOP_TRACE)
-                return;
-        }
-
-        this._addEdge(edge);
-
-        let toVertex = edge.getOtherVertex(fromVertex.key);
-        return this._traceVertex(toVertex, segment);
     }
 
     // ---------------
-    // Add to result
+    // Helper methods
+    // To deal with the need for async promises during the trace
+    // These are TYPESCRIPT only methods.
+
+    private _getSegment(segmentKey: string): Promise<GraphDbLinkedSegment> {
+        this._asyncLoadInProgressCount++;
+        return this.segmentLoader
+            .getSegments(this._result.modelSetKey, [segmentKey])
+            .then((segmentsByKey: SegmentResultI) => {
+                this._asyncLoadInProgressCount--;
+                const segment = segmentsByKey[segmentKey];
+                if (segment == null) {
+                    throw new Error(`Could not find segment ${segmentKey}`);
+                }
+                return segment;
+            });
+    }
+
+    private handleTraceComplete() {
+        if (this._traceEnded)
+            return;
+
+        this._traceEnded = true;
+
+        if (this._result.vertexes.length && !this._result.edges.length) {
+            this._result.traceAbortedMessage = "The trace stopped on the start device.";
+        }
+
+        const duration = moment
+            .duration(new Date().getTime() - this._startTime.getTime())
+            .humanize();
+
+        // Log the complete
+        console.log(`Trace completed. Trace Config '${this._traceConfigKey}',`
+            + ` Start Vertex or Edge '${this._startVertexOrEdgeKey}',`
+            + ` ${this._result.vertexes.length} vertexes,`
+            + ` ${this._result.edges.length} edges,`
+            + ` error:'${this._result.traceAbortedMessage}',`
+            + ` in ${duration}`);
+
+        this._completeResolve(this._result);
+    }
+
+    private handlePromiseCatch(error: string): void {
+        if (this._traceEnded)
+            return;
+
+        this._traceEnded = true;
+
+        console.log(`ERROR: ${error}`);
+        this._completeReject(`ERROR: ${error}`);
+    }
+
+
+    private iterate(): void {
+        // Drain the trace queue
+        try {
+            while (this._traceEdgeQueue.length && !this._traceEnded) {
+                const params = this._traceEdgeQueue.pop();
+                this._traceEdge(params.segment, params.edge, params.vertex)
+            }
+        } catch (e) {
+            if (!(e instanceof _TraceAbortedWithMessageError)) {
+                console.log(e);
+                this.handlePromiseCatch(e.toString());
+            }
+            return;
+        }
+
+
+        // If the trace has been aborted
+        if (this._result.traceAbortedMessage != null) {
+            this.handleTraceComplete();
+
+            // OR if the trace has completed
+        } else if (this._traceEdgeQueue.length === 0
+            && this._asyncLoadInProgressCount === 0) {
+            this.handleTraceComplete();
+        }
+
+    }
+
+    // ---------------
+    // Rule sort comparator
+
+    private _ruleSortCmp(r1: GraphDbTraceConfigRuleTuple,
+                         r2: GraphDbTraceConfigRuleTuple): number {
+        const R = new GraphDbTraceConfigRuleTuple();
+
+        // First, Order the rules that apply to the start vertex first
+        if (r1.applyTo == R.APPLY_TO_START_VERTEX
+            && r2.applyTo != R.APPLY_TO_START_VERTEX) {
+            return -1;
+        }
+
+        if (r1.applyTo != R.APPLY_TO_START_VERTEX
+            && r2.applyTo == R.APPLY_TO_START_VERTEX) {
+            return 1;
+        }
+
+        // Then just compare by order
+        return r1.order == r2.order ? 0 : (r1.order < r2.order ? -1 : 1);
+    }
+
+    // ---------------
+    // Traversing methods
+
+    private _traceEdge(segment: GraphDbLinkedSegment,
+                       edge: GraphDbLinkedEdge,
+                       fromVertex: GraphDbLinkedVertex | null): void {
+        if (this._checkAlreadyTraced({edgeKey: edge.key}))
+            return;
+
+        if (!this._matchTraceRules({edge: edge}))
+            return;
+
+        this._addEdge(edge);
+
+        if (fromVertex != null) {
+            const toVertex = edge.getOtherVertex(fromVertex.key);
+            this._traceVertex(segment, toVertex);
+
+        } else {
+            this._traceVertex(segment, edge.srcVertex);
+            this._traceVertex(segment, edge.dstVertex);
+
+        }
+    }
+
+    private _traceVertex(segment: GraphDbLinkedSegment,
+                         vertex: GraphDbLinkedVertex): void {
+        if (this._checkAlreadyTraced({vertexKey: vertex.key}))
+            return;
+
+        this._addVertex(vertex);
+
+        if (!this._matchTraceRules({vertex: vertex}))
+            return;
+
+        for (const edge of vertex.edges) {
+            this._traceEdge(segment, edge, vertex);
+        }
+
+        for (const segmentKey of vertex.linksToSegmentKeys) {
+            this._traceEdgesInNextSegment(vertex.key, segmentKey);
+        }
+
+    }
+
+    private _traceEdgesInNextSegment(vertexKey: string, segmentKey: string) {
+        this._getSegment(segmentKey)
+            .then((segment: GraphDbLinkedSegment) => {
+                const vertex = segment.vertexByKey[vertexKey];
+                if (vertex == null)
+                    throw new Error(`Vertex '${vertexKey}' is not in segment '${segmentKey}'`);
+
+                for (const edge of vertex.edges) {
+                    this._traceEdgeQueue.push({
+                        segment: segment,
+                        edge: edge,
+                        vertex: vertex
+                    });
+                }
+            })
+            .then(() => this.iterate())
+            .catch((e) => this.handlePromiseCatch(e));
+    }
+
+    // ---------------
+    // Add to _result
+
+    private _setTraceAborted(message: string) {
+        this._result.traceAbortedMessage = message;
+        throw new _TraceAbortedWithMessageError();
+    }
 
     private _addVertex(vertex: GraphDbLinkedVertex) {
         let newItem = new GraphDbTraceResultVertexTuple();
         newItem.key = vertex.key;
         newItem.props = vertex.props;
-        this.result.vertexes.push(newItem);
+        this._result.vertexes.push(newItem);
     }
 
     private _addEdge(edge: GraphDbLinkedEdge) {
@@ -156,60 +302,79 @@ export class RunTrace {
         newItem.srcVertexKey = edge.srcVertex.key;
         newItem.dstVertexKey = edge.dstVertex.key;
         newItem.props = edge.props;
-        this.result.vertexes.push(newItem);
-    }
-
-    private _setTraceAborted(message: string) {
-        this.result.traceAbortedMessage = message;
-        throw new _TraceAbortedWithMessageError();
+        this._result.vertexes.push(newItem);
     }
 
     // ---------------
     // Already Traced State
 
-    private _checkAlreadyTraced(vertexKey: string | null, edgeKey: string | null,
-                                segmentKey: string): boolean {
-        let val = `${vertexKey}, ${edgeKey}, ${segmentKey}`;
-        return this._alreadyTracedSet[val] === true;
-    }
+    private _checkAlreadyTraced(params: { vertexKey?: string, edgeKey?: string }): boolean {
+        const val = `${params.vertexKey}, ${params.edgeKey}`;
+        const traced = this._alreadyTracedSet[val] !== true;
+        if (!traced)
+            this._alreadyTracedSet[val] = true;
 
-    private _addToAlreadyTraced(vertexKey: string | null, edgeKey: string | null,
-                                segmentKey: string) {
-        let val = `${vertexKey}, ${edgeKey}, ${segmentKey}`;
-        this._alreadyTracedSet[val] = true;
-    }
-
-    // ---------------
-    // Match Edge Rules
-    private _matchEdgeTraceRules(edge: GraphDbLinkedEdge) {
-        for (let rule of this._traceConfig.rules) {
-            if (rule.applyTo != rule.APPLY_TO_EDGE)
-                continue;
-
-            if (this._matchProps(edge.props, rule))
-                return rule;
-        }
+        return traced;
     }
 
 
     // ---------------
     // Match Vertex Rules
-    private _matchVertexTraceRules(vertex: GraphDbLinkedVertex) {
-        for (let rule of this._traceConfig.rules) {
-            if (rule.applyTo != rule.APPLY_TO_VERTEX)
+    private _matchTraceRules(params: {
+        vertex?: GraphDbLinkedVertex,
+        edge?: GraphDbLinkedEdge
+    }): boolean {
+
+        const isVertex = params.vertex != null;
+        const isEdge = params.edge != null;
+        const isStartVertex = isVertex && params.vertex.key == this._startVertexOrEdgeKey;
+
+        const props = params.vertex != null ? params.vertex.props : params.edge.props;
+
+        for (let rule of this._traceRules) {
+            // Accept the conditions in which we'll run this rule
+            if (rule.applyTo == rule.APPLY_TO_VERTEX && isVertex) {
+                // pass
+
+            } else if (rule.applyTo == rule.APPLY_TO_VERTEX && isEdge) {
+                // pass
+
+            } else if (rule.applyTo == rule.APPLY_TO_VERTEX && isStartVertex) {
+                // pass
+
+            } else {
+                // Else, this isn't the right rule for this thing, move onto the next
+                continue
+            }
+
+            // If the rule doesn't match, then continue
+            if (!this._matchProps(props, rule))
                 continue;
 
-            if (this._matchProps(vertex.props, rule))
-                return rule;
+            // The rule has matched.
+
+            // Apply the action - Continue
+            if (rule.action == rule.ACTION_CONTINUE_TRACE) {
+                return true;
+            }
+
+            // Apply the action - Abort
+            if (rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE) {
+                this._setTraceAborted(rule.actionData);
+                return false;
+            }
+
+            // Apply the action - Stop
+            if (rule.action == rule.ACTION_STOP_TRACE)
+                return false;
+
+
         }
     }
 
     // ---------------
     // Match The Properties
     private _matchProps(props: {}, rule: GraphDbTraceConfigRuleTuple) {
-        if (!rule.isEnabled)
-            return false;
-
         let propVal = (props[rule.propertyName] || '').toString();
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE) {
@@ -226,13 +391,13 @@ export class RunTrace {
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_BITMASK_AND) {
             try {
-                return ((parseInt(propVal) & parseInt(rule.propertyValue)) !== 0);
+                return !!(parseInt(propVal) & parseInt(rule.propertyValue));
 
             } catch {
             }
             return false;
         }
 
-        throw new Error("NotImplementedError");
+        throw new Error(`rule.propertyValueType = ${rule.propertyValueType}`);
     }
 }

@@ -1,6 +1,10 @@
-""" Fast Graph DB
+""" Run Trace
 
-This module stores a memory resident model of a graph network.
+This module contains the logic to perform python side traces.
+
+NOTE: THIS FILE MUST BE KEPT IN SYNC WITH THE TYPESCRIPT VERSION AT :
+* peek_plugin_graphdb/plugin-module/_private/tracer-service/PrivateRunTrace.ts
+
 
 """
 import logging
@@ -33,13 +37,16 @@ class _TraceAbortedWithMessageException(Exception):
     pass
 
 
-class RunTrace:
+class PrivateRunTrace:
     def __init__(self, result: GraphDbTraceResultTuple,
                  traceConfig: GraphDbTraceConfigTuple,
                  fastDb: FastGraphDbModel,
                  startVertexOrEdgeKey: str, startSegmentKeys: List[str]) -> None:
 
-        self._traceConfig = traceConfig
+        self._traceConfigKey = traceConfig.key
+        self._traceRules = list(filter(lambda r: r.isEnabled, traceConfig.rules))
+        self._traceRules.sort(key=cmp_to_key(self._ruleSortCmp))
+
         self._fastDb = fastDb
         self._startVertexOrEdgeKey = startVertexOrEdgeKey
         self._startSegmentKeys = startSegmentKeys
@@ -51,8 +58,8 @@ class RunTrace:
 
     def run(self) -> None:
 
+        # Sort and filter the rules
         startTime = datetime.now(pytz.utc)
-        self._traceConfig.rules.sort(key=cmp_to_key(self._ruleSortCmp))
 
         try:
             # Queue up the starting point and any segments it's in
@@ -88,10 +95,13 @@ class RunTrace:
         # Log the complete
         logger.debug("Trace completed. Trace Config '%s', Start Vertex or Edge '%s'"
                      " %s vertexes, %s edges, error:'%s', in %s",
-                     self._traceConfig.key, self._startVertexOrEdgeKey,
+                     self._traceConfigKey, self._startVertexOrEdgeKey,
                      len(self._result.vertexes), len(self._result.edges),
                      self._result.traceAbortedMessage,
                      (datetime.now(pytz.utc) - startTime))
+
+    # ---------------
+    # Rule sort comparator
 
     def _ruleSortCmp(self, r1, r2):
         R = GraphDbTraceConfigRuleTuple
@@ -109,6 +119,9 @@ class RunTrace:
         if r1.order == r2.order:
             return 0
         return -1 if r1.order < r2.order else 1
+
+    # ---------------
+    # Traversing methods
 
     def _traceEdge(self, segment: GraphDbLinkedSegment,
                    edge: GraphDbLinkedEdge,
@@ -135,9 +148,6 @@ class RunTrace:
 
         if self._checkAlreadyTraced(vertex.key, None):
             return
-
-        if vertex.key == 'D0003be52COMP':
-            logger.debug("STOP AT OPEN POINT")
 
         self._addVertex(vertex)
 
@@ -205,7 +215,7 @@ class RunTrace:
 
         props = vertex.props if vertex else edge.props
 
-        for rule in self._traceConfig.rules:
+        for rule in self._traceRules:
             # Accept the conditions in which we'll run this rule
             if rule.applyTo == rule.APPLY_TO_VERTEX and isVertex:
                 pass

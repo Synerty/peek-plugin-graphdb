@@ -8,7 +8,7 @@ import logging
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
     ItemKeyIndexCacheController
-from peek_plugin_graphdb._private.client.controller.RunTrace import RunTrace
+from peek_plugin_graphdb._private.client.controller.PrivateRunTrace import PrivateRunTrace
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
     TraceConfigCacheController
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
@@ -54,7 +54,7 @@ class TracerController:
             startVertexKey=startVertexKey
         )
 
-        RunTrace(result, traceConfig, fastGraphDbModel,
-                 startVertexKey, startSegmentKeys).run()
+        PrivateRunTrace(result, traceConfig, fastGraphDbModel,
+                        startVertexKey, startSegmentKeys).run()
 
         return result
