@@ -1,14 +1,13 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
 import {graphDbTuplePrefix} from "../PluginNames";
-import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
 
 
 @addTupleType
 export class ItemKeyTuple extends Tuple {
     public static readonly tupleName = graphDbTuplePrefix + "ItemKeyTuple";
 
-    //  The modelSetId for this itemKeyIndex.
-    modelSet: GraphDbModelSetTuple = new GraphDbModelSetTuple();
+    //  The model set of this itemKeyIndex
+    modelSetKey: string;
 
     // The key of the vertex or edge
     itemKey: string;
@@ -25,27 +24,18 @@ export class ItemKeyTuple extends Tuple {
         super(ItemKeyTuple.tupleName)
     }
 
-    static unpackJson(key: string, packedJson: string): ItemKeyTuple {
+    unpackJson(key: string, packedJson: string, modelSetKey: string): ItemKeyTuple {
         // Reconstruct the data
         let objectProps: {} = JSON.parse(packedJson);
 
-        // Get out the object type
-        let thisModelSetId = objectProps['_msid'];
-        delete objectProps['_msid'];
-
-        // Create the new object
-        let newSelf = new ItemKeyTuple();
-
-        // These objects get replaced later in the UI
-        newSelf.modelSet = new GraphDbModelSetTuple();
-        newSelf.modelSet.id = thisModelSetId;
+        this.modelSetKey = modelSetKey;
 
         // Unpack the custom data here
-        newSelf.itemKey = key;
-        newSelf.itemType = objectProps["itemType"];
-        newSelf.segmentKeys = objectProps["segmentKeys"];
+        this.itemKey = key;
+        this.itemType = objectProps["itemType"];
+        this.segmentKeys = objectProps["segmentKeys"];
 
-        return newSelf;
+        return this;
 
     }
 }

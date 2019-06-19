@@ -471,7 +471,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
 
             return isOnlinePromise
                 .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
-                .then((packedKeyIndexes:GraphDbPackedItemKeyTuple[]) => {
+                .then((packedKeyIndexes: GraphDbPackedItemKeyTuple[]) => {
                     let itemKeys = [];
                     for (let packed of packedKeyIndexes) {
                         // Create the new object
@@ -519,7 +519,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
         for (let chunkKey of chunkKeys) {
             let keysForThisChunk = keysByChunkKey[chunkKey];
             promises.push(
-                this.getItemKeysForKeys(keysForThisChunk, chunkKey)
+                this.getItemKeysForKeys(keysForThisChunk, modelSetKey, chunkKey)
             );
         }
 
@@ -541,7 +541,8 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
      * Get the objects with matching keywords from the index..
      *
      */
-    private getItemKeysForKeys(keys: string[], chunkKey: string): Promise<ItemKeyTuple[]> {
+    private getItemKeysForKeys(keys: string[], modelSetKey: string,
+                               chunkKey: string): Promise<ItemKeyTuple[]> {
 
         if (!this.index.updateDateByChunkKey.hasOwnProperty(chunkKey)) {
             console.log(`ObjectIDs: ${keys} doesn't appear in the index`);
@@ -575,7 +576,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
 
                             let packedJson = chunkData[key];
                             foundItemKeyIndexs
-                                .push(ItemKeyTuple.unpackJson(key, packedJson));
+                                .push(new ItemKeyTuple().unpackJson(key, packedJson, modelSetKey));
 
                         }
 
