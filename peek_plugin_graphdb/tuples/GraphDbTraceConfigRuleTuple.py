@@ -11,7 +11,7 @@ class GraphDbTraceConfigRuleTuple(Tuple):
     """ Import Graph Trace Config Rule
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbImportTraceConfigRuleTuple'
+    __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceConfigRuleTuple'
 
     #:  The processing order of this rule
     order: int = TupleField()

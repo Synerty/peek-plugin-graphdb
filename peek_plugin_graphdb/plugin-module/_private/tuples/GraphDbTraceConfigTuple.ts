@@ -1,6 +1,5 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
 import {graphDbTuplePrefix} from "../PluginNames";
-import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
 import {GraphDbTraceConfigRuleTuple} from "./GraphDbTraceConfigRuleTuple";
 
 
@@ -9,7 +8,7 @@ export class GraphDbTraceConfigTuple extends Tuple {
     public static readonly tupleName = graphDbTuplePrefix + "GraphDbTraceConfigTuple";
 
     //  The modelSetId for this segment.
-    modelSet: GraphDbModelSetTuple;
+    modelSetKey: string;
 
     // The unique key of this trace config [Required]
     key: string;

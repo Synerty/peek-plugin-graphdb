@@ -26,6 +26,7 @@ import {ItemKeyIndexLoaderStatusTuple} from "./ItemKeyIndexLoaderStatusTuple";
 import {OfflineConfigTuple} from "../tuples/OfflineConfigTuple";
 import {GraphDbModelSetTuple} from "../../GraphDbModelSetTuple";
 import {GraphDbTupleService} from "../GraphDbTupleService";
+import {GraphDbPackedItemKeyTuple} from "./GraphDbPackedItemKeyTuple";
 
 // ----------------------------------------------------------------------------
 
@@ -456,7 +457,7 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
         // If there is no offline support, or we're online
         if (!this.offlineConfig.cacheChunksForOffline
             || this.vortexStatusService.snapshot.isOnline) {
-            let ts = new TupleSelector(ItemKeyTuple.tupleName, {
+            let ts = new TupleSelector(GraphDbPackedItemKeyTuple.tupleName, {
                 "modelSetKey": modelSetKey,
                 "keys": keys
             });
@@ -469,7 +470,17 @@ export class ItemKeyIndexLoaderService extends ComponentLifecycleEventEmitter {
                     .toPromise();
 
             return isOnlinePromise
-                .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false));
+                .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
+                .then((packedKeyIndexes:GraphDbPackedItemKeyTuple[]) => {
+                    let itemKeys = [];
+                    for (let packed of packedKeyIndexes) {
+                        // Create the new object
+                        let newObject = new ItemKeyTuple();
+                        newObject.unpackJson(packed.packedJson, packed.key, modelSetKey);
+                        itemKeys.push(newObject);
+                    }
+                    return itemKeys;
+                });
         }
 
 

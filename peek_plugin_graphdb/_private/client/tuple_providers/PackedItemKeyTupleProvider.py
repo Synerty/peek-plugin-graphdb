@@ -3,26 +3,26 @@ import logging
 from collections import defaultdict
 from typing import Union, List
 
-from peek_plugin_graphdb._private.tuples.GraphDbPackedSegmentTuple import \
-    GraphDbPackedSegmentTuple
 from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
 from vortex.handler.TupleDataObservableHandler import TuplesProviderABC
 
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    SegmentCacheController
-from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
-    GraphDbEncodedChunkTuple
-from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import \
-    makeChunkKeyForSegmentKey
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
+    ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
+    ItemKeyIndexEncodedChunk
+from peek_plugin_graphdb._private.tuples.GraphDbPackedItemKeyTuple import \
+    GraphDbPackedItemKeyTuple
+from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
+    makeChunkKeyForItemKey
 
 logger = logging.getLogger(__name__)
 
 
-class PackedSegmentTupleProvider(TuplesProviderABC):
-    def __init__(self, cacheController: SegmentCacheController):
+class PackedItemKeyTupleProvider(TuplesProviderABC):
+    def __init__(self, cacheController: ItemKeyIndexCacheController):
         self._cacheController = cacheController
 
     @deferToThreadWrapWithLogger(logger)
@@ -33,16 +33,16 @@ class PackedSegmentTupleProvider(TuplesProviderABC):
 
         keysByChunkKey = defaultdict(list)
 
-        foundDocuments: List[GraphDbPackedSegmentTuple] = []
+        foundDocuments: List[GraphDbPackedItemKeyTuple] = []
 
         for key in keys:
-            keysByChunkKey[makeChunkKeyForSegmentKey(modelSetKey, key)].append(key)
+            keysByChunkKey[makeChunkKeyForItemKey(modelSetKey, key)].append(key)
 
         for chunkKey, subKeys in keysByChunkKey.items():
-            chunk: GraphDbEncodedChunkTuple = self._cacheController.segmentChunk(chunkKey)
+            chunk: ItemKeyIndexEncodedChunk = self._cacheController.itemKeyIndexChunk(chunkKey)
 
             if not chunk:
-                logger.warning("GraphDb segment chunk %s is missing from cache", chunkKey)
+                logger.warning("GraphDb ItemKey chunk %s is missing from cache", chunkKey)
                 continue
 
             segmentsByKeyStr = Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
@@ -51,13 +51,13 @@ class PackedSegmentTupleProvider(TuplesProviderABC):
             for subKey in subKeys:
                 if subKey not in segmentsByKey:
                     logger.warning(
-                        "Document %s is missing from index, chunkKey %s",
+                        "ItemKey %s is missing from index, chunkKey %s",
                         subKey, chunkKey
                     )
                     continue
 
                 # Create the new object
-                foundDocuments.append(GraphDbPackedSegmentTuple(
+                foundDocuments.append(GraphDbPackedItemKeyTuple(
                     key=subKey,
                     packedJson=segmentsByKey[subKey]
                 ))

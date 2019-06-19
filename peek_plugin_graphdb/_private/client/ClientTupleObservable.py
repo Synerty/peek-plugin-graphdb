@@ -10,6 +10,8 @@ from peek_plugin_graphdb._private.client.controller.TracerController import \
     TracerController
 from peek_plugin_graphdb._private.client.tuple_providers.ItemKeyIndexUpdateDateTupleProvider import \
     ItemKeyIndexUpdateDateTupleProvider
+from peek_plugin_graphdb._private.client.tuple_providers.PackedItemKeyTupleProvider import \
+    PackedItemKeyTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.PackedSegmentTupleProvider import \
     PackedSegmentTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.SegmentUpdateDateTupleProvider import \
@@ -22,6 +24,7 @@ from peek_plugin_graphdb._private.tuples.GraphDbPackedSegmentTuple import \
     GraphDbPackedSegmentTuple
 from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import \
     ItemKeyIndexUpdateDateTuple
+from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
     SegmentIndexUpdateDateTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
@@ -64,6 +67,11 @@ def makeClientTupleDataObservableHandler(
     tupleObservable.addTupleProvider(ItemKeyIndexUpdateDateTuple.tupleName(),
                                      ItemKeyIndexUpdateDateTupleProvider(
                                          itemKeyCacheController))
+
+    tupleObservable.addTupleProvider(
+        ItemKeyTuple.tupleName(),
+        PackedItemKeyTupleProvider(itemKeyCacheController)
+    )
 
     tupleObservable.addTupleProvider(
         GraphDbPackedSegmentTuple.tupleName(),

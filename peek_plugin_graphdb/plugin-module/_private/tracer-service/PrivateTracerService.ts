@@ -63,7 +63,7 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
                     return null;
 
                 for (let tuple of tuples) {
-                    if (tuple.modelSet.key == modelSetKey
+                    if (tuple.modelSetKey == modelSetKey
                         && tuple.key == traceConfigKey) {
                         return tuple;
                     }
@@ -98,7 +98,11 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
             return this.runServerTrace(modelSetKey, traceConfigKey, startVertexKey);
         }
 
-        return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey);
+        throw new Error("Peek must be online for tracing."
+        + " Offline tracing is disabled in this release of Peek."
+        + " Please contact Synerty for the latest release with offline tracing enabled.");
+        // JJC TODO: Debug offline support
+        // return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey);
     }
 
     private runServerTrace(modelSetKey: string, traceConfigKey: string,

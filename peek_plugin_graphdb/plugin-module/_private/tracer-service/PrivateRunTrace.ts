@@ -100,7 +100,7 @@ export class PrivateRunTrace {
                         }
 
                         throw new Error("Could not find vertex or edge"
-                            + ` ${this._startVertexOrEdgeKey} of segment ${segmentKey}`
+                            + ` ${this._startVertexOrEdgeKey} of segment ${segmentKey} `
                         );
                     })
                     .then(() => this.iterate())
@@ -125,7 +125,7 @@ export class PrivateRunTrace {
                 this._asyncLoadInProgressCount--;
                 const segment = segmentsByKey[segmentKey];
                 if (segment == null) {
-                    throw new Error(`Could not find segment ${segmentKey}`);
+                    throw new Error(`Could not find segment ${segmentKey} `);
                 }
                 return segment;
             });
