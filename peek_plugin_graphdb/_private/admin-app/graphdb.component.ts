@@ -13,8 +13,8 @@ let exampleDocMod = `
 `;
 
 @Component({
-    selector: 'graphDb-admin',
-    templateUrl: 'graphDb.component.html'
+    selector: 'graphdb-admin',
+    templateUrl: 'graphdb.component.html'
 })
 export class GraphDbComponent implements OnInit {
 
