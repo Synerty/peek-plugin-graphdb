@@ -35,7 +35,7 @@
         "alembicDir": "_private/alembic"
     },
     "admin": {
-        "showHomeLink": true,
+        "showHomeLink": false,
         "appDir": "_private/admin-app",
         "appModule": "graphdb.module#GraphDbModule",
         "moduleDir": "plugin-module"
@@ -45,7 +45,7 @@
     "mobile": {
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
-        "showHomeLink": true,
+        "showHomeLink": false,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
         "assetDir": "_private/both-assets",
@@ -84,7 +84,7 @@
     "desktop": {
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
-        "showHomeLink": true,
+        "showHomeLink": false,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
         "assetDir": "_private/both-assets",
