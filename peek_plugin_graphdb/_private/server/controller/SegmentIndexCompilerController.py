@@ -28,7 +28,8 @@ class SegmentIndexCompilerController:
 
     """
 
-    FETCH_SIZE = 10
+    DE_DUPE_FETCH_SIZE = 2000
+    ITEMS_PER_TASK = 10
     PERIOD = 1.000
 
     QUEUE_MAX = 20
@@ -98,9 +99,9 @@ class SegmentIndexCompilerController:
             queueItems = yield self._grabQueueChunk()
 
         # Send the tasks to the peek worker
-        for start in range(0, len(queueItems), self.FETCH_SIZE):
+        for start in range(0, len(queueItems), self.ITEMS_PER_TASK):
 
-            items = queueItems[start: start + self.FETCH_SIZE]
+            items = queueItems[start: start + self.ITEMS_PER_TASK]
 
             # Set the watermark
             self._lastQueueId = items[-1].id
@@ -120,8 +121,8 @@ class SegmentIndexCompilerController:
             qry = (session.query(GraphDbCompilerQueue)
                    .order_by(asc(GraphDbCompilerQueue.id))
                    .filter(GraphDbCompilerQueue.id > self._lastQueueId)
-                   .yield_per(500)
-                   # .limit(self.FETCH_SIZE)
+                   .yield_per(self.DE_DUPE_FETCH_SIZE)
+                   .limit(self.DE_DUPE_FETCH_SIZE)
                    )
 
             queueItems = qry.all()
