@@ -35,7 +35,7 @@
         "alembicDir": "_private/alembic"
     },
     "admin": {
-        "showHomeLink": false,
+        "showHomeLink": true,
         "appDir": "_private/admin-app",
         "appModule": "graphdb.module#GraphDbModule",
         "moduleDir": "plugin-module"
