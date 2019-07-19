@@ -26,6 +26,20 @@ class ItemKeyIndexCompilerController:
     2) Process queue
     3) Delete from queue
 
+    TODO: Optimisation
+
+    1) Load in data using core SQL
+    2) Dedupe in the DB with SQL
+
+        with sq as (
+            SELECT min(id) as "minId"
+            FROM pl_graphdb."ItemKeyIndexCompilerQueue"
+            GROUP BY "modelSetId", "chunkKey"
+        )
+        DELETE
+        FROM pl_graphdb."ItemKeyIndexCompilerQueue"
+        WHERE "id" not in (SELECT "minId" FROM sq)
+
     """
 
     DE_DUPE_FETCH_SIZE = 2000
