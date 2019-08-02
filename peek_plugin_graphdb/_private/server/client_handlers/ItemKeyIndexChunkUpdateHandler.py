@@ -85,7 +85,7 @@ class ItemKeyIndexChunkUpdateHandler:
 
             return (
                 Payload(filt=clientItemKeyIndexUpdateFromServerFilt, tuples=results)
-                    .makePayloadEnvelope().toVortexMsg()
+                    .makePayloadEnvelope(compressionLevel=3).toVortexMsg()
             )
 
         finally:

@@ -86,7 +86,7 @@ class SegmentChunkIndexUpdateHandler:
 
             return (
                 Payload(filt=clientSegmentUpdateFromServerFilt, tuples=results)
-                    .makePayloadEnvelope().toVortexMsg()
+                    .makePayloadEnvelope(compressionLevel=3).toVortexMsg()
             )
 
         finally:
