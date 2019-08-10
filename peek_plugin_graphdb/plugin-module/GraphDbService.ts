@@ -36,6 +36,16 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
     }
 
 
+    /** Does Key Exist
+     *
+     * Does the key exist in the GraphDB Model
+     *
+     */
+    doesKeyExist(modelSetKey: string, vertexOrEdgeKey: string): Promise<boolean> {
+        return this.tracerService.doesKeyExist(modelSetKey, vertexOrEdgeKey);
+    }
+
+
     /** Get Trace Result
      *
      * Trace the graph with a pre-defined trace rule, and return a flat model

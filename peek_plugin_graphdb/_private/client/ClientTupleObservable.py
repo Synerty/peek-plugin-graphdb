@@ -8,6 +8,8 @@ from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController i
     TraceConfigCacheController
 from peek_plugin_graphdb._private.client.controller.TracerController import \
     TracerController
+from peek_plugin_graphdb._private.client.tuple_providers.GraphDbDoesKeyExistTupleProvider import \
+    GraphDbDoesKeyExistTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.ItemKeyIndexUpdateDateTupleProvider import \
     ItemKeyIndexUpdateDateTupleProvider
 from peek_plugin_graphdb._private.client.tuple_providers.PackedItemKeyTupleProvider import \
@@ -27,6 +29,7 @@ from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import \
 from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
     SegmentIndexUpdateDateTuple
+from peek_plugin_graphdb.tuples.GraphDbDoesKeyExistTuple import GraphDbDoesKeyExistTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
 
@@ -64,9 +67,10 @@ def makeClientTupleDataObservableHandler(
         TraceConfigTupleProvider(traceConfigCacheController)
     )
 
-    tupleObservable.addTupleProvider(ItemKeyIndexUpdateDateTuple.tupleName(),
-                                     ItemKeyIndexUpdateDateTupleProvider(
-                                         itemKeyCacheController))
+    tupleObservable.addTupleProvider(
+        ItemKeyIndexUpdateDateTuple.tupleName(),
+        ItemKeyIndexUpdateDateTupleProvider(itemKeyCacheController)
+    )
 
     tupleObservable.addTupleProvider(
         ItemKeyTuple.tupleName(),
@@ -76,4 +80,9 @@ def makeClientTupleDataObservableHandler(
     tupleObservable.addTupleProvider(
         GraphDbPackedSegmentTuple.tupleName(),
         PackedSegmentTupleProvider(segmentCacheController)
+    )
+
+    tupleObservable.addTupleProvider(
+        GraphDbDoesKeyExistTuple.tupleName(),
+        GraphDbDoesKeyExistTupleProvider(itemKeyCacheController)
     )

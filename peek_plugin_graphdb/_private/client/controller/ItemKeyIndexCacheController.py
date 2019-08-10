@@ -2,6 +2,12 @@ import json
 import logging
 from typing import Dict, List
 
+from twisted.internet.defer import inlineCallbacks
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+from vortex.Payload import Payload
+from vortex.PayloadEndpoint import PayloadEndpoint
+from vortex.PayloadEnvelope import PayloadEnvelope
+
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRpc import \
     ItemKeyIndexChunkLoadRpc
@@ -9,10 +15,6 @@ from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
     ItemKeyIndexEncodedChunk
 from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
     makeChunkKeyForItemKey
-from twisted.internet.defer import inlineCallbacks
-from vortex.Payload import Payload
-from vortex.PayloadEndpoint import PayloadEndpoint
-from vortex.PayloadEnvelope import PayloadEnvelope
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +107,7 @@ class ItemKeyIndexCacheController:
     def getSegmentKeys(self, modelSetKey: str, vertexKey: str) -> List[str]:
 
         chunkKey = makeChunkKeyForItemKey(modelSetKey, vertexKey)
-
-        chunk: ItemKeyIndexEncodedChunk = (
-            self.itemKeyIndexChunk(chunkKey)
-        )
+        chunk: ItemKeyIndexEncodedChunk = self.itemKeyIndexChunk(chunkKey)
 
         if not chunk:
             logger.warning("ItemKeyIndex chunk %s is missing from cache", chunkKey)
@@ -129,3 +128,17 @@ class ItemKeyIndexCacheController:
         segmentKeys = json.loads(packedJson)
 
         return segmentKeys
+
+    @deferToThreadWrapWithLogger(logger)
+    def doesKeyExist(self, modelSetKey: str, vertexOrEdgeKey: str) -> bool:
+
+        chunkKey = makeChunkKeyForItemKey(modelSetKey, vertexOrEdgeKey)
+        chunk: ItemKeyIndexEncodedChunk = self.itemKeyIndexChunk(chunkKey)
+
+        if not chunk:
+            return False
+
+        resultsByKeyStr = Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        resultsByKey = json.loads(resultsByKeyStr)
+
+        return vertexOrEdgeKey in resultsByKey

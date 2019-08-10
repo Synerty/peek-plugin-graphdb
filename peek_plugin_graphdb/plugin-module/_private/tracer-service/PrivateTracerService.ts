@@ -14,6 +14,7 @@ import {GraphDbTraceConfigTuple} from "../tuples/GraphDbTraceConfigTuple";
 import {ItemKeyIndexLoaderService} from "../item-key-index-loader";
 import {GraphDbTraceResultTuple} from "../../GraphDbTraceResultTuple";
 import {PrivateRunTrace} from "./PrivateRunTrace";
+import {GraphDbDoesKeyExistTuple} from "../../GraphDbDoesKeyExistTuple";
 
 // ----------------------------------------------------------------------------
 
@@ -73,6 +74,53 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
         return promise;
     }
 
+    doesKeyExist(modelSetKey: string, vertexOrEdgeKey: string): Promise<boolean> {
+        if (modelSetKey == null || modelSetKey.length == 0) {
+            return Promise.reject("We've been passed a null/empty modelSetKey");
+        }
+
+        if (vertexOrEdgeKey == null || vertexOrEdgeKey.length == 0) {
+            return Promise.reject("We've been passed a null/empty vertexOrEdgeKey");
+        }
+
+
+        if (!this.offlineConfig.cacheChunksForOffline
+            || this.vortexStatusService.snapshot.isOnline) {
+            return this.doesKeyExistServer(modelSetKey, vertexOrEdgeKey);
+        }
+
+        throw new Error("Peek must be online for tracing."
+            + " Offline tracing is disabled in this release of Peek."
+            + " Please contact Synerty for the latest release with offline tracing enabled.");
+        // JJC TODO: Debug offline support
+        // return this.doesKeyExistLocal(modelSetKey, vertexOrEdgeKey);
+
+    }
+
+    private async doesKeyExistServer(modelSetKey: string, vertexOrEdgeKey: string): Promise<boolean> {
+        const ts = new TupleSelector(GraphDbDoesKeyExistTuple.tupleName, {
+            "modelSetKey": modelSetKey,
+            "vertexOrEdgeKey": vertexOrEdgeKey
+        });
+
+        if (!this.vortexStatusService.snapshot.isOnline) {
+            await this.vortexStatusService.isOnline
+                .filter(online => online)
+                .first()
+                .toPromise();
+        }
+
+        const tuples: GraphDbDoesKeyExistTuple[] = <any>await this.tupleService
+            .offlineObserver.pollForTuples(ts, false);
+        return tuples.length != 0 && tuples[0].exists;
+    }
+
+
+    private async doesKeyExistLocal(modelSetKey: string, vertexOrEdgeKey: string): Promise<boolean> {
+        const keys = await this.itemKeyLoader.getSegmentKeys(modelSetKey, vertexOrEdgeKey);
+        return keys.length != 0;
+    }
+
     /** Get Segments
      *
      * Get the objects with matching keywords from the index..
@@ -99,8 +147,8 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
         }
 
         throw new Error("Peek must be online for tracing."
-        + " Offline tracing is disabled in this release of Peek."
-        + " Please contact Synerty for the latest release with offline tracing enabled.");
+            + " Offline tracing is disabled in this release of Peek."
+            + " Please contact Synerty for the latest release with offline tracing enabled.");
         // JJC TODO: Debug offline support
         // return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey);
     }
