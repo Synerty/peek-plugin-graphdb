@@ -1,5 +1,6 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
 import {graphDbTuplePrefix} from "./_private/PluginNames";
+import {GraphDbLinkedEdge} from "./GraphDbLinkedEdge";
 
 /** GraphDB Trace Result Edge Tuple
  *
@@ -18,6 +19,14 @@ export class GraphDbTraceResultEdgeTuple extends Tuple {
 
     //  The key of the vertex start point of this trace
     dstVertexKey: string;
+
+    //  Is source upstream or downstream?
+    srcDirection: number;
+
+    static readonly DIR_UNKNOWN = GraphDbLinkedEdge.DIR_UNKNOWN;
+    static readonly DIR_SRC_IS_UPSTREAM = GraphDbLinkedEdge.DIR_SRC_IS_UPSTREAM;
+    static readonly DIR_SRC_IS_DOWNSTREAM = GraphDbLinkedEdge.DIR_SRC_IS_DOWNSTREAM;
+    static readonly DIR_SRC_IS_BOTH = GraphDbLinkedEdge.DIR_SRC_IS_BOTH;
 
     //  The edges
     props: {};

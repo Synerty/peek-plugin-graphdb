@@ -58,6 +58,7 @@ export class GraphDbLinkedSegment {
         for (let jsonEdge of jsonDict["edges"]) {
             let newEdge = new GraphDbLinkedEdge();
             newEdge.key = jsonEdge["k"];
+            newEdge.srcDirection = jsonEdge["sd"];
             newEdge.props = jsonEdge["p"];
             newEdge.srcVertex = this.vertexByKey[jsonEdge["sk"]];
             newEdge.dstVertex = this.vertexByKey[jsonEdge["dk"]];

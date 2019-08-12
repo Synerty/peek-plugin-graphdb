@@ -36,6 +36,12 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
     readonly PROP_VAL_TYPE_COMMA_LIST = 2;
     readonly PROP_VAL_TYPE_REGEX = 3;
     readonly PROP_VAL_TYPE_BITMASK_AND = 4;
+    readonly PROP_VAL_TYPE_DIRECTION = 4;
+
+    //  Trace edge src/dst direction
+    readonly PROP_VAL_TRACE_UPSTREAM = 2 ** 0;
+    readonly PROP_VAL_TRACE_DOWNSTREAM = 2 ** 1;
+    readonly PROP_VAL_TRACE_BOTH = 2 ** 2;
 
     //  The comment for this rule
     comment: string | null;
@@ -58,8 +64,7 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
             for (let val of splitVals) {
                 this.preparedValueSet[val] = true;
             }
-        }
-        else if (this.propertyValueType == this.PROP_VAL_TYPE_REGEX) {
+        } else if (this.propertyValueType == this.PROP_VAL_TYPE_REGEX) {
             this.preparedRegex = new RegExp(this.propertyValue);
         }
     }

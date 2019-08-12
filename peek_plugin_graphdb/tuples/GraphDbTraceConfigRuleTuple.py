@@ -43,6 +43,12 @@ class GraphDbTraceConfigRuleTuple(Tuple):
     PROP_VAL_TYPE_COMMA_LIST = 2
     PROP_VAL_TYPE_REGEX = 3
     PROP_VAL_TYPE_BITMASK_AND = 4
+    PROP_VAL_TYPE_DIRECTION = 5
+
+    #:  Trace edge src/dst direction
+    PROP_VAL_TRACE_UPSTREAM = 2 ** 0
+    PROP_VAL_TRACE_DOWNSTREAM = 2 ** 1
+    PROP_VAL_TRACE_BOTH = 2 ** 2
 
     #:  The comment for this rule
     comment: str = TupleField()

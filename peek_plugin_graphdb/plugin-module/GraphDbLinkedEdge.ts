@@ -12,6 +12,14 @@ export class GraphDbLinkedEdge {
     //  The dst vertex
     dstVertex: GraphDbLinkedVertex;
 
+    //  Is source upstream or downstream?
+    srcDirection: number;
+
+    static readonly  DIR_UNKNOWN = 0;
+    static readonly  DIR_SRC_IS_UPSTREAM = 1;
+    static readonly  DIR_SRC_IS_DOWNSTREAM = 2;
+    static readonly  DIR_SRC_IS_BOTH = 3;
+
     //  The properties of this edge
     props: {};
 

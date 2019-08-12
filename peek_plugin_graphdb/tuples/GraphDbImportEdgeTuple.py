@@ -1,7 +1,8 @@
 from typing import Dict, Any
 
-from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType
+
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 
 
 @addTupleType
@@ -12,8 +13,13 @@ class GraphDbImportEdgeTuple(Tuple):
 
     """
     __tupleType__ = graphDbTuplePrefix + 'GraphDbImportEdgeTuple'
-    __slots__ = ("k", "sk", "dk", "p")
+    __slots__ = ("k", "sk", "dk", "p", "sd")
     __rawJonableFields__ = ["p"]
+
+    DIR_UNKNOWN = 0
+    DIR_SRC_IS_UPSTREAM = 1
+    DIR_SRC_IS_DOWNSTREAM = 2
+    DIR_SRC_IS_BOTH = 3
 
     @property
     def key(self) -> str:
@@ -40,6 +46,14 @@ class GraphDbImportEdgeTuple(Tuple):
         self.dk = val
 
     @property
+    def srcDirection(self) -> int:
+        return self.sd
+
+    @srcDirection.setter
+    def srcDirection(self, val) -> None:
+        self.sd = val
+
+    @property
     def props(self) -> Dict[str, str]:
         if self.p is None:
             self.p = {}
@@ -50,12 +64,15 @@ class GraphDbImportEdgeTuple(Tuple):
         self.p = val
 
     def __repr__(self):
-        return '%s.%s.%s.%s' % (self.k, self.sk, self.dk, self.p)
+        return '%s.%s.%s.%s.%s' % (self.k, self.sk, self.dk, self.sd, self.p)
 
     def packJsonDict(self) -> Dict[str, Any]:
-        return dict(
+        jsonDict = dict(
             k=self.k,
             sk=self.sk,
             dk=self.dk,
             p=self.p
         )
+        if self.sd:
+            jsonDict["sd"] = self.sd
+        return jsonDict

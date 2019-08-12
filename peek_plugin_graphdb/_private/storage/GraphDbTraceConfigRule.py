@@ -38,7 +38,7 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
     actionData = Column(String)
 
     #: The name of the property to apply the rule to
-    propertyName = Column(String, nullable=False)
+    propertyName = Column(String)
 
     #:  A comma separated list of property values to match
     propertyValue = Column(String, nullable=False)

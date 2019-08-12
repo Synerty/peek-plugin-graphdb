@@ -130,7 +130,8 @@ class PrivateRunTrace:
         if self._checkAlreadyTraced(None, edge.key):
             return
 
-        if not self._matchTraceRules(edge=edge):
+        if not self._matchTraceRules(edge=edge,
+                                     fromSrcVertex=edge.srcVertex.key == fromVertex.key):
             return
 
         self._addEdge(edge)
@@ -208,7 +209,8 @@ class PrivateRunTrace:
     # ---------------
     # Match Vertex Rules
     def _matchTraceRules(self, vertex: Optional[GraphDbLinkedVertex] = None,
-                         edge: Optional[GraphDbLinkedEdge] = None) -> bool:
+                         edge: Optional[GraphDbLinkedEdge] = None,
+                         fromSrcVertex: Optional[bool] = None) -> bool:
         isVertex = vertex is not None
         isEdge = edge is not None
         isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
@@ -231,7 +233,7 @@ class PrivateRunTrace:
                 continue
 
             # If the rule doesn't match, then continue
-            if not self._matchProps(props, rule):
+            if not self._matchProps(props, rule, fromSrcVertex, edge):
                 continue
 
             # The rule has matched.
@@ -255,7 +257,9 @@ class PrivateRunTrace:
     # ---------------
     # Match The Properties
     def _matchProps(self, props: Dict,
-                    rule: GraphDbTraceConfigRuleTuple):
+                    rule: GraphDbTraceConfigRuleTuple,
+                    fromSrcVertex: Optional[bool],
+                    edge: Optional[GraphDbLinkedEdge]):
         propVal = str(props.get(rule.propertyName))
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE:
@@ -275,6 +279,36 @@ class PrivateRunTrace:
                 pass
 
             return False
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
+            E = GraphDbLinkedEdge
+            if fromSrcVertex:
+                goingUpstream = edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
+            else:
+                goingUpstream = edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
+
+            if fromSrcVertex:
+                goingDownstream = edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
+            else:
+                goingDownstream = edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
+
+            goingBoth = edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_BOTH
+
+            bitVal = 0
+            if goingDownstream: bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM
+            if goingUpstream: bitVal += rule.PROP_VAL_TRACE_UPSTREAM
+            if goingBoth: bitVal += rule.PROP_VAL_TRACE_BOTH
+
+            try:
+                return bool(bitVal & int(rule.propertyValue))
+
+            except ValueError:
+                pass
+
+            return False
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
+            return rule.preparedRegex.match(propVal)
 
         raise NotImplementedError("rule.propertyValueType  = %s"
                                   % rule.propertyValueType)

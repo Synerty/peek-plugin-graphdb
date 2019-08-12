@@ -226,7 +226,10 @@ export class PrivateRunTrace {
         if (this._checkAlreadyTraced({edgeKey: edge.key}))
             return;
 
-        if (!this._matchTraceRules({edge: edge}))
+        if (!this._matchTraceRules({
+            edge: edge,
+            fromSrcVertex: edge.srcVertex.key == fromVertex.key
+        }))
             return;
 
         this._addEdge(edge);
@@ -322,7 +325,8 @@ export class PrivateRunTrace {
     // Match Vertex Rules
     private _matchTraceRules(params: {
         vertex?: GraphDbLinkedVertex,
-        edge?: GraphDbLinkedEdge
+        edge?: GraphDbLinkedEdge,
+        fromSrcVertex?: boolean
     }): boolean {
 
         const isVertex = params.vertex != null;
@@ -348,7 +352,7 @@ export class PrivateRunTrace {
             }
 
             // If the rule doesn't match, then continue
-            if (!this._matchProps(props, rule))
+            if (!this._matchProps(props, rule, params.fromSrcVertex, params.edge))
                 continue;
 
             // The rule has matched.
@@ -374,7 +378,8 @@ export class PrivateRunTrace {
 
     // ---------------
     // Match The Properties
-    private _matchProps(props: {}, rule: GraphDbTraceConfigRuleTuple) {
+    private _matchProps(props: {}, rule: GraphDbTraceConfigRuleTuple,
+                        fromSrcVertex?: boolean, edge?: GraphDbLinkedEdge) {
         let propVal = (props[rule.propertyName] || '').toString();
 
         if (rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE) {
@@ -398,6 +403,30 @@ export class PrivateRunTrace {
             return false;
         }
 
+        if (rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION) {
+            const goingUpstream = fromSrcVertex
+                ? edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_DOWNSTREAM
+                : edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_UPSTREAM;
+
+            const goingDownstream = fromSrcVertex
+                ? edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_UPSTREAM
+                : edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_DOWNSTREAM;
+
+            const goingBoth = edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_BOTH;
+
+            let bitVal = 0;
+            if (goingDownstream) bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM;
+            if (goingUpstream) bitVal += rule.PROP_VAL_TRACE_UPSTREAM;
+            if (goingBoth) bitVal += rule.PROP_VAL_TRACE_BOTH;
+
+            try {
+                return !!(bitVal & parseInt(rule.propertyValue));
+            } catch {
+            }
+            return false;
+        }
+
         throw new Error(`rule.propertyValueType = ${rule.propertyValueType}`);
     }
+
 }
