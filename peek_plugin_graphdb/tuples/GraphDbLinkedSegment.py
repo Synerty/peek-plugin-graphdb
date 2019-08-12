@@ -50,7 +50,7 @@ class GraphDbLinkedSegment:
             newEdge = GraphDbLinkedEdge()
             newEdge._k = jsonEdge["k"]
             newEdge._p = jsonEdge["p"]
-            newEdge._sd = jsonEdge["sd"]
+            newEdge._sd = jsonEdge.get("sd")
             newEdge._s = self.vertexByKey[jsonEdge["sk"]]
             newEdge._d = self.vertexByKey[jsonEdge["dk"]]
             newEdge.srcVertex._e.append(newEdge)

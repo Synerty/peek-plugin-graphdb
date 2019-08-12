@@ -91,6 +91,7 @@ class GraphDbTraceConfigRuleTuple(Tuple):
         if self.propertyValueType == self.PROP_VAL_TYPE_COMMA_LIST: return "CSV"
         if self.propertyValueType == self.PROP_VAL_TYPE_REGEX: return "Regexp"
         if self.propertyValueType == self.PROP_VAL_TYPE_BITMASK_AND: return "AND"
+        if self.propertyValueType == self.PROP_VAL_TYPE_DIRECTION: return "Direction"
         raise NotImplementedError()
 
     def __repr__(self):

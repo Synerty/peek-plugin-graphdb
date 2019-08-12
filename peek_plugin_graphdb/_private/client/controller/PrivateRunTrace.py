@@ -41,7 +41,8 @@ class PrivateRunTrace:
     def __init__(self, result: GraphDbTraceResultTuple,
                  traceConfig: GraphDbTraceConfigTuple,
                  fastDb: FastGraphDbModel,
-                 startVertexOrEdgeKey: str, startSegmentKeys: List[str]) -> None:
+                 startVertexOrEdgeKey: str, startSegmentKeys: List[str],
+                 maxVertexes: Optional[int] = None) -> None:
 
         self._traceConfigKey = traceConfig.key
         self._traceRules = list(filter(lambda r: r.isEnabled, traceConfig.rules))
@@ -50,6 +51,7 @@ class PrivateRunTrace:
         self._fastDb = fastDb
         self._startVertexOrEdgeKey = startVertexOrEdgeKey
         self._startSegmentKeys = startSegmentKeys
+        self._maxVertexes = maxVertexes
 
         self._alreadyTracedSet = set()
         self._result = result
@@ -190,6 +192,10 @@ class PrivateRunTrace:
         ))
 
     def _addVertex(self, vertex: GraphDbLinkedVertex):
+        if self._maxVertexes and len(self._result.vertexes) >= self._maxVertexes:
+            self._setTraceAborted("Trace exceeded maximum vertexes of %s"
+                                  % self._maxVertexes)
+
         self._result.vertexes.append(GraphDbTraceResultVertexTuple(
             key=vertex.key,
             props=vertex.props

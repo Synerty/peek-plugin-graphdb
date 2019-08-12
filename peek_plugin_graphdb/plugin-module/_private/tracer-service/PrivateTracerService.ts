@@ -127,7 +127,7 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
      *
      */
     runTrace(modelSetKey: string, traceConfigKey: string,
-             startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+             startVertexKey: string, maxVertexes: number | null = null): Promise<GraphDbTraceResultTuple> {
 
         if (modelSetKey == null || modelSetKey.length == 0) {
             return Promise.reject("We've been passed a null/empty modelSetKey");
@@ -143,23 +143,25 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
 
         if (!this.offlineConfig.cacheChunksForOffline
             || this.vortexStatusService.snapshot.isOnline) {
-            return this.runServerTrace(modelSetKey, traceConfigKey, startVertexKey);
+            return this.runServerTrace(modelSetKey, traceConfigKey,
+                startVertexKey, maxVertexes);
         }
 
         throw new Error("Peek must be online for tracing."
             + " Offline tracing is disabled in this release of Peek."
             + " Please contact Synerty for the latest release with offline tracing enabled.");
         // JJC TODO: Debug offline support
-        // return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey);
+        // return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey, maxVertexes);
     }
 
     private runServerTrace(modelSetKey: string, traceConfigKey: string,
-                           startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+                           startVertexKey: string, maxVertexes: number): Promise<GraphDbTraceResultTuple> {
 
         let ts = new TupleSelector(GraphDbTraceResultTuple.tupleName, {
             "modelSetKey": modelSetKey,
             "traceConfigKey": traceConfigKey,
-            "startVertexKey": startVertexKey
+            "startVertexKey": startVertexKey,
+            "maxVertexes": maxVertexes
         });
 
         let isOnlinePromise: any = this.vortexStatusService.snapshot.isOnline ?
@@ -175,7 +177,7 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
     }
 
     private runLocalTrace(modelSetKey: string, traceConfigKey: string,
-                          startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+                          startVertexKey: string, maxVertexes: number): Promise<GraphDbTraceResultTuple> {
 
         let result = new GraphDbTraceResultTuple();
         result.modelSetKey = modelSetKey;
@@ -201,7 +203,7 @@ export class PrivateTracerService extends ComponentLifecycleEventEmitter {
             .then((startSegmentKeys: string[]) => {
                 const runTrace = new PrivateRunTrace(result, traceConfigParam,
                     this.segmentLoader, startVertexKey,
-                    startSegmentKeys);
+                    startSegmentKeys, maxVertexes);
 
                 return runTrace.run();
             })

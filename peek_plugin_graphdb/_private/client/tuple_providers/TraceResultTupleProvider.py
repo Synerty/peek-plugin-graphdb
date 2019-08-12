@@ -21,9 +21,10 @@ class TraceResultTupleProvider(TuplesProviderABC):
         modelSetKey = tupleSelector.selector["modelSetKey"]
         startVertexKey = tupleSelector.selector["startVertexKey"]
         traceConfigKey = tupleSelector.selector["traceConfigKey"]
+        maxVertexes = tupleSelector.selector.get("maxVertexes")
 
         traceResult = yield self._tracerController.runTrace(
-            modelSetKey, traceConfigKey, startVertexKey
+            modelSetKey, traceConfigKey, startVertexKey, maxVertexes
         )
 
         envelope = yield Payload(filt, tuples=[traceResult]).makePayloadEnvelopeDefer()

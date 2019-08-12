@@ -55,7 +55,8 @@ export class PrivateRunTrace {
                 traceConfig: GraphDbTraceConfigTuple,
                 private segmentLoader: PrivateSegmentLoaderService,
                 private _startVertexOrEdgeKey: string,
-                private _startSegmentKeys: string[]) {
+                private _startSegmentKeys: string[],
+                private _maxVertexes: null | number = null) {
 
         this._traceConfigKey = traceConfig.key;
         this._traceRules = traceConfig.rules.filter(r => r.isEnabled);
@@ -293,6 +294,10 @@ export class PrivateRunTrace {
     }
 
     private _addVertex(vertex: GraphDbLinkedVertex) {
+        if (this._maxVertexes && this._result.vertexes.length >= this._maxVertexes) {
+            this._setTraceAborted(`Trace exceeded maximum vertexes of ${this._maxVertexes}`);
+        }
+
         let newItem = new GraphDbTraceResultVertexTuple();
         newItem.key = vertex.key;
         newItem.props = vertex.props;

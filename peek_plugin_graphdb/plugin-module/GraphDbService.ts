@@ -52,10 +52,11 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
      *
      */
     getTraceResult(modelSetKey: string, traceConfigKey: string,
-                   startVertexKey: string): Promise<GraphDbTraceResultTuple> {
+                   startVertexKey: string,
+                   maxVertexes: number | null = null): Promise<GraphDbTraceResultTuple> {
 
         return this.tracerService
-            .runTrace(modelSetKey, traceConfigKey, startVertexKey);
+            .runTrace(modelSetKey, traceConfigKey, startVertexKey, maxVertexes);
     }
 
     /** Get Trace Model
@@ -64,10 +65,11 @@ export class GraphDbService extends ComponentLifecycleEventEmitter {
      *
      */
     getTraceModel(modelSetKey: string, traceConfigKey: string,
-                  startVertexKey: string): Promise<GraphDbLinkedModel> {
+                  startVertexKey: string,
+                  maxVertexes: number | null = null): Promise<GraphDbLinkedModel> {
 
         return this.tracerService
-            .runTrace(modelSetKey, traceConfigKey, startVertexKey)
+            .runTrace(modelSetKey, traceConfigKey, startVertexKey, maxVertexes)
             .then((result: GraphDbTraceResultTuple) => {
                 return GraphDbLinkedModel.createFromTraceResult(result);
             });

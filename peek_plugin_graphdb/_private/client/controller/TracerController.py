@@ -4,6 +4,7 @@ This module stores a memory resident model of a graph network.
 
 """
 import logging
+from typing import Optional
 
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
@@ -32,7 +33,8 @@ class TracerController:
 
     @deferToThreadWrapWithLogger(logger)
     def runTrace(self, modelSetKey, traceConfigKey,
-                 startVertexKey) -> GraphDbTraceResultTuple:
+                 startVertexKey,
+                 maxVertexes: Optional[int] = None) -> GraphDbTraceResultTuple:
         traceConfig = self._traceConfigCacheController.traceConfigTuple(
             modelSetKey=modelSetKey, traceConfigKey=traceConfigKey
         )
@@ -55,6 +57,6 @@ class TracerController:
         )
 
         PrivateRunTrace(result, traceConfig, fastGraphDbModel,
-                        startVertexKey, startSegmentKeys).run()
+                        startVertexKey, startSegmentKeys, maxVertexes).run()
 
         return result
