@@ -132,8 +132,8 @@ class PrivateRunTrace:
         if self._checkAlreadyTraced(None, edge.key):
             return
 
-        if not self._matchTraceRules(edge=edge,
-                                     fromSrcVertex=edge.srcVertex.key == fromVertex.key):
+        fromSrcVertex = fromVertex and edge.srcVertex.key == fromVertex.key
+        if not self._matchTraceRules(edge=edge, fromSrcVertex=fromSrcVertex):
             return
 
         self._addEdge(edge)

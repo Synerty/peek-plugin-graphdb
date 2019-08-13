@@ -227,10 +227,8 @@ export class PrivateRunTrace {
         if (this._checkAlreadyTraced({edgeKey: edge.key}))
             return;
 
-        if (!this._matchTraceRules({
-            edge: edge,
-            fromSrcVertex: edge.srcVertex.key == fromVertex.key
-        }))
+        const fromSrcVertex = fromVertex && edge.srcVertex.key == fromVertex.key;
+        if (!this._matchTraceRules({edge: edge, fromSrcVertex: fromSrcVertex}))
             return;
 
         this._addEdge(edge);
