@@ -10,6 +10,8 @@ from peek_plugin_base.PeekVortexUtil import peekClientName
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     clientSegmentUpdateFromServerFilt
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
+    GraphDbEncodedChunkTuple
 
 logger = logging.getLogger(__name__)
 
@@ -81,8 +83,12 @@ class SegmentChunkIndexUpdateHandler:
                     .filter(GraphDbEncodedChunk.chunkKey.in_(chunkKeys))
             ]
 
-            if not results:
-                return None
+            deletedChunkKeys = set(chunkKeys) - set([r.chunkKey for r in results])
+
+            for chunkKey in deletedChunkKeys:
+                results.append(GraphDbEncodedChunkTuple(
+                    chunkKey=chunkKey
+                ))
 
             return (
                 Payload(filt=clientSegmentUpdateFromServerFilt, tuples=results)

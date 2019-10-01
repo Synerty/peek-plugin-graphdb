@@ -87,6 +87,12 @@ class SegmentCacheController:
         chunkKeysUpdatedByModelSet: Dict[str, List[str]] = defaultdict(list)
 
         for t in encodedChunkTuples:
+            if not t.encodedData:
+                if t.chunkKey in self._cache:
+                    del self._cache[t.chunkKey]
+                    # TODO: Notify the clients when a chunk key is deleted
+                    # chunkKeysUpdated.append(t.chunkKey)
+                continue
 
             if (not t.chunkKey in self._cache or
                     self._cache[t.chunkKey].lastUpdate != t.lastUpdate):

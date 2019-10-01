@@ -37,7 +37,7 @@ class ItemKeyIndexCacheController:
         self._webAppHandler = None
 
         #: This stores the cache of itemKeyIndex data for the clients
-        self._cache: Dict[int, ItemKeyIndexEncodedChunk] = {}
+        self._cache: Dict[str, ItemKeyIndexEncodedChunk] = {}
 
         self._endpoint = PayloadEndpoint(clientItemKeyIndexUpdateFromServerFilt,
                                          self._processItemKeyIndexPayload)
@@ -88,6 +88,11 @@ class ItemKeyIndexCacheController:
         chunkKeysUpdated: List[str] = []
 
         for t in encodedChunkTuples:
+            if not t.encodedData:
+                if t.chunkKey in self._cache:
+                    del self._cache[t.chunkKey]
+                    chunkKeysUpdated.append(t.chunkKey)
+                continue
 
             if (not t.chunkKey in self._cache or
                     self._cache[t.chunkKey].lastUpdate != t.lastUpdate):

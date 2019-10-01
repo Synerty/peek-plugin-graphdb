@@ -1,15 +1,16 @@
 import logging
 from typing import List, Optional
 
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
-    clientItemKeyIndexUpdateFromServerFilt
 from twisted.internet.defer import Deferred
-
-from peek_plugin_base.PeekVortexUtil import peekClientName
-from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import ItemKeyIndexEncodedChunk
 from vortex.DeferUtil import vortexLogFailure, deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 from vortex.VortexFactory import VortexFactory, NoVortexException
+
+from peek_plugin_base.PeekVortexUtil import peekClientName
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
+    clientItemKeyIndexUpdateFromServerFilt
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
+    ItemKeyIndexEncodedChunk
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,8 @@ class ItemKeyIndexChunkUpdateHandler:
             return
 
         if peekClientName not in VortexFactory.getRemoteVortexName():
-            logger.debug("No clients are online to send the itemKey chunk to, %s", chunkKeys)
+            logger.debug("No clients are online to send the itemKey chunk to, %s",
+                         chunkKeys)
             return
 
         def send(vortexMsg: bytes):
@@ -80,8 +82,12 @@ class ItemKeyIndexChunkUpdateHandler:
                     .filter(ItemKeyIndexEncodedChunk.chunkKey.in_(chunkKeys))
             )
 
-            if not results:
-                return None
+            deletedChunkKeys = set(chunkKeys) - set([r.chunkKey for r in results])
+
+            for chunkKey in deletedChunkKeys:
+                results.append(ItemKeyIndexEncodedChunk(
+                    chunkKey=chunkKey
+                ))
 
             return (
                 Payload(filt=clientItemKeyIndexUpdateFromServerFilt, tuples=results)
