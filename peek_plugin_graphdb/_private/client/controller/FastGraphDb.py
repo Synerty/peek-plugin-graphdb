@@ -67,21 +67,26 @@ class FastGraphDbModel:
         for chunkKey in chunkKeys:
             graphDbEncodedChunkTuple = self._cacheController.segmentChunk(chunkKey)
 
-            segments = yield self._unpackSegmentsFromChunk(graphDbEncodedChunkTuple)
-            segmentKeys = set([s.key for s in segments])
+            if graphDbEncodedChunkTuple:
+                segments = yield self._unpackSegmentsFromChunk(graphDbEncodedChunkTuple)
+                segmentKeyToKeep = set([s.key for s in segments])
+
+            else:
+                segments = []
+                segmentKeyToKeep = set()
 
             if chunkKey in self._segmentKeysByChunkKey:
                 # Old keys from this chunk
                 segmentKeysToRemove = self._segmentKeysByChunkKey[chunkKey]
                 # New keys from this chunk
-                segmentKeysToRemove -= segmentKeys
+                segmentKeysToRemove -= segmentKeyToKeep
 
                 # Remove the segments that are no longer present in this chunk
                 for key in segmentKeysToRemove:
                     self._segmentsByKey.pop(key)
 
             # Make note of the new segment keys in this chunk
-            self._segmentKeysByChunkKey[chunkKey] = segmentKeys
+            self._segmentKeysByChunkKey[chunkKey] = segmentKeyToKeep
 
             # Add or update the segments in the model
             for segment in segments:
