@@ -39,7 +39,7 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
 
         transaction.commit()
 
-        logger.debug("Deleted %s trace configs in %s",
+        logger.info("Deleted %s trace configs in %s",
                      len(traceConfigKeys),
                      (datetime.now(pytz.utc) - startTime))
 
@@ -165,7 +165,7 @@ def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbTraceConfigTuple],
 
         dbSession.commit()
 
-        logger.debug("Inserted %s trace configs in %s",
+        logger.info("Inserted %s trace configs in %s",
                      len(inserts),
                      (datetime.now(pytz.utc) - startTime))
 

@@ -132,7 +132,7 @@ def _compileItemKeyIndexChunk(modelSetId: int,
         conn.execute(queueTable.delete(queueTable.c.id.in_(queueItemIds)))
 
         transaction.commit()
-        logger.debug("Compiled and Committed %s EncodedItemKeyIndexChunks in %s",
+        logger.info("Compiled and Committed %s EncodedItemKeyIndexChunks in %s",
                      total, (datetime.now(pytz.utc) - startTime))
 
 

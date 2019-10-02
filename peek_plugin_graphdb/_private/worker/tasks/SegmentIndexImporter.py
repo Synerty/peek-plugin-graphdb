@@ -59,7 +59,7 @@ def deleteSegment(self, modelSetKey: str, importGroupHashes: List[str]) -> None:
 
         transaction.commit()
 
-        logger.debug("Deleted %s, queued %s chunks in %s",
+        logger.info("Deleted %s, queued %s chunks in %s",
                      len(importGroupHashes), len(chunkKeys),
                      (datetime.now(pytz.utc) - startTime))
 
@@ -233,7 +233,7 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         else:
             transaction.rollback()
 
-        logger.debug("Inserted %s queued %s chunks in %s",
+        logger.info("Inserted %s queued %s chunks in %s",
                      len(inserts), len(chunkKeysForQueue),
                      (datetime.now(pytz.utc) - startTime))
 

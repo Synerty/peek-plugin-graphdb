@@ -91,7 +91,8 @@ class SegmentCacheController:
                 if t.chunkKey in self._cache:
                     del self._cache[t.chunkKey]
                     # TODO: Notify the clients when a chunk key is deleted
-                    # chunkKeysUpdated.append(t.chunkKey)
+                    modelSetKey = t.chunkKey.split('.')[0]
+                    chunkKeysUpdatedByModelSet[modelSetKey].append(t.chunkKey)
                 continue
 
             if (not t.chunkKey in self._cache or

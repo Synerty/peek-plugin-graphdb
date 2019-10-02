@@ -66,6 +66,19 @@ class GraphDbImportEdgeTuple(Tuple):
     def __repr__(self):
         return '%s.%s.%s.%s.%s' % (self.k, self.sk, self.dk, self.sd, self.p)
 
+    def sortSrcDstForHash(self) -> None:
+        if self.srcVertexKey < self.dstVertexKey:
+            return
+
+        # Flip the source and destination so hashing is consistent.
+
+        self.dstVertexKey, self.srcVertexKey = self.srcVertexKey, self.dstVertexKey
+        if self.srcDirection == self.DIR_SRC_IS_DOWNSTREAM:
+            self.srcDirection = self.DIR_SRC_IS_UPSTREAM
+
+        elif self.srcDirection == self.DIR_SRC_IS_UPSTREAM:
+            self.srcDirection = self.DIR_SRC_IS_DOWNSTREAM
+
     def packJsonDict(self) -> Dict[str, Any]:
         jsonDict = dict(
             k=self.k,

@@ -39,7 +39,7 @@ class GraphDbImportSegmentTuple(Tuple):
     #:  The hash of this import group
     importGroupHash: str = TupleField()
 
-    def generateSegmentKey(self) -> str:
+    def sortDataForHashing(self) -> None:
         """ Generate Segment Key
 
         This method generates a unique has of this segment based on its internal
@@ -47,13 +47,31 @@ class GraphDbImportSegmentTuple(Tuple):
 
         """
 
+        self.edges.sort(key=lambda e: e.key)
+        self.vertexes.sort(key=lambda v: v.key)
+        self.links.sort(key=lambda l: l.vertexKey + l.segmentKey)
+
+        # Make sure these are a consistent order.
+        # src/dst doesn't mean anything.
+        for edge in self.edges:
+            edge.sortSrcDstForHash()
+
+    def generateSegmentKey(self) -> str:
+        """ Generate Segment Key
+
+        This method generates a unique has of this segment based on its internal
+        contents, that is, the edges, vertexes but not links to other segments.
+
+        """
+        self.sortDataForHashing()
+
         m = hashlib.md5()
         m.update(b'zeroth item padding')
 
-        for edge in sorted(self.edges, key=lambda e: e.key):
+        for edge in self.edges:
             m.update(str(edge).encode())
 
-        for vertex in sorted(self.vertexes, key=lambda v: v.key):
+        for vertex in self.vertexes:
             m.update(str(vertex).encode())
 
         return m.hexdigest()
@@ -66,19 +84,20 @@ class GraphDbImportSegmentTuple(Tuple):
         AND the links to other segments.
 
         """
+        self.sortDataForHashing()
 
         m = hashlib.md5()
         m.update(b'zeroth item padding')
 
-        for edge in sorted(self.edges, key=lambda e: e.key):
+        for edge in self.edges:
             m.update(ujson.dumps(edge.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
-        for vertex in sorted(self.vertexes, key=lambda v: v.key):
+        for vertex in self.vertexes:
             m.update(ujson.dumps(vertex.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
-        for link in sorted(self.links, key=lambda l: l.vertexKey + l.segmentKey):
+        for link in self.links:
             m.update(ujson.dumps(link.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
