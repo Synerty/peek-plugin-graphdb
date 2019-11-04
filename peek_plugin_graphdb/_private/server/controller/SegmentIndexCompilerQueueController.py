@@ -4,7 +4,7 @@ from typing import List
 
 import pytz
 from sqlalchemy import asc
-from twisted.internet import task, reactor
+from twisted.internet import task, reactor, defer
 from twisted.internet.defer import inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger, vortexLogFailure
 
@@ -17,7 +17,7 @@ from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCom
 logger = logging.getLogger(__name__)
 
 
-class SegmentIndexCompilerController:
+class SegmentIndexCompilerQueueController:
     """ GraphDbChunkCompilerQueueController
 
     Compile the disp items into the grid data
@@ -33,6 +33,8 @@ class SegmentIndexCompilerController:
 
     QUEUE_MAX = 20
     QUEUE_MIN = 0
+
+    TASK_TIMEOUT = 60.0
 
     def __init__(self, dbSessionCreator,
                  statusController: SegmentIndexStatusController,
@@ -111,7 +113,10 @@ class SegmentIndexCompilerController:
         self._chunksInProgress |= set([o.chunkKey for o in items])
 
         try:
-            chunkKeys = yield compileSegmentChunk.delay(items)
+            d = compileSegmentChunk.delay(items)
+            d.addTimeout(self.TASK_TIMEOUT, reactor)
+
+            chunkKeys = yield d
             logger.debug("Time Taken = %s" % (datetime.now(pytz.utc) - startTime))
 
             self._queueCount -= 1
@@ -124,8 +129,11 @@ class SegmentIndexCompilerController:
             self._chunksInProgress -= set([o.chunkKey for o in items])
 
         except Exception as e:
-            # self._statusController.setCompilerError(str(e))
-            logger.debug("Retrying compile : %s", str(e))
+            if isinstance(e, defer.TimeoutError):
+                logger.info("Retrying compile, Task has timed out.")
+            else:
+                logger.debug("Retrying compile : %s", str(e))
+
             reactor.callLater(2.0, self._sendToWorker, items)
             return
 

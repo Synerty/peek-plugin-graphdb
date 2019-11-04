@@ -21,12 +21,12 @@ from peek_plugin_graphdb._private.server.client_handlers.TraceConfigUpdateHandle
     TraceConfigUpdateHandler
 from peek_plugin_graphdb._private.server.controller.ImportController import \
     ImportController
-from peek_plugin_graphdb._private.server.controller.ItemKeyIndexCompilerController import \
-    ItemKeyIndexCompilerController
+from peek_plugin_graphdb._private.server.controller.ItemKeyIndexCompilerQueueController import \
+    ItemKeyIndexCompilerQueueController
 from peek_plugin_graphdb._private.server.controller.ItemKeyIndexStatusController import \
     ItemKeyIndexStatusController
-from peek_plugin_graphdb._private.server.controller.SegmentIndexCompilerController import \
-    SegmentIndexCompilerController
+from peek_plugin_graphdb._private.server.controller.SegmentIndexCompilerQueueController import \
+    SegmentIndexCompilerQueueController
 from peek_plugin_graphdb._private.server.controller.SegmentIndexStatusController import \
     SegmentIndexStatusController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
@@ -153,21 +153,21 @@ class ServerEntryHook(PluginServerEntryHookABC,
 
         # ----------------
         # Segment Index Compiler Controller
-        segmentIndexCompilerController = SegmentIndexCompilerController(
+        segmentIndexCompilerQueueController = SegmentIndexCompilerQueueController(
             dbSessionCreator=self.dbSessionCreator,
             statusController=segmentStatusController,
             clientChunkUpdateHandler=clientSegmentChunkUpdateHandler
         )
-        self._loadedObjects.append(segmentIndexCompilerController)
+        self._loadedObjects.append(segmentIndexCompilerQueueController)
 
         # ----------------
         # Key Item Index Compiler Controller
-        itemKeyIndexCompilerController = ItemKeyIndexCompilerController(
+        itemKeyIndexCompilerQueueController = ItemKeyIndexCompilerQueueController(
             dbSessionCreator=self.dbSessionCreator,
             statusController=itemKeyIndexStatusController,
             clientUpdateHandler=itemKeyIndexChunkUpdateHandler
         )
-        self._loadedObjects.append(itemKeyIndexCompilerController)
+        self._loadedObjects.append(itemKeyIndexCompilerQueueController)
 
         # ----------------
         # Import Controller
@@ -190,10 +190,10 @@ class ServerEntryHook(PluginServerEntryHookABC,
         settings = yield self._loadSettings()
 
         if settings[SEGMENT_COMPILER_ENABLED]:
-            segmentIndexCompilerController.start()
+            segmentIndexCompilerQueueController.start()
 
         if settings[ITEM_KEY_COMPILER_ENABLED]:
-            itemKeyIndexCompilerController.start()
+            itemKeyIndexCompilerQueueController.start()
 
 
         # self._test()
