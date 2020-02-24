@@ -16,7 +16,7 @@ from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import \
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import \
     GraphDbEncodedChunk
-from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
+from peek_plugin_base.worker.CeleryApp import celeryApp
 from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,7 @@ from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCom
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
-from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
+from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import \
     ItemKeyImportTuple, loadItemKeys, deleteItemKeys
 from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import \

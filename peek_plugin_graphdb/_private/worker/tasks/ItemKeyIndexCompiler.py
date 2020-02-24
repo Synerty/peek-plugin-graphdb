@@ -17,7 +17,7 @@ from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
     ItemKeyIndexCompilerQueue
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
     ItemKeyIndexEncodedChunk
-from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
+from peek_plugin_base.worker.CeleryApp import celeryApp
 
 logger = logging.getLogger(__name__)
 

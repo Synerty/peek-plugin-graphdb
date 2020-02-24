@@ -33,8 +33,3 @@ class WorkerEntryHook(PluginWorkerEntryHookABC):
                 SegmentIndexCompiler.__name__,
                 ItemKeyIndexImporter.__name__,
                 ItemKeyIndexCompiler.__name__]
-
-    @property
-    def celeryApp(self):
-        from .CeleryApp import celeryApp
-        return celeryApp

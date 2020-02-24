@@ -11,7 +11,7 @@ from vortex.Payload import Payload
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
-from peek_plugin_graphdb._private.worker.CeleryApp import celeryApp
+from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
     GraphDbTraceConfigTuple
 
