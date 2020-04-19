@@ -6,6 +6,8 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index
 
+from peek_abstract_chunked_index.private.tuples.ChunkedIndexEncodedChunkTupleABC import \
+    ChunkedIndexEncodedChunkTupleABC
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
     GraphDbEncodedChunkTuple
@@ -14,7 +16,8 @@ from .DeclarativeBase import DeclarativeBase
 logger = logging.getLogger(__name__)
 
 
-class GraphDbEncodedChunk(DeclarativeBase):
+class GraphDbEncodedChunk(DeclarativeBase,
+                          ChunkedIndexEncodedChunkTupleABC):
     __tablename__ = 'GraphDbEncodedChunk'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -33,11 +36,22 @@ class GraphDbEncodedChunk(DeclarativeBase):
         Index("idx_Chunk_modelSetId_chunkKey", modelSetId, chunkKey, unique=False),
     )
 
-    def toTuple(self) -> GraphDbEncodedChunkTuple:
-        return GraphDbEncodedChunkTuple(
-            modelSetKey=self.modelSet.key,
-            chunkKey=self.chunkKey,
-            encodedData=self.encodedData,
-            encodedHash=self.encodedHash,
-            lastUpdate=self.lastUpdate
-        )
+    @property
+    def ckiChunkKey(self):
+        return self.chunkKey
+
+    @classmethod
+    def ckiCreateDeleteEncodedChunk(cls, chunkKey: str):
+        return GraphDbEncodedChunkTuple(chunkKey=chunkKey)
+
+    @classmethod
+    def sqlCoreChunkKeyColumn(cls):
+        return cls.__table__.c.chunkKey
+
+    @classmethod
+    def sqlCoreLoad(cls, row):
+        return GraphDbEncodedChunkTuple(modelSetKey=row.key,
+                                        chunkKey=row.chunkKey,
+                                        encodedData=row.encodedData,
+                                        encodedHash=row.encodedHash,
+                                        lastUpdate=row.lastUpdate)

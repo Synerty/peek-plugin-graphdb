@@ -1,22 +1,24 @@
 import logging
 
-from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from sqlalchemy import Column, LargeBinary
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index
-
-from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from vortex.Tuple import Tuple, addTupleType
+
+from peek_abstract_chunked_index.private.tuples.ChunkedIndexEncodedChunkTupleABC import \
+    ChunkedIndexEncodedChunkTupleABC
+from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
+from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from .DeclarativeBase import DeclarativeBase
 
 logger = logging.getLogger(__name__)
 
 
-
 @addTupleType
-class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase):
+class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase,
+                               ChunkedIndexEncodedChunkTupleABC):
     __tablename__ = 'ItemKeyIndexEncodedChunk'
     __tupleType__ = graphDbTuplePrefix + 'ItemKeyIndexEncodedChunkTable'
 
@@ -33,5 +35,26 @@ class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase):
     lastUpdate = Column(String, nullable=False)
 
     __table_args__ = (
-        Index("idx_ItemKeyIndexEnc_modelSetId_chunkKey", modelSetId, chunkKey, unique=False),
+        Index("idx_ItemKeyIndexEnc_modelSetId_chunkKey", modelSetId, chunkKey,
+              unique=False),
     )
+
+    @property
+    def ckiChunkKey(self):
+        return self.chunkKey
+
+    @classmethod
+    def ckiCreateDeleteEncodedChunk(cls, chunkKey: str):
+        return ItemKeyIndexEncodedChunk(chunkKey=chunkKey)
+
+    @classmethod
+    def sqlCoreChunkKeyColumn(cls):
+        return cls.__table__.c.chunkKey
+
+    @classmethod
+    def sqlCoreLoad(cls, row):
+        return ItemKeyIndexEncodedChunk(id=row.id,
+                                        chunkKey=row.chunkKey,
+                                        encodedData=row.encodedData,
+                                        encodedHash=row.encodedHash,
+                                        lastUpdate=row.lastUpdate)

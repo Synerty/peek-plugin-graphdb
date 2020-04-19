@@ -17,3 +17,7 @@ class GraphDbEncodedChunkTuple(Tuple):
     encodedData: bytes = TupleField()
     encodedHash: str = TupleField()
     lastUpdate: str = TupleField()
+
+    @property
+    def ckiChunkKey(self):
+        return self.chunkKey

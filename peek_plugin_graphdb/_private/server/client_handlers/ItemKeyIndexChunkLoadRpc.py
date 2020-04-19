@@ -1,6 +1,8 @@
 import logging
 from typing import List
 
+from peek_abstract_chunked_index.private.server.client_handlers.ChunkedIndexChunkLoadRpcABC import \
+    ChunkedIndexChunkLoadRpcABC
 from peek_plugin_base.PeekVortexUtil import peekServerName, peekClientName
 from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
@@ -10,9 +12,7 @@ from vortex.rpc.RPC import vortexRPC
 logger = logging.getLogger(__name__)
 
 
-class ItemKeyIndexChunkLoadRpc:
-    def __init__(self, dbSessionCreator: DbSessionCreator):
-        self._dbSessionCreator = dbSessionCreator
+class ItemKeyIndexChunkLoadRpc(ChunkedIndexChunkLoadRpcABC):
 
     def makeHandlers(self):
         """ Make Handlers
@@ -35,16 +35,4 @@ class ItemKeyIndexChunkLoadRpc:
         Tell the server of the latest status of the loader
 
         """
-        session = self._dbSessionCreator()
-        try:
-            chunks = (session
-                      .query(ItemKeyIndexEncodedChunk)
-                      .order_by(ItemKeyIndexEncodedChunk.id)
-                      .offset(offset)
-                      .limit(count)
-                      .yield_per(count))
-
-            return list(chunks)
-
-        finally:
-            session.close()
+        return self.ckiInitialLoadChunksBlocking(offset, count, ItemKeyIndexEncodedChunk)
