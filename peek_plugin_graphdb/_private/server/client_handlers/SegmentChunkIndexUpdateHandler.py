@@ -3,10 +3,10 @@ from typing import List, Dict
 
 from sqlalchemy import select
 
-from peek_abstract_chunked_index.private.server.client_handlers.ChunkedIndexChunkUpdateHandlerABC import \
-    ChunkedIndexChunkUpdateHandlerABC
-from peek_abstract_chunked_index.private.tuples.ChunkedIndexEncodedChunkTupleABC import \
-    ChunkedIndexEncodedChunkTupleABC
+from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkUpdateHandlerABC import \
+    ACIChunkUpdateHandlerABC
+from peek_abstract_chunked_index.private.tuples.ACIEncodedChunkTupleABC import \
+    ACIEncodedChunkTupleABC
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
     clientSegmentUpdateFromServerFilt
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
@@ -15,8 +15,8 @@ from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 logger = logging.getLogger(__name__)
 
 
-class SegmentChunkIndexUpdateHandler(ChunkedIndexChunkUpdateHandlerABC):
-    _ChunkedTuple: ChunkedIndexEncodedChunkTupleABC = GraphDbEncodedChunk
+class SegmentChunkIndexUpdateHandler(ACIChunkUpdateHandlerABC):
+    _ChunkedTuple: ACIEncodedChunkTupleABC = GraphDbEncodedChunk
     _updateFromServerFilt: Dict = clientSegmentUpdateFromServerFilt
     _logger: logging.Logger = logger
 

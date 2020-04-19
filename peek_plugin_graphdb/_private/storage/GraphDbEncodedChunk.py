@@ -6,8 +6,8 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index
 
-from peek_abstract_chunked_index.private.tuples.ChunkedIndexEncodedChunkTupleABC import \
-    ChunkedIndexEncodedChunkTupleABC
+from peek_abstract_chunked_index.private.tuples.ACIEncodedChunkTupleABC import \
+    ACIEncodedChunkTupleABC
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
     GraphDbEncodedChunkTuple
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GraphDbEncodedChunk(DeclarativeBase,
-                          ChunkedIndexEncodedChunkTupleABC):
+                          ACIEncodedChunkTupleABC):
     __tablename__ = 'GraphDbEncodedChunk'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
