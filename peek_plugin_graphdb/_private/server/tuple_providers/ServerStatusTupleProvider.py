@@ -1,8 +1,8 @@
 import logging
 from typing import Union
 
-from peek_plugin_graphdb._private.server.controller.SegmentIndexStatusController import \
-    SegmentIndexStatusController
+from peek_plugin_graphdb._private.server.controller.StatusController import \
+    StatusController
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class ServerStatusTupleProvider(TuplesProviderABC):
-    def __init__(self, segmentIndexStatus: SegmentIndexStatusController):
+    def __init__(self, segmentIndexStatus: StatusController):
         self._segmentIndexStatus = segmentIndexStatus
 
     @inlineCallbacks

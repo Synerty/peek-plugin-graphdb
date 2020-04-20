@@ -23,12 +23,10 @@ from peek_plugin_graphdb._private.server.controller.ImportController import \
     ImportController
 from peek_plugin_graphdb._private.server.controller.ItemKeyIndexCompilerQueueController import \
     ItemKeyIndexCompilerQueueController
-from peek_plugin_graphdb._private.server.controller.ItemKeyIndexStatusController import \
-    ItemKeyIndexStatusController
 from peek_plugin_graphdb._private.server.controller.SegmentIndexCompilerQueueController import \
     SegmentIndexCompilerQueueController
-from peek_plugin_graphdb._private.server.controller.SegmentIndexStatusController import \
-    SegmentIndexStatusController
+from peek_plugin_graphdb._private.server.controller.StatusController import \
+    StatusController
 from peek_plugin_graphdb._private.storage import DeclarativeBase
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.storage.Setting import globalSetting, \
@@ -113,22 +111,15 @@ class ServerEntryHook(PluginServerEntryHookABC,
         self._loadedObjects.append(clientTraceConfigUpdateHandler)
 
         # ----------------
-        # Segment Status Controller
-        segmentStatusController = SegmentIndexStatusController()
-        self._loadedObjects.append(segmentStatusController)
-
-        # ----------------
-        # Status Controller
-        itemKeyIndexStatusController = ItemKeyIndexStatusController(
-            segmentStatusController.status
-        )
-        self._loadedObjects.append(itemKeyIndexStatusController)
+        # Queue Status Controller
+        statusController = StatusController()
+        self._loadedObjects.append(statusController)
 
         # ----------------
         # Tuple Observable
         tupleObservable = makeTupleDataObservableHandler(
             dbSessionCreator=self.dbSessionCreator,
-            segmentStatusController=segmentStatusController
+            segmentStatusController=statusController
         )
         self._loadedObjects.append(tupleObservable)
 
@@ -140,8 +131,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
 
         # ----------------
         # Tell the status controller about the Tuple Observable
-        segmentStatusController.setTupleObservable(tupleObservable)
-        itemKeyIndexStatusController.setTupleObservable(tupleObservable)
+        statusController.setTupleObservable(tupleObservable)
 
         # ----------------
         # Main Controller
@@ -155,7 +145,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
         # Segment Index Compiler Controller
         segmentIndexCompilerQueueController = SegmentIndexCompilerQueueController(
             dbSessionCreator=self.dbSessionCreator,
-            statusController=segmentStatusController,
+            statusController=statusController,
             clientChunkUpdateHandler=clientSegmentChunkUpdateHandler
         )
         self._loadedObjects.append(segmentIndexCompilerQueueController)
@@ -164,7 +154,7 @@ class ServerEntryHook(PluginServerEntryHookABC,
         # Key Item Index Compiler Controller
         itemKeyIndexCompilerQueueController = ItemKeyIndexCompilerQueueController(
             dbSessionCreator=self.dbSessionCreator,
-            statusController=itemKeyIndexStatusController,
+            statusController=statusController,
             clientUpdateHandler=itemKeyIndexChunkUpdateHandler
         )
         self._loadedObjects.append(itemKeyIndexCompilerQueueController)
