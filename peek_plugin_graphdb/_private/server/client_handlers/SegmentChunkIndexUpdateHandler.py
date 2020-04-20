@@ -30,4 +30,4 @@ class SegmentChunkIndexUpdateHandler(ACIChunkUpdateHandlerABC):
                        chunkTable.c.encodedHash,
                        chunkTable.c.lastUpdate]) \
             .select_from(chunkTable.join(msTable)) \
-            .where(chunkTable.c.indexBucket.in_(chunkKeys))
+            .where(chunkTable.c.chunkKey.in_(chunkKeys))
