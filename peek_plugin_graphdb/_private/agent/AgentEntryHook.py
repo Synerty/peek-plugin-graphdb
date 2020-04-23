@@ -15,10 +15,10 @@ class AgentEntryHook(PluginAgentEntryHookABC):
         logger.debug("Loaded")
 
     def start(self):
-        pass
+        logger.debug("Started")
 
     def stop(self):
-        pass
+        logger.debug("Stopped")
 
     def unload(self):
         logger.debug("Unloaded")
