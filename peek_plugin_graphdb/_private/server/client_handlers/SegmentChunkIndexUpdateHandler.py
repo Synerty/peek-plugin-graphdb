@@ -20,7 +20,8 @@ class SegmentChunkIndexUpdateHandler(ACIChunkUpdateHandlerABC):
     _updateFromServerFilt: Dict = clientSegmentUpdateFromServerFilt
     _logger: logging.Logger = logger
 
-    def _makeLoadSql(self, chunkKeys: List[str]):
+    @classmethod
+    def _makeLoadSql(cls, chunkKeys: List[str]):
         chunkTable = GraphDbEncodedChunk.__table__
         msTable = GraphDbModelSet.__table__
 
