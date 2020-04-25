@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @addTupleType
 class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase,
                                ACIEncodedChunkTupleABC):
+
     __tablename__ = 'ItemKeyIndexEncodedChunk'
     __tupleType__ = graphDbTuplePrefix + 'ItemKeyIndexEncodedChunkTable'
 
@@ -42,6 +43,14 @@ class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase,
     @property
     def ckiChunkKey(self):
         return self.chunkKey
+
+    @property
+    def ckiLastUpdate(self):
+        return self.lastUpdate
+
+    @property
+    def ckiHasEncodedData(self) -> bool:
+        return bool(self.encodedData)
 
     @classmethod
     def ckiCreateDeleteEncodedChunk(cls, chunkKey: str):

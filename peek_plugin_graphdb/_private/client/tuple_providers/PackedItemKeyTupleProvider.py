@@ -39,7 +39,7 @@ class PackedItemKeyTupleProvider(TuplesProviderABC):
             keysByChunkKey[makeChunkKeyForItemKey(modelSetKey, key)].append(key)
 
         for chunkKey, subKeys in keysByChunkKey.items():
-            chunk: ItemKeyIndexEncodedChunk = self._cacheController.itemKeyIndexChunk(chunkKey)
+            chunk: ItemKeyIndexEncodedChunk = self._cacheController.encodedChunk(chunkKey)
 
             if not chunk:
                 logger.warning("GraphDb ItemKey chunk %s is missing from cache", chunkKey)

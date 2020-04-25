@@ -1,12 +1,12 @@
 import logging
-from typing import List
+from typing import Optional
 
 from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkLoadRpcABC import \
     ACIChunkLoadRpcABC
 from peek_plugin_base.PeekVortexUtil import peekServerName, peekClientName
-from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import ItemKeyIndexEncodedChunk
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
+    ItemKeyIndexEncodedChunk
 from vortex.rpc.RPC import vortexRPC
 
 logger = logging.getLogger(__name__)
@@ -29,10 +29,11 @@ class ItemKeyIndexChunkLoadRpc(ACIChunkLoadRpcABC):
     # -------------
     @vortexRPC(peekServerName, acceptOnlyFromVortex=peekClientName, timeoutSeconds=60,
                additionalFilt=graphDbFilt, deferToThread=True)
-    def loadItemKeyIndexChunks(self, offset: int, count: int) -> List[ItemKeyIndexEncodedChunk]:
+    def loadItemKeyIndexChunks(self, offset: int, count: int) -> Optional[bytes]:
         """ Update Page Loader Status
 
         Tell the server of the latest status of the loader
 
         """
-        return self.ckiInitialLoadChunksBlocking(offset, count, ItemKeyIndexEncodedChunk)
+        return self.ckiInitialLoadChunksPayloadBlocking(offset, count,
+                                                        ItemKeyIndexEncodedChunk)

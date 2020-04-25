@@ -23,8 +23,8 @@ class ItemKeyIndexUpdateDateTupleProvider(TuplesProviderABC):
                       tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
         tuple_ = ItemKeyIndexUpdateDateTuple()
         tuple_.updateDateByChunkKey = {
-            key:self._cacheHandler.itemKeyIndexChunk(key).lastUpdate
-            for key in self._cacheHandler.itemKeyIndexKeys()
+            key:self._cacheHandler.encodedChunk(key).lastUpdate
+            for key in self._cacheHandler.encodedChunkKeys()
         }
         payload = Payload(filt, tuples=[tuple_])
         payloadEnvelope = yield payload.makePayloadEnvelopeDefer()

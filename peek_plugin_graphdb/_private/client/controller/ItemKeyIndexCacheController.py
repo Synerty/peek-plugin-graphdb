@@ -1,13 +1,9 @@
 import json
 import logging
-from typing import Dict, List
+from typing import List
 
-from twisted.internet.defer import inlineCallbacks
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-from vortex.Payload import Payload
-from vortex.PayloadEndpoint import PayloadEndpoint
-from vortex.PayloadEnvelope import PayloadEnvelope
-
+from peek_abstract_chunked_index.private.client.controller.ACICacheControllerABC import \
+    ACICacheControllerABC
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRpc import \
     ItemKeyIndexChunkLoadRpc
@@ -15,6 +11,8 @@ from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
     ItemKeyIndexEncodedChunk
 from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
     makeChunkKeyForItemKey
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +20,7 @@ clientItemKeyIndexUpdateFromServerFilt = dict(key="clientItemKeyIndexUpdateFromS
 clientItemKeyIndexUpdateFromServerFilt.update(graphDbFilt)
 
 
-class ItemKeyIndexCacheController:
+class ItemKeyIndexCacheController(ACICacheControllerABC):
     """ ItemKeyIndex Cache Controller
 
     The ItemKeyIndex cache controller stores all the chunks in memory,
@@ -30,89 +28,16 @@ class ItemKeyIndexCacheController:
 
     """
 
-    LOAD_CHUNK = 64
-
-    def __init__(self, clientId: str):
-        self._clientId = clientId
-        self._webAppHandler = None
-
-        #: This stores the cache of itemKeyIndex data for the clients
-        self._cache: Dict[str, ItemKeyIndexEncodedChunk] = {}
-
-        self._endpoint = PayloadEndpoint(clientItemKeyIndexUpdateFromServerFilt,
-                                         self._processItemKeyIndexPayload)
-
-    def setItemKeyIndexCacheHandler(self, handler):
-        self._webAppHandler = handler
-
-    @inlineCallbacks
-    def start(self):
-        yield self.reloadCache()
-
-    def shutdown(self):
-        self._tupleObservable = None
-
-        self._endpoint.shutdown()
-        self._endpoint = None
-
-        self._cache = {}
-
-    @inlineCallbacks
-    def reloadCache(self):
-        self._cache = {}
-
-        offset = 0
-        while True:
-            logger.info(
-                "Loading ItemKeyIndexChunk %s to %s" % (offset, offset + self.LOAD_CHUNK))
-            encodedChunkTuples: List[ItemKeyIndexEncodedChunk] = (
-                yield ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks(offset,
-                                                                      self.LOAD_CHUNK)
-            )
-
-            if not encodedChunkTuples:
-                break
-
-            self._loadItemKeyIndexIntoCache(encodedChunkTuples)
-
-            offset += self.LOAD_CHUNK
-
-    @inlineCallbacks
-    def _processItemKeyIndexPayload(self, payloadEnvelope: PayloadEnvelope, **kwargs):
-        paylod = yield payloadEnvelope.decodePayloadDefer()
-        itemKeyIndexTuples: List[ItemKeyIndexEncodedChunk] = paylod.tuples
-        self._loadItemKeyIndexIntoCache(itemKeyIndexTuples)
-
-    def _loadItemKeyIndexIntoCache(self,
-                                   encodedChunkTuples: List[ItemKeyIndexEncodedChunk]):
-        chunkKeysUpdated: List[str] = []
-
-        for t in encodedChunkTuples:
-            if not t.encodedData:
-                if t.chunkKey in self._cache:
-                    del self._cache[t.chunkKey]
-                    chunkKeysUpdated.append(t.chunkKey)
-                continue
-
-            if (not t.chunkKey in self._cache or
-                    self._cache[t.chunkKey].lastUpdate != t.lastUpdate):
-                self._cache[t.chunkKey] = t
-                chunkKeysUpdated.append(t.chunkKey)
-
-        logger.debug("Received itemKeyIndex updates from server, %s", chunkKeysUpdated)
-
-        self._webAppHandler.notifyOfItemKeyIndexUpdate(chunkKeysUpdated)
-
-    def itemKeyIndexChunk(self, chunkKey) -> ItemKeyIndexEncodedChunk:
-        return self._cache.get(chunkKey)
-
-    def itemKeyIndexKeys(self) -> List[int]:
-        return list(self._cache)
+    _ChunkedTuple = ItemKeyIndexEncodedChunk
+    _chunkLoadRpcMethod = ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks
+    _updateFromServerFilt = clientItemKeyIndexUpdateFromServerFilt
+    _logger = logger
 
     def getSegmentKeys(self, modelSetKey: str, vertexKey: str) -> List[str]:
 
         chunkKey = makeChunkKeyForItemKey(modelSetKey, vertexKey)
-        chunk: ItemKeyIndexEncodedChunk = self.itemKeyIndexChunk(chunkKey)
+        # noinspection PyTypeChecker
+        chunk: ItemKeyIndexEncodedChunk = self.encodedChunk(chunkKey)
 
         if not chunk:
             logger.warning("ItemKeyIndex chunk %s is missing from cache", chunkKey)
@@ -138,7 +63,8 @@ class ItemKeyIndexCacheController:
     def doesKeyExist(self, modelSetKey: str, vertexOrEdgeKey: str) -> bool:
 
         chunkKey = makeChunkKeyForItemKey(modelSetKey, vertexOrEdgeKey)
-        chunk: ItemKeyIndexEncodedChunk = self.itemKeyIndexChunk(chunkKey)
+        # noinspection PyTypeChecker
+        chunk: ItemKeyIndexEncodedChunk = self.encodedChunk(chunkKey)
 
         if not chunk:
             return False
