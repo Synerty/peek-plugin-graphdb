@@ -40,6 +40,6 @@ class ItemKeyTuple(Tuple):
         self.itemKey = key
         self.modelSetKey = modelSetKey
         self.itemType = objectProps.get('itemType')
-        self.segmentKeys = objectProps.get('segmentKeys')
+        self.segmentKeys = objectProps.get('encodedChunkKeys')
 
         return self

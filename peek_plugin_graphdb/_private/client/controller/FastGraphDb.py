@@ -57,7 +57,7 @@ class FastGraphDbModel:
         return self._segmentsByKey.get(segmentKey)
 
     @inlineCallbacks
-    def notifyOfSegmentUpdate(self, chunkKeys: List[str]):
+    def notifyOfUpdate(self, chunkKeys: List[str]):
         """ Notify of Segment Updates
 
         This method is called by the client.SegmentCacheController when it receives
@@ -65,7 +65,7 @@ class FastGraphDbModel:
 
         """
         for chunkKey in chunkKeys:
-            graphDbEncodedChunkTuple = self._cacheController.segmentChunk(chunkKey)
+            graphDbEncodedChunkTuple = self._cacheController.encodedChunk(chunkKey)
 
             if graphDbEncodedChunkTuple:
                 segments = yield self._unpackSegmentsFromChunk(graphDbEncodedChunkTuple)

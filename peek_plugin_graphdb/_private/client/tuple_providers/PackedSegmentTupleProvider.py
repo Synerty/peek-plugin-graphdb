@@ -39,7 +39,7 @@ class PackedSegmentTupleProvider(TuplesProviderABC):
             keysByChunkKey[makeChunkKeyForSegmentKey(modelSetKey, key)].append(key)
 
         for chunkKey, subKeys in keysByChunkKey.items():
-            chunk: GraphDbEncodedChunkTuple = self._cacheController.segmentChunk(chunkKey)
+            chunk: GraphDbEncodedChunkTuple = self._cacheController.encodedChunk(chunkKey)
 
             if not chunk:
                 logger.warning("GraphDb segment chunk %s is missing from cache", chunkKey)
