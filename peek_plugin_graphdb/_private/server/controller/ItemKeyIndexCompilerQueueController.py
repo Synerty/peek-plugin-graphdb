@@ -58,7 +58,7 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompiler import \
             compileItemKeyIndexChunk
 
-        return compileItemKeyIndexChunk.delay(block.items)
+        return compileItemKeyIndexChunk.delay(block.itemsEncodedPayload)
 
     def _processWorkerResults(self, results):
         self._clientUpdateHandler.sendChunks(results)

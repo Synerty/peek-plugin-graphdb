@@ -33,5 +33,6 @@ class ItemKeyIndexCompilerQueue(Tuple, DeclarativeBase,
         return ItemKeyIndexCompilerQueue(id=row.id, modelSetId=row.modelSetId,
                                          chunkKey=row.chunkKey)
 
+    @property
     def ckiUniqueKey(self):
         return self.chunkKey

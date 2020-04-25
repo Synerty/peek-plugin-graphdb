@@ -58,7 +58,7 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         from peek_plugin_graphdb._private.worker.tasks.SegmentIndexCompiler import \
             compileSegmentChunk
 
-        return compileSegmentChunk.delay(block.items)
+        return compileSegmentChunk.delay(block.itemsEncodedPayload)
 
     def _processWorkerResults(self, results):
         self._clientChunkUpdateHandler.sendChunks(results)

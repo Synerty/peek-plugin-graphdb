@@ -32,5 +32,6 @@ class GraphDbCompilerQueue(Tuple, DeclarativeBase,
         return GraphDbCompilerQueue(id=row.id, modelSetId=row.modelSetId,
                                     chunkKey=row.chunkKey)
 
+    @property
     def ckiUniqueKey(self):
         return self.chunkKey
