@@ -1,5 +1,5 @@
 from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
-from sqlalchemy import Column, Index, ForeignKey
+from sqlalchemy import Column, Index, ForeignKey, BigInteger
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 
@@ -15,7 +15,7 @@ class ItemKeyIndex(Tuple, DeclarativeBase):
     __tupleType__ = graphDbTuplePrefix + 'ItemKeyIndexTable'
 
     #:  The unique ID of this itemKeyIndex (database generated)
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     #:  The model set for this itemKeyIndex
     modelSetId = Column(Integer,

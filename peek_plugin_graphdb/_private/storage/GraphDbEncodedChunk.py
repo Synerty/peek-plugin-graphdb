@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Column, LargeBinary
+from sqlalchemy import Column, LargeBinary, BigInteger
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
@@ -20,7 +20,7 @@ class GraphDbEncodedChunk(DeclarativeBase,
                           ACIEncodedChunkTupleABC):
     __tablename__ = 'GraphDbEncodedChunk'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     modelSetId = Column(Integer,
                         ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),

@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Column
+from sqlalchemy import Column, BigInteger
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer, String
 from vortex.Tuple import Tuple, addTupleType
@@ -19,7 +19,7 @@ class GraphDbCompilerQueue(Tuple, DeclarativeBase,
     __tupleType__ = graphDbTuplePrefix + 'GraphDbChunkQueueTuple'
     __tablename__ = 'GraphDbChunkQueue'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     modelSetId = Column(Integer,
                         ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),
