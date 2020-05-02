@@ -10,8 +10,11 @@ from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkUpdate
     ItemKeyIndexChunkUpdateHandler
 from peek_plugin_graphdb._private.server.controller.StatusController import \
     StatusController
+from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
 from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
     ItemKeyIndexCompilerQueue
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
+    ItemKeyIndexEncodedChunk
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,8 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
 
     _logger = logger
     _QueueDeclarative: ACIProcessorQueueTupleABC = ItemKeyIndexCompilerQueue
+    _VacuumDeclaratives = (ItemKeyIndexCompilerQueue, ItemKeyIndex,
+                           ItemKeyIndexEncodedChunk)
 
     def __init__(self, dbSessionCreator,
                  statusController: StatusController,
@@ -84,4 +89,3 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
                     AND pl_graphdb."ItemKeyIndexCompilerQueue"."chunkKey" = sq1."chunkKey"
 
             ''' % {'id': lastFetchedId, 'limit': dedupeLimit}
-

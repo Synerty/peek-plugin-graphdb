@@ -11,6 +11,8 @@ from peek_plugin_graphdb._private.server.client_handlers.SegmentChunkIndexUpdate
 from peek_plugin_graphdb._private.server.controller.StatusController import \
     StatusController
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,7 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
 
     _logger = logger
     _QueueDeclarative: ACIProcessorQueueTupleABC = GraphDbCompilerQueue
+    _VacuumDeclaratives = (GraphDbCompilerQueue, GraphDbEncodedChunk, GraphDbSegment)
 
     def __init__(self, dbSessionCreator,
                  statusController: StatusController,
