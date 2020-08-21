@@ -1,41 +1,38 @@
-import {CommonModule} from "@angular/common";
-import {NgModule} from "@angular/core";
-import {Routes} from "@angular/router";
-// Import a small abstraction library to switch between nativescript and web
-import {PeekModuleFactory} from "@synerty/peek-util-web";
-// Import the default route component
-import {GraphDbCfgComponent} from "./graphdb-cfg.component";
-// Import global modules, for example, the canvas extensions.
+import { CommonModule } from "@angular/common";
+import { HttpClientModule } from "@angular/common/http";
+import { NgModule } from "@angular/core";
+import { Routes } from "@angular/router";
+import { FormsModule } from "@angular/forms";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { RouterModule } from "@angular/router";
+import { GraphDbCfgComponent } from "./graphdb-cfg.component";
 
-
-// Define the child routes for this plugin
+// Define the child routes for this plugin.
 export const pluginRoutes: Routes = [
     // {
     //     path: 'showDiagram',
     //     component: GraphDbCfgComponent
     // },
     {
-        path: '',
-        pathMatch: 'full',
-        component: GraphDbCfgComponent
-    }
-
+        path: "",
+        pathMatch: "full",
+        component: GraphDbCfgComponent,
+    },
 ];
 
 // Define the root module for this plugin.
 // This module is loaded by the lazy loader, what ever this defines is what is started.
-// When it first loads, it will look up the routs and then select the component to load.
+// When it first loads, it will look up the routes and then select the component to load.
 @NgModule({
     imports: [
         CommonModule,
-        PeekModuleFactory.RouterModule,
-        PeekModuleFactory.RouterModule.forChild(pluginRoutes),
-        ...PeekModuleFactory.FormsModules,
+        HttpClientModule,
+        RouterModule.forChild(pluginRoutes),
+        FormsModule,
+        NzIconModule,
     ],
     exports: [],
     providers: [],
-    declarations: [GraphDbCfgComponent]
+    declarations: [GraphDbCfgComponent],
 })
-export class GraphDbCfgModule {
-}
-
+export class GraphDbCfgModule {}
