@@ -5,7 +5,7 @@ import {
     TupleSelector
 } from "@synerty/vortexjs";
 import {ServerStatusTuple, graphDbFilt} from "@peek/peek_plugin_graphdb/_private";
-import {Ng2BalloonMsgService} from "@synerty/ng2-balloon-msg";
+import { BalloonMsgService } from "@synerty/peek-plugin-base-js"
 
 
 @Component({
@@ -16,7 +16,7 @@ export class StatusComponent extends ComponentLifecycleEventEmitter {
 
     item: ServerStatusTuple = new ServerStatusTuple();
 
-    constructor(private balloonMsg: Ng2BalloonMsgService,
+    constructor(private balloonMsg: BalloonMsgService,
                 private tupleObserver: TupleDataObserverService) {
         super();
 

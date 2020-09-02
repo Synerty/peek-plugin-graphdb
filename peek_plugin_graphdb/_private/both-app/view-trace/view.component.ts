@@ -1,8 +1,8 @@
 import {Component, Input, OnInit} from "@angular/core";
 import {ActivatedRoute, Params} from "@angular/router";
 import {graphDbBaseUrl} from "@peek/peek_plugin_graphdb/_private";
-import {TitleService} from "@synerty/peek-util";
-import {Ng2BalloonMsgService} from "@synerty/ng2-balloon-msg";
+import { TitleService } from "@synerty/peek-plugin-base-js"
+import { BalloonMsgService } from "@synerty/peek-plugin-base-js"
 
 import {
     ComponentLifecycleEventEmitter,
@@ -15,7 +15,7 @@ import {
 
 import {GraphDbService, GraphDbTraceResultTuple} from "@peek/peek_plugin_graphdb";
 import {Observable} from "rxjs/Observable";
-import {extend} from "@synerty/vortexjs/src/vortex/UtilMisc";
+import {extend} from "@synerty/vortexjs";
 
 
 @Component({
@@ -33,7 +33,7 @@ export class ViewTraceComponent extends ComponentLifecycleEventEmitter implement
 
     error: string = '';
 
-    constructor(private balloonMsg: Ng2BalloonMsgService,
+    constructor(private balloonMsg: BalloonMsgService,
                 private route: ActivatedRoute,
                 private graphDbService: GraphDbService,
                 private vortexStatus: VortexStatusService,
