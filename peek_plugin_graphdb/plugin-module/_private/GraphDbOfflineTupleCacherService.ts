@@ -1,13 +1,9 @@
-import {Injectable} from "@angular/core";
-import {
-    ComponentLifecycleEventEmitter,
-    TupleSelector,
-    VortexStatusService
-} from "@synerty/vortexjs";
-import {GraphDbTupleService} from "./GraphDbTupleService";
-import {GraphDbModelSetTuple} from "../GraphDbModelSetTuple";
-import {GraphDbTraceConfigTuple} from "./tuples/GraphDbTraceConfigTuple";
-
+import { Injectable } from "@angular/core"
+import { TupleSelector, VortexStatusService } from "@synerty/vortexjs"
+import { GraphDbTupleService } from "./GraphDbTupleService"
+import { GraphDbModelSetTuple } from "../GraphDbModelSetTuple"
+import { GraphDbTraceConfigTuple } from "./tuples/GraphDbTraceConfigTuple"
+import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 
 /** Diagram Lookups offline cacher
  *
@@ -18,23 +14,25 @@ import {GraphDbTraceConfigTuple} from "./tuples/GraphDbTraceConfigTuple";
  *
  */
 @Injectable()
-export class GraphDbOfflineTupleCacherService extends ComponentLifecycleEventEmitter {
-
-
-    constructor(private tupleService: GraphDbTupleService,
-                vortexStatusService: VortexStatusService) {
-        super();
-
+export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
+    
+    constructor(
+        private tupleService: GraphDbTupleService,
+        vortexStatusService: VortexStatusService
+    ) {
+        super()
+        
         // Delete data older than 7 days
-        let date7DaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
-
-        let promise = null;
+        let date7DaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000)
+        
+        let promise = null
         if (vortexStatusService.snapshot.isOnline) {
             promise = this.tupleService.offlineStorage
                 .deleteOldTuples(date7DaysAgo)
-                .catch(err => console.log(`ERROR: Failed to delete old tuples`));
-
-        } else {
+                .catch(err => console.log(`ERROR: Failed to delete old tuples`))
+            
+        }
+        else {
             vortexStatusService.isOnline
                 .takeUntil(this.onDestroyEvent)
                 .filter((val) => val === true)
@@ -42,19 +40,19 @@ export class GraphDbOfflineTupleCacherService extends ComponentLifecycleEventEmi
                 .subscribe(() => {
                     this.tupleService.offlineStorage
                         .deleteOldTuples(date7DaysAgo)
-                        .catch(err => console.log(`ERROR: Failed to delete old tuples`));
-                });
-            promise = Promise.resolve();
+                        .catch(err => console.log(`ERROR: Failed to delete old tuples`))
+                })
+            promise = Promise.resolve()
         }
-
+        
         promise
             .then(() => {
-                this.loadModelSet();
-                this.loadTraceConfigs();
-            });
-
+                this.loadModelSet()
+                this.loadTraceConfigs()
+            })
+        
     }
-
+    
     /**
      * Cache Model Set
      *
@@ -62,15 +60,15 @@ export class GraphDbOfflineTupleCacherService extends ComponentLifecycleEventEmi
      *
      */
     private loadModelSet() {
-
-        let ts = new TupleSelector(GraphDbModelSetTuple.tupleName, {});
-
+        
+        let ts = new TupleSelector(GraphDbModelSetTuple.tupleName, {})
+        
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
+            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts))
     }
-
+    
     /**
      * Cache Trace Configs
      *
@@ -78,15 +76,14 @@ export class GraphDbOfflineTupleCacherService extends ComponentLifecycleEventEmi
      *
      */
     private loadTraceConfigs() {
-
-        let ts = new TupleSelector(GraphDbTraceConfigTuple.tupleName, {});
-
+        
+        let ts = new TupleSelector(GraphDbTraceConfigTuple.tupleName, {})
+        
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
-
+            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts))
+        
     }
-
-
+    
 }
