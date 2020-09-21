@@ -2,7 +2,7 @@ import { Component, OnInit } from "@angular/core"
 import { ActivatedRoute, Params } from "@angular/router"
 import { BalloonMsgService, NgLifeCycleEvents, TitleService } from "@synerty/peek-plugin-base-js"
 import { VortexStatusService } from "@synerty/vortexjs"
-import { GraphDbService, GraphDbTraceResultTuple } from "@peek/peek_plugin_graphdb"
+import { GraphDbService, GraphDbTraceResultTuple } from "@_peek/peek_plugin_graphdb"
 
 @Component({
     selector: "plugin-graphdb-view-trace",

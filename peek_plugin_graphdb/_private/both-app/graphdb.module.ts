@@ -21,7 +21,7 @@ import {
     graphDbObservableName,
     graphDbTupleOfflineServiceName,
     graphDbActionProcessorName,
-} from "@peek/peek_plugin_graphdb/_private/PluginNames";
+} from "@_peek/peek_plugin_graphdb/_private/PluginNames";
 import { ViewTraceComponent } from "./view-trace/view.component";
 
 // Define the child routes for this plugin.

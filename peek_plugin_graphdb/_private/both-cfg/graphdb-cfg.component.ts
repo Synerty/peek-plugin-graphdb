@@ -1,15 +1,15 @@
 import { Component } from "@angular/core"
 import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 import { TupleSelector } from "@synerty/vortexjs"
-import { GraphDbTupleService, OfflineConfigTuple } from "@peek/peek_plugin_graphdb/_private"
+import { GraphDbTupleService, OfflineConfigTuple } from "@_peek/peek_plugin_graphdb/_private"
 import {
     PrivateSegmentLoaderService,
     PrivateSegmentLoaderStatusTuple
-} from "@peek/peek_plugin_graphdb/_private/segment-loader"
+} from "@_peek/peek_plugin_graphdb/_private/segment-loader"
 import {
     ItemKeyIndexLoaderService,
     ItemKeyIndexLoaderStatusTuple
-} from "@peek/peek_plugin_graphdb/_private/item-key-index-loader"
+} from "@_peek/peek_plugin_graphdb/_private/item-key-index-loader"
 
 @Component({
     selector: "peek-plugin-graphdb-cfg",

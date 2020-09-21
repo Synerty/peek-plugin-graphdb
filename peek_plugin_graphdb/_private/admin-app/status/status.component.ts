@@ -1,6 +1,6 @@
 import { Component } from "@angular/core"
 import { TupleDataObserverService, TupleSelector } from "@synerty/vortexjs"
-import { ServerStatusTuple } from "@peek/peek_plugin_graphdb/_private"
+import { ServerStatusTuple } from "@_peek/peek_plugin_graphdb/_private"
 import { BalloonMsgService, NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 
 @Component({
