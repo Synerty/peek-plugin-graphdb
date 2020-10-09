@@ -21,7 +21,7 @@ import {
     graphDbFilt,
     graphDbObservableName,
     graphDbTupleOfflineServiceName
-} from "@_peek/peek_plugin_graphdb/_private";
+} from "@peek/peek_plugin_graphdb/_private";
 // import {EditPropertyComponent} from "./edit-property-table/edit.component";
 // import {EditSegmentTypeComponent} from "./edit-object-type-table/edit.component";
 // import {ViewSegmentComponent} from "./view-segment/view-segment";
