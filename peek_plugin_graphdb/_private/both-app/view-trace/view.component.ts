@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core"
 import { ActivatedRoute, Params } from "@angular/router"
-import { BalloonMsgService, NgLifeCycleEvents, TitleService } from "@synerty/peek-plugin-base-js"
+import { BalloonMsgService, NgLifeCycleEvents, HeaderService } from "@synerty/peek-plugin-base-js"
 import { VortexStatusService } from "@synerty/vortexjs"
 import { GraphDbService, GraphDbTraceResultTuple } from "@peek/peek_plugin_graphdb"
 
@@ -21,11 +21,11 @@ export class ViewTraceComponent extends NgLifeCycleEvents implements OnInit {
         private route: ActivatedRoute,
         private graphDbService: GraphDbService,
         private vortexStatus: VortexStatusService,
-        private titleService: TitleService
+        private headerService: HeaderService
     ) {
         super()
         
-        titleService.setTitle("DEV test trace ...")
+        headerService.setTitle("DEV test trace ...")
     }
     
     ngOnInit() {
@@ -65,12 +65,12 @@ export class ViewTraceComponent extends NgLifeCycleEvents implements OnInit {
     //
     //     if (this.itemKey == null || this.itemKey.key == null) {
     //         this.balloonMsg.showWarning(`Failed to find ${key}`);
-    //         this.titleService.setTitle(`ItemKey ${key} Not Found`);
+    //         this.headerService.setTitle(`ItemKey ${key} Not Found`);
     //         return;
     //     }
     //     this.balloonMsg.showSuccess(`We've found ${key}`);
     //
-    //     this.titleService.setTitle(`ItemKey ${key}`);
+    //     this.headerService.setTitle(`ItemKey ${key}`);
     //
     //     this.itemKeyTypeName = this.itemKey.itemKeyType.name;
     // }
