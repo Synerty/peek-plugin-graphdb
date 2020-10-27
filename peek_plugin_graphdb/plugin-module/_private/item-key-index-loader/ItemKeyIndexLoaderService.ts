@@ -14,7 +14,7 @@ import {
 
 import { graphDbCacheStorageName, graphDbFilt, graphDbTuplePrefix } from "../PluginNames"
 
-import { Subject } from "rxjs/Subject"
+import { Subject } from "rxjs"
 import { Observable } from "rxjs/Observable"
 import { ItemKeyIndexEncodedChunkTuple } from "./ItemKeyIndexEncodedChunkTuple"
 import { ItemKeyIndexUpdateDateTuple } from "./ItemKeyIndexUpdateDateTuple"
