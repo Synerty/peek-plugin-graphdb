@@ -13,8 +13,7 @@ import {
 
 @Component({
     selector: "peek-plugin-graphdb-cfg",
-    templateUrl: "graphdb-cfg.component.web.html",
-    moduleId: module.id
+    templateUrl: "graphdb-cfg.component.web.html"
 })
 export class GraphDbCfgComponent extends NgLifeCycleEvents {
     segmentIndexStatus: PrivateSegmentLoaderStatusTuple = new PrivateSegmentLoaderStatusTuple()

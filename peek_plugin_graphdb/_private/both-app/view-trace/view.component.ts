@@ -6,8 +6,7 @@ import { GraphDbService, GraphDbTraceResultTuple } from "@peek/peek_plugin_graph
 
 @Component({
     selector: "plugin-graphdb-view-trace",
-    templateUrl: "view.component.web.html",
-    moduleId: module.id
+    templateUrl: "view.component.web.html"
 })
 export class ViewTraceComponent extends NgLifeCycleEvents implements OnInit {
     modelSetKey: string = "pofDiagram"
