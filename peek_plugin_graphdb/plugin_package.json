@@ -14,9 +14,8 @@
         "agent",
         "storage",
         "admin",
-        "client",
-        "mobile",
-        "desktop",
+        "field",
+        "office",
         "doc-dev",
         "doc-admin"
     ],
@@ -40,9 +39,8 @@
         "appModule": "graphdb.module#GraphDbModule",
         "moduleDir": "plugin-module"
     },
-    "client": {
-    },
-    "mobile": {
+
+    "field": {
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
@@ -81,7 +79,7 @@
             }
         ]
     },
-    "desktop": {
+    "office": {
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
