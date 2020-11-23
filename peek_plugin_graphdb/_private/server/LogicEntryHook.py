@@ -1,7 +1,7 @@
 import logging
 
 from celery import Celery
-from peek_plugin_base.server.PluginServerEntryHookABC import PluginServerEntryHookABC
+from peek_plugin_base.server.PluginLogicEntryHookABC import PluginLogicEntryHookABC
 from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
@@ -44,13 +44,13 @@ from .controller.MainController import MainController
 logger = logging.getLogger(__name__)
 
 
-class ServerEntryHook(PluginServerEntryHookABC,
+class LogicEntryHook(PluginLogicEntryHookABC,
                       PluginServerStorageEntryHookABC,
                       PluginServerWorkerEntryHookABC):
     def __init__(self, *args, **kwargs):
         """" Constructor """
         # Call the base classes constructor
-        PluginServerEntryHookABC.__init__(self, *args, **kwargs)
+        PluginLogicEntryHookABC.__init__(self, *args, **kwargs)
 
         #: Loaded Objects, This is a list of all objects created when we start
         self._loadedObjects = []
