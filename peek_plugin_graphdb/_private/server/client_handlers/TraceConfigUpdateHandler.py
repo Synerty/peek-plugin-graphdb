@@ -9,7 +9,7 @@ from vortex.Payload import Payload
 from vortex.PayloadFilterKeys import plDeleteKey
 from vortex.VortexFactory import VortexFactory, NoVortexException
 
-from peek_plugin_base.PeekVortexUtil import peekClientName
+from peek_plugin_base.PeekVortexUtil import peekBackendNames
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
     clientTraceConfigUpdateFromServerFilt
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
@@ -53,9 +53,13 @@ class TraceConfigUpdateHandler:
         if not traceConfigKeys:
             return
 
-        if peekClientName not in VortexFactory.getRemoteVortexName():
-            logger.debug("No clients are online to send the doc chunk to, %s",
-                         traceConfigKeys)
+        vortexNamesToSendTo = set(peekBackendNames) & set(
+            VortexFactory.getRemoteVortexName())
+
+        if not vortexNamesToSendTo:
+            self._logger.debug(
+                "No clients are online to send the doc chunk to, %s",
+                traceConfigKeys)
             return
 
         payload = Payload(filt=copy(clientTraceConfigUpdateFromServerFilt))
@@ -67,7 +71,10 @@ class TraceConfigUpdateHandler:
         vortexMsg = yield payloadEnvelope.toVortexMsgDefer()
 
         try:
-            VortexFactory.sendVortexMsg(vortexMsg, destVortexName=peekClientName)
+            for vortexName in vortexNamesToSendTo:
+                VortexFactory.sendVortexMsg(
+                    vortexMsg, destVortexName=vortexName
+                )
 
         except Exception as e:
             logger.exception(e)
@@ -86,16 +93,21 @@ class TraceConfigUpdateHandler:
         if not traceConfigKeys:
             return
 
-        if peekClientName not in VortexFactory.getRemoteVortexName():
-            logger.debug("No clients are online to send the trace configs to, %s",
-                         traceConfigKeys)
+        vortexNamesToSendTo = set(peekBackendNames) & set(
+            VortexFactory.getRemoteVortexName())
+
+        if not vortexNamesToSendTo:
+            self._logger.debug(
+                "No clients are online to send the trace configs to, %s",
+                traceConfigKeys)
             return
 
         def send(vortexMsg: bytes):
             if vortexMsg:
-                VortexFactory.sendVortexMsg(
-                    vortexMsg, destVortexName=peekClientName
-                )
+                for vortexName in vortexNamesToSendTo:
+                    VortexFactory.sendVortexMsg(
+                        vortexMsg, destVortexName=vortexName
+                    )
 
         d: Deferred = self._loadTraceConfigs(modelSetKey, traceConfigKeys)
         d.addCallback(send)
