@@ -2,7 +2,7 @@ import hashlib
 import json
 from typing import List
 
-import ujson
+import json
 from vortex.Tuple import addTupleType, TupleField, Tuple
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
@@ -90,15 +90,15 @@ class GraphDbImportSegmentTuple(Tuple):
         m.update(b'zeroth item padding')
 
         for edge in self.edges:
-            m.update(ujson.dumps(edge.tupleToSqlaBulkInsertDict(), sort_keys=True)
+            m.update(json.dumps(edge.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
         for vertex in self.vertexes:
-            m.update(ujson.dumps(vertex.tupleToSqlaBulkInsertDict(), sort_keys=True)
+            m.update(json.dumps(vertex.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
         for link in self.links:
-            m.update(ujson.dumps(link.tupleToSqlaBulkInsertDict(), sort_keys=True)
+            m.update(json.dumps(link.tupleToSqlaBulkInsertDict(), sort_keys=True)
                      .encode())
 
         m.update(self.key.encode())
