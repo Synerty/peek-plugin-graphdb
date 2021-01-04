@@ -11,10 +11,12 @@ from twisted.internet.defer import inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    SegmentCacheController
-from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
-    GraphDbEncodedChunkTuple
+from peek_plugin_graphdb._private.client.controller.SegmentCacheController import (
+    SegmentCacheController,
+)
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import (
+    GraphDbEncodedChunkTuple,
+)
 from peek_plugin_graphdb.tuples.GraphDbLinkedSegment import GraphDbLinkedSegment
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ class FastGraphDb:
         self._cacheController = cacheController
         self._graphsByModelSetKey = {}
 
-    def graphForModelSet(self, modelSetKey: str) -> 'FastGraphDbModel':
+    def graphForModelSet(self, modelSetKey: str) -> "FastGraphDbModel":
         if modelSetKey not in self._graphsByModelSetKey:
             self._graphsByModelSetKey[modelSetKey] = FastGraphDbModel(
                 modelSetKey, self._cacheController
@@ -58,7 +60,7 @@ class FastGraphDbModel:
 
     @inlineCallbacks
     def notifyOfUpdate(self, chunkKeys: List[str]):
-        """ Notify of Segment Updates
+        """Notify of Segment Updates
 
         This method is called by the client.SegmentCacheController when it receives
          updates from the server.
@@ -93,15 +95,14 @@ class FastGraphDbModel:
                 self._segmentsByKey[segment.key] = segment
 
     @deferToThreadWrapWithLogger(logger)
-    def _unpackSegmentsFromChunk(self, encodedChunkTuple: GraphDbEncodedChunkTuple
-                                 ) -> List[GraphDbLinkedSegment]:
+    def _unpackSegmentsFromChunk(
+        self, encodedChunkTuple: GraphDbEncodedChunkTuple
+    ) -> List[GraphDbLinkedSegment]:
 
         foundSegments: List[GraphDbLinkedSegment] = []
 
         segmentJsonStrByKeyStr = (
-            Payload()
-                .fromEncodedPayload(encodedChunkTuple.encodedData)
-                .tuples[0]
+            Payload().fromEncodedPayload(encodedChunkTuple.encodedData).tuples[0]
         )
 
         segmentJsonStrByKey = json.loads(segmentJsonStrByKeyStr)

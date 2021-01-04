@@ -18,7 +18,6 @@ class MainController(TupleActionProcessorDelegateABC):
 
     @inlineCallbacks
     def start(self, readApi) -> Deferred:
-
         self._readApi = readApi
 
     def shutdown(self):
@@ -26,4 +25,3 @@ class MainController(TupleActionProcessorDelegateABC):
 
     def processTupleAction(self, tupleAction: TupleActionABC) -> Deferred:
         raise NotImplementedError(tupleAction.tupleName())
-

@@ -5,10 +5,9 @@ from twisted.internet.defer import Deferred
 
 
 class GraphDbApiABC(metaclass=ABCMeta):
-
     @abstractmethod
     def createOrUpdateSegment(self, graphSegmentEncodedPayload: bytes) -> Deferred:
-        """ Create or Update Segment
+        """Create or Update Segment
 
         Add new Graph Segments to the GraphDB
 
@@ -19,8 +18,10 @@ class GraphDbApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def deleteSegments(self, modelSetKey: str, importGroupHashes: List[str]) -> Deferred:
-        """ Delete Segments
+    def deleteSegments(
+        self, modelSetKey: str, importGroupHashes: List[str]
+    ) -> Deferred:
+        """Delete Segments
 
         Delete a Graph Segment from the GraphDB.
 
@@ -31,7 +32,7 @@ class GraphDbApiABC(metaclass=ABCMeta):
         """
 
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
-        """ Create or Update Trace Config
+        """Create or Update Trace Config
 
         Add new trace configs to the GraphDB
 
@@ -41,8 +42,10 @@ class GraphDbApiABC(metaclass=ABCMeta):
 
         """
 
-    def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Deferred:
-        """ Delete Trace Config
+    def deleteTraceConfig(
+        self, modelSetKey: str, traceConfigKeys: List[str]
+    ) -> Deferred:
+        """Delete Trace Config
 
         Delete a trace config from the GraphDB.
 

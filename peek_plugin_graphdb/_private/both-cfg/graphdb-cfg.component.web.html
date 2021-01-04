@@ -4,26 +4,29 @@
 
 <div class="peek-nav-bar-padding ">
     <div class="peek-information-section">
-        <button class="btn" [class.bg-success]="segmentIndexStatus.cacheForOfflineEnabled"
-                (click)="toggleOfflineMode()">
+        <button
+            (click)="toggleOfflineMode()"
+            [class.bg-success]="segmentIndexStatus.cacheForOfflineEnabled"
+            class="btn"
+        >
             {{segmentIndexStatus.cacheForOfflineEnabled
             ? 'Disable Offline Support'
             : 'Enable Offline Support'}}
         </button>
         <h3>Segment Index</h3>
         <p>
-            Load Complete : {{segmentIndexStatus.initialLoadComplete}}<br/>
+            Load Complete : {{segmentIndexStatus.initialLoadComplete}}<br />
             Load Progress :
-            {{segmentIndexStatus.loadProgress}}/{{segmentIndexStatus.loadTotal}}<br/>
-            Last Check : {{segmentIndexStatus.lastCheck}}<br/>
+            {{segmentIndexStatus.loadProgress}}/{{segmentIndexStatus.loadTotal}}<br />
+            Last Check : {{segmentIndexStatus.lastCheck}}<br />
         </p>
         <h3>Item Key Index</h3>
         <p>
-            Load Complete : {{itemKeyIndexStatus.initialLoadComplete}}<br/>
+            Load Complete : {{itemKeyIndexStatus.initialLoadComplete}}<br />
             Load Progress :
-            {{itemKeyIndexStatus.loadProgress}}/{{itemKeyIndexStatus.loadTotal}}<br/>
-            Last Check : {{itemKeyIndexStatus.lastCheck}}<br/>
+            {{itemKeyIndexStatus.loadProgress}}/{{itemKeyIndexStatus.loadTotal}}<br />
+            Last Check : {{itemKeyIndexStatus.lastCheck}}<br />
         </p>
-
+    
     </div>
 </div>

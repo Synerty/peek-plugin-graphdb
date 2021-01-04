@@ -1,7 +1,8 @@
 import logging
 
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusControllerABC import \
-    ACIProcessorStatusControllerABC
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusControllerABC import (
+    ACIProcessorStatusControllerABC,
+)
 from peek_plugin_graphdb._private.tuples.ServerStatusTuple import ServerStatusTuple
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,13 @@
 import { Component } from "@angular/core"
-import { BalloonMsgService, NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
+import {
+    BalloonMsgService,
+    NgLifeCycleEvents
+} from "@synerty/peek-plugin-base-js"
 import { extend, TupleLoader, VortexService } from "@synerty/vortexjs"
-import { graphDbFilt, SettingPropertyTuple } from "@peek/peek_plugin_graphdb/_private"
+import {
+    graphDbFilt,
+    SettingPropertyTuple
+} from "@peek/peek_plugin_graphdb/_private"
 
 @Component({
     selector: "pl-graphdb-edit-setting",

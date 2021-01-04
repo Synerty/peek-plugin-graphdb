@@ -2,15 +2,19 @@ import json
 import logging
 from typing import List
 
-from peek_abstract_chunked_index.private.client.controller.ACICacheControllerABC import \
-    ACICacheControllerABC
+from peek_abstract_chunked_index.private.client.controller.ACICacheControllerABC import (
+    ACICacheControllerABC,
+)
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRpc import \
-    ItemKeyIndexChunkLoadRpc
-from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
-    ItemKeyIndexEncodedChunk
-from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
-    makeChunkKeyForItemKey
+from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRpc import (
+    ItemKeyIndexChunkLoadRpc,
+)
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
+    ItemKeyIndexEncodedChunk,
+)
+from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import (
+    makeChunkKeyForItemKey,
+)
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 from vortex.Payload import Payload
 
@@ -21,7 +25,7 @@ clientItemKeyIndexUpdateFromServerFilt.update(graphDbFilt)
 
 
 class ItemKeyIndexCacheController(ACICacheControllerABC):
-    """ ItemKeyIndex Cache Controller
+    """ItemKeyIndex Cache Controller
 
     The ItemKeyIndex cache controller stores all the chunks in memory,
     allowing fast access from the mobile and desktop devices.
@@ -48,8 +52,7 @@ class ItemKeyIndexCacheController(ACICacheControllerABC):
 
         if vertexKey not in resultsByKey:
             logger.warning(
-                "ItemKey %s is missing from index, chunkKey %s",
-                vertexKey, chunkKey
+                "ItemKey %s is missing from index, chunkKey %s", vertexKey, chunkKey
             )
             return []
 

@@ -2,13 +2,16 @@ import logging
 from collections import defaultdict
 from typing import Dict, List, Any
 
-from peek_abstract_chunked_index.private.client.controller.ACICacheControllerABC import \
-    ACICacheControllerABC
+from peek_abstract_chunked_index.private.client.controller.ACICacheControllerABC import (
+    ACICacheControllerABC,
+)
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.server.client_handlers.SegmentIndexChunkLoadRpc import \
-    SegmentIndexChunkLoadRpc
-from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
-    GraphDbEncodedChunkTuple
+from peek_plugin_graphdb._private.server.client_handlers.SegmentIndexChunkLoadRpc import (
+    SegmentIndexChunkLoadRpc,
+)
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import (
+    GraphDbEncodedChunkTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +20,7 @@ clientSegmentUpdateFromServerFilt.update(graphDbFilt)
 
 
 class SegmentCacheController(ACICacheControllerABC):
-    """ Segment Cache Controller
+    """Segment Cache Controller
 
     The Segment cache controller stores all the chunks in memory,
     allowing fast access from the mobile and desktop devices.
@@ -41,7 +44,7 @@ class SegmentCacheController(ACICacheControllerABC):
 
         chunkKeysUpdatedByModelSet: Dict[str, List[str]] = defaultdict(list)
         for chunkKey in chunkKeys:
-            modelSetKey = chunkKey.split('.')[0]
+            modelSetKey = chunkKey.split(".")[0]
             chunkKeysUpdatedByModelSet[modelSetKey].append(chunkKey)
 
         for modelSetKey, updatedChunkKeys in chunkKeysUpdatedByModelSet.items():

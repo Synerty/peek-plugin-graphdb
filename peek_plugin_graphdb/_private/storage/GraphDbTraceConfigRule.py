@@ -7,23 +7,24 @@ from vortex.Tuple import Tuple, addTupleType
 
 from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 from peek_plugin_graphdb._private.storage.DeclarativeBase import DeclarativeBase
-from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import \
-    GraphDbTraceConfigRuleTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import (
+    GraphDbTraceConfigRuleTuple,
+)
 
 
 @addTupleType
 class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbTraceConfigRuleTable'
-    __tablename__ = 'GraphDbTraceConfigRule'
+    __tupleType__ = graphDbTuplePrefix + "GraphDbTraceConfigRuleTable"
+    __tablename__ = "GraphDbTraceConfigRule"
 
     #:  The unique ID of this segment (database generated)
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     #:  The model set for this segment
-    traceConfigId = Column(Integer,
-                           ForeignKey('GraphDbTraceConfig.id', ondelete='CASCADE'),
-                           nullable=False)
-    traceConfig = relationship('GraphDbTraceConfig')
+    traceConfigId = Column(
+        Integer, ForeignKey("GraphDbTraceConfig.id", ondelete="CASCADE"), nullable=False
+    )
+    traceConfig = relationship("GraphDbTraceConfig")
 
     #:  The processing order of this rule
     order = Column(Integer, nullable=False)
@@ -52,8 +53,9 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
     #:  Is this rule enabled
     isEnabled = Column(Boolean, nullable=False, server_default="true")
 
-    def fromTuple(self, tupleIn: GraphDbTraceConfigRuleTuple,
-                  traceConfigId: Optional[int]) -> 'GraphDbTraceConfigRule':
+    def fromTuple(
+        self, tupleIn: GraphDbTraceConfigRuleTuple, traceConfigId: Optional[int]
+    ) -> "GraphDbTraceConfigRule":
         if traceConfigId is not None:
             self.traceConfigId = traceConfigId
 
@@ -79,7 +81,7 @@ class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
             propertyValue=self.propertyValue,
             propertyValueType=self.propertyValueType,
             comment=self.comment,
-            isEnabled=self.isEnabled
+            isEnabled=self.isEnabled,
         )
 
         return traceTuple

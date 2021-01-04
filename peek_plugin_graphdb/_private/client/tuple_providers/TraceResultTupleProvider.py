@@ -1,8 +1,9 @@
 import logging
 from typing import Union
 
-from peek_plugin_graphdb._private.client.controller.TracerController import \
-    TracerController
+from peek_plugin_graphdb._private.client.controller.TracerController import (
+    TracerController,
+)
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -16,8 +17,9 @@ class TraceResultTupleProvider(TuplesProviderABC):
         self._tracerController = tracerController
 
     @inlineCallbacks
-    def makeVortexMsg(self, filt: dict,
-                      tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+    def makeVortexMsg(
+        self, filt: dict, tupleSelector: TupleSelector
+    ) -> Union[Deferred, bytes]:
         modelSetKey = tupleSelector.selector["modelSetKey"]
         startVertexKey = tupleSelector.selector["startVertexKey"]
         traceConfigKey = tupleSelector.selector["traceConfigKey"]

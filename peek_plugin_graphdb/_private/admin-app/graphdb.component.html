@@ -2,64 +2,74 @@
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
         <!-- Home Tab -->
-        <li role="presentation" class="active">
-            <a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a>
+        <li class="active" role="presentation">
+            <a aria-controls="home" data-toggle="tab" href="#home" role="tab">
+                Home
+            </a>
         </li>
         <!-- Status -->
         <li role="presentation">
-            <a href="#status" aria-controls="status" role="tab"
-               data-toggle="tab">Status</a>
+            <a
+                aria-controls="status" data-toggle="tab" href="#status"
+                role="tab"
+            >Status
+            </a>
         </li>
         <!--&lt;!&ndash; Edit Segment Tab &ndash;&gt;-->
         <!--<li role="presentation">-->
-            <!--<a href="#editSegment" aria-controls="editSegment" role="tab"-->
-               <!--data-toggle="tab">View Segment</a>-->
+        <!--<a href="#editSegment" aria-controls="editSegment" role="tab"-->
+        <!--data-toggle="tab">View Segment</a>-->
         <!--</li>-->
         <!--&lt;!&ndash; Edit Segment Type Tab &ndash;&gt;-->
         <!--<li role="presentation">-->
-            <!--<a href="#editDocType" aria-controls="editDocType" role="tab"-->
-               <!--data-toggle="tab">Edit Segment Types</a>-->
+        <!--<a href="#editDocType" aria-controls="editDocType" role="tab"-->
+        <!--data-toggle="tab">Edit Segment Types</a>-->
         <!--</li>-->
         <!--&lt;!&ndash; Edit Property Names Tab &ndash;&gt;-->
         <!--<li role="presentation">-->
-            <!--<a href="#editPropertyNames" aria-controls="editPropertyNames" role="tab"-->
-               <!--data-toggle="tab">Edit Property Names</a>-->
+        <!--<a href="#editPropertyNames" aria-controls="editPropertyNames" role="tab"-->
+        <!--data-toggle="tab">Edit Property Names</a>-->
         <!--</li>-->
         <!-- Edit Settings Tab -->
         <li role="presentation">
-            <a href="#editSetting" aria-controls="editSetting" role="tab"
-               data-toggle="tab">Edit Settings</a>
+            <a
+                aria-controls="editSetting" data-toggle="tab"
+                href="#editSetting"
+                role="tab"
+            >Edit Settings
+            </a>
         </li>
     </ul>
-
+    
     <!-- Tab panes -->
     <div class="tab-content">
         <!-- Edit Status Tab -->
-        <div role="tabpanel" class="tab-pane" id="status">
+        <div class="tab-pane" id="status" role="tabpanel">
             <pl-graphdb-status></pl-graphdb-status>
         </div>
         <!-- Edit Settings Tab -->
-        <div role="tabpanel" class="tab-pane" id="editSetting">
+        <div class="tab-pane" id="editSetting" role="tabpanel">
             <pl-graphdb-edit-setting></pl-graphdb-edit-setting>
         </div>
         <!--&lt;!&ndash; Edit Segment Tab &ndash;&gt;-->
         <!--<div role="tabpanel" class="tab-pane" id="editSegment">-->
-            <!--<pl-graphdb-view-segment></pl-graphdb-view-segment>-->
+        <!--<pl-graphdb-view-segment></pl-graphdb-view-segment>-->
         <!--</div>-->
         <!--&lt;!&ndash; Edit Segment Type Tab &ndash;&gt;-->
         <!--<div role="tabpanel" class="tab-pane" id="editDocType">-->
-            <!--<pl-graphdb-edit-object-type></pl-graphdb-edit-object-type>-->
+        <!--<pl-graphdb-edit-object-type></pl-graphdb-edit-object-type>-->
         <!--</div>-->
         <!--&lt;!&ndash; Edit Property Names Tab &ndash;&gt;-->
         <!--<div role="tabpanel" class="tab-pane" id="editPropertyNames">-->
-            <!--<pl-graphdb-edit-property></pl-graphdb-edit-property>-->
+        <!--<pl-graphdb-edit-property></pl-graphdb-edit-property>-->
         <!--</div>-->
         <!-- Home Tab -->
-        <div role="tabpanel" class="tab-pane active" id="home">
+        <div class="tab-pane active" id="home" role="tabpanel">
             <h1 class="text-center">Graph DB</h1>
-            <p>This plugin stores a graph model, and supports offline caching.</p>
+            <p>This plugin stores a graph model, and supports offline
+               caching.</p>
             <p>https://en.wikipedia.org/wiki/Graph_theory</p>
         </div>
-
+    
     </div>
 </div>

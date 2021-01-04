@@ -1,30 +1,41 @@
 import logging
 
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
-    ItemKeyIndexCacheController
-from peek_plugin_graphdb._private.client.controller.TracerController import \
-    TracerController
-from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import \
-    ItemKeyIndexCacheHandler
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
+    ItemKeyIndexCacheController,
+)
+from peek_plugin_graphdb._private.client.controller.TracerController import (
+    TracerController,
+)
+from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import (
+    ItemKeyIndexCacheHandler,
+)
 from twisted.internet.defer import inlineCallbacks
 from vortex.handler.TupleActionProcessorProxy import TupleActionProcessorProxy
-from vortex.handler.TupleDataObservableProxyHandler import TupleDataObservableProxyHandler
+from vortex.handler.TupleDataObservableProxyHandler import (
+    TupleDataObservableProxyHandler,
+)
 from vortex.handler.TupleDataObserverClient import TupleDataObserverClient
 
 from peek_plugin_base.PeekVortexUtil import peekServerName
 from peek_plugin_base.client.PluginClientEntryHookABC import PluginClientEntryHookABC
-from peek_plugin_graphdb._private.PluginNames import graphDbFilt, \
-    graphDbActionProcessorName
+from peek_plugin_graphdb._private.PluginNames import (
+    graphDbFilt,
+    graphDbActionProcessorName,
+)
 from peek_plugin_graphdb._private.PluginNames import graphDbObservableName
-from peek_plugin_graphdb._private.client.ClientTupleObservable import \
-    makeClientTupleDataObservableHandler
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    SegmentCacheController
-from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
-    TraceConfigCacheController
-from peek_plugin_graphdb._private.client.handlers.SegmentCacheHandler import \
-    SegmentCacheHandler
+from peek_plugin_graphdb._private.client.ClientTupleObservable import (
+    makeClientTupleDataObservableHandler,
+)
+from peek_plugin_graphdb._private.client.controller.SegmentCacheController import (
+    SegmentCacheController,
+)
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import (
+    TraceConfigCacheController,
+)
+from peek_plugin_graphdb._private.client.handlers.SegmentCacheHandler import (
+    SegmentCacheHandler,
+)
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
@@ -42,7 +53,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
         self._loadedObjects = []
 
     def load(self) -> None:
-        """ Load
+        """Load
 
         This will be called when the plugin is loaded, just after the db is migrated.
         Place any custom initialiastion steps here.
@@ -58,7 +69,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
 
     @inlineCallbacks
     def start(self):
-        """ Load
+        """Load
 
         This will be called when the plugin is loaded, just after the db is migrated.
         Place any custom initialisation steps here.
@@ -71,7 +82,8 @@ class ClientEntryHook(PluginClientEntryHookABC):
             TupleActionProcessorProxy(
                 tupleActionProcessorName=graphDbActionProcessorName,
                 proxyToVortexName=peekServerName,
-                additionalFilt=graphDbFilt)
+                additionalFilt=graphDbFilt,
+            )
         )
 
         # ----------------
@@ -80,7 +92,8 @@ class ClientEntryHook(PluginClientEntryHookABC):
             observableName=graphDbObservableName,
             proxyToVortexName=peekServerName,
             additionalFilt=graphDbFilt,
-            observerName="Proxy to devices")
+            observerName="Proxy to devices",
+        )
         self._loadedObjects.append(tupleDataObservableProxyHandler)
 
         # ----------------
@@ -90,7 +103,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
             observableName=graphDbObservableName,
             destVortexName=peekServerName,
             additionalFilt=graphDbFilt,
-            observerName="Data for client"
+            observerName="Data for client",
         )
         self._loadedObjects.append(serverTupleObserver)
 
@@ -105,17 +118,14 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # ----------------
         # Segment Cache Controller
 
-        segmentCacheController = SegmentCacheController(
-            self.platform.serviceId
-        )
+        segmentCacheController = SegmentCacheController(self.platform.serviceId)
         self._loadedObjects.append(segmentCacheController)
 
         # ----------------
         # Segment Cache Handler
 
         segmentHandler = SegmentCacheHandler(
-            cacheController=segmentCacheController,
-            clientId=self.platform.serviceId
+            cacheController=segmentCacheController, clientId=self.platform.serviceId
         )
         self._loadedObjects.append(segmentHandler)
 
@@ -138,7 +148,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
 
         itemKeyIndexHandler = ItemKeyIndexCacheHandler(
             cacheController=itemKeyIndexCacheController,
-            clientId=self.platform.serviceId
+            clientId=self.platform.serviceId,
         )
         self._loadedObjects.append(itemKeyIndexHandler)
 
@@ -158,11 +168,13 @@ class ClientEntryHook(PluginClientEntryHookABC):
 
         # ----------------
         # Create the Tuple Observer
-        makeClientTupleDataObservableHandler(tupleDataObservableProxyHandler,
-                                             segmentCacheController,
-                                             itemKeyIndexCacheController,
-                                             traceConfigCacheController,
-                                             tracerController)
+        makeClientTupleDataObservableHandler(
+            tupleDataObservableProxyHandler,
+            segmentCacheController,
+            itemKeyIndexCacheController,
+            traceConfigCacheController,
+            tracerController,
+        )
 
         # ----------------
         # Start the cache controllers
@@ -173,7 +185,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
         logger.debug("Started")
 
     def stop(self):
-        """ Stop
+        """Stop
 
         This method is called by the platform to tell the peek app to shutdown and stop
         everything it's doing

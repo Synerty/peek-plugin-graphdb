@@ -19,12 +19,13 @@ class __CrudHandler(OrmCrudHandler):
 
 
 class __ExtUpdateObservable(OrmCrudHandlerExtension):
-    """ Update Observable ORM Crud Extension
+    """Update Observable ORM Crud Extension
 
     This extension is called after events that will alter data,
     it then notifies the observer.
 
     """
+
     def __init__(self, tupleDataObserver: TupleDataObservableHandler):
         self._tupleDataObserver = tupleDataObserver
 
@@ -32,8 +33,7 @@ class __ExtUpdateObservable(OrmCrudHandlerExtension):
         selector = {}
         # Copy any filter values into the selector
         # selector["lookupName"] = payloadFilt["lookupName"]
-        tupleSelector = TupleSelector(GraphDbSegment.tupleName(),
-                                      selector)
+        tupleSelector = TupleSelector(GraphDbSegment.tupleName(), selector)
         self._tupleDataObserver.notifyOfTupleUpdate(tupleSelector)
         return True
 
@@ -43,8 +43,7 @@ class __ExtUpdateObservable(OrmCrudHandlerExtension):
 
 # This method creates an instance of the handler class.
 def makeSegmentTableHandler(tupleObservable, dbSessionCreator):
-    handler = __CrudHandler(dbSessionCreator, GraphDbSegment,
-                            filtKey, retreiveAll=True)
+    handler = __CrudHandler(dbSessionCreator, GraphDbSegment, filtKey, retreiveAll=True)
 
     logger.debug("Started")
     handler.addExtension(GraphDbSegment, __ExtUpdateObservable(tupleObservable))

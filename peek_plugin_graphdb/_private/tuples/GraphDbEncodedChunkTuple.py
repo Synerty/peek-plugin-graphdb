@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 @addTupleType
 class GraphDbEncodedChunkTuple(Tuple):
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbEncodedChunkTuple'
+    __tupleType__ = graphDbTuplePrefix + "GraphDbEncodedChunkTuple"
 
     modelSetKey: str = TupleField()
 

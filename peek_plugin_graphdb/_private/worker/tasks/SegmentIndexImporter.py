@@ -9,16 +9,24 @@ from txcelery.defer import DeferrableTask
 from vortex.Payload import Payload
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
+from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import (
+    GraphDbCompilerQueue,
+)
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from peek_plugin_base.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import \
-    ItemKeyImportTuple, loadItemKeys, deleteItemKeys
-from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import \
-    makeChunkKeyForSegmentKey
-from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
+from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import (
+    ItemKeyImportTuple,
+    loadItemKeys,
+    deleteItemKeys,
+)
+from peek_plugin_graphdb._private.worker.tasks._SegmentIndexCalcChunkKey import (
+    makeChunkKeyForSegmentKey,
+)
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import (
+    GraphDbImportSegmentTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,16 +48,22 @@ def deleteSegment(self, modelSetKey: str, importGroupHashes: List[str]) -> None:
         modelSetId = modelSetIdByKey[modelSetKey]
 
         chunkKeys = conn.execute(
-            select([segmentTable.c.modelSetId, segmentTable.c.chunkKey],
-                   and_(segmentTable.c.importGroupHash.in_(importGroupHashes),
-                        segmentTable.c.modelSetId == modelSetId))
+            select(
+                [segmentTable.c.modelSetId, segmentTable.c.chunkKey],
+                and_(
+                    segmentTable.c.importGroupHash.in_(importGroupHashes),
+                    segmentTable.c.modelSetId == modelSetId,
+                ),
+            )
         ).fetchall()
 
         if chunkKeys:
             conn.execute(
                 segmentTable.delete(
-                    and_(segmentTable.c.importGroupHash.in_(importGroupHashes),
-                         segmentTable.c.modelSetId == modelSetId)
+                    and_(
+                        segmentTable.c.importGroupHash.in_(importGroupHashes),
+                        segmentTable.c.modelSetId == modelSetId,
+                    )
                 )
             )
 
@@ -59,9 +73,12 @@ def deleteSegment(self, modelSetKey: str, importGroupHashes: List[str]) -> None:
 
         transaction.commit()
 
-        logger.info("Deleted %s, queued %s chunks in %s",
-                     len(importGroupHashes), len(chunkKeys),
-                     (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Deleted %s, queued %s chunks in %s",
+            len(importGroupHashes),
+            len(chunkKeys),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     except Exception as e:
         transaction.rollback()
@@ -119,9 +136,9 @@ def _loadModelSets() -> Dict[str, int]:
     conn = engine.connect()
     try:
         modelSetTable = GraphDbModelSet.__table__
-        results = list(conn.execute(select(
-            columns=[modelSetTable.c.id, modelSetTable.c.key]
-        )))
+        results = list(
+            conn.execute(select(columns=[modelSetTable.c.id, modelSetTable.c.key]))
+        )
         modelSetIdByKey = {o.key: o.id for o in results}
         del results
 
@@ -143,9 +160,10 @@ def _makeModelSet(modelSetKey: str) -> int:
         dbSession.close()
 
 
-def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
-                           modelSetId: int, modelSetKey: str) -> None:
-    """ Insert or Update Objects
+def _insertOrUpdateObjects(
+    newSegments: List[GraphDbImportSegmentTuple], modelSetId: int, modelSetKey: str
+) -> None:
+    """Insert or Update Objects
 
     1) Find objects and update them
     2) Insert object if the are missing
@@ -179,29 +197,34 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
             modelSetId=modelSetId,
             key=importSegment.key,
             importGroupHash=importSegment.importGroupHash,
-            chunkKey=makeChunkKeyForSegmentKey(importSegment.modelSetKey,
-                                               importSegment.key),
-            segmentJson=segmentJson
+            chunkKey=makeChunkKeyForSegmentKey(
+                importSegment.modelSetKey, importSegment.key
+            ),
+            segmentJson=segmentJson,
         )
         inserts.append(existingObject.tupleToSqlaBulkInsertDict())
 
         chunkKeysForQueue.add((modelSetId, existingObject.chunkKey))
 
         for edge in importSegment.edges:
-            newItemKeys.append(ItemKeyImportTuple(
-                importGroupHash=importSegment.importGroupHash,
-                itemKey=edge.key,
-                itemType=ItemKeyTuple.ITEM_TYPE_EDGE,
-                segmentKey=importSegment.key
-            ))
+            newItemKeys.append(
+                ItemKeyImportTuple(
+                    importGroupHash=importSegment.importGroupHash,
+                    itemKey=edge.key,
+                    itemType=ItemKeyTuple.ITEM_TYPE_EDGE,
+                    segmentKey=importSegment.key,
+                )
+            )
 
         for vertex in importSegment.vertexes:
-            newItemKeys.append(ItemKeyImportTuple(
-                importGroupHash=importSegment.importGroupHash,
-                itemKey=vertex.key,
-                itemType=ItemKeyTuple.ITEM_TYPE_VERTEX,
-                segmentKey=importSegment.key
-            ))
+            newItemKeys.append(
+                ItemKeyImportTuple(
+                    importGroupHash=importSegment.importGroupHash,
+                    itemKey=vertex.key,
+                    itemType=ItemKeyTuple.ITEM_TYPE_VERTEX,
+                    segmentKey=importSegment.key,
+                )
+            )
 
     # TODO: If this fails, we could potentially delete by segment key.
     # But that seems a bit hackish, the agents should delete the old first.
@@ -223,7 +246,7 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         if chunkKeysForQueue:
             conn.execute(
                 queueTable.insert(),
-                [dict(modelSetId=m, chunkKey=c) for m, c in chunkKeysForQueue]
+                [dict(modelSetId=m, chunkKey=c) for m, c in chunkKeysForQueue],
             )
 
         loadItemKeys(conn, newItemKeys, modelSetId, modelSetKey)
@@ -233,14 +256,16 @@ def _insertOrUpdateObjects(newSegments: List[GraphDbImportSegmentTuple],
         else:
             transaction.rollback()
 
-        logger.info("Inserted %s queued %s chunks in %s",
-                     len(inserts), len(chunkKeysForQueue),
-                     (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Inserted %s queued %s chunks in %s",
+            len(inserts),
+            len(chunkKeysForQueue),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     except Exception:
         transaction.rollback()
         raise
-
 
     finally:
         conn.close()

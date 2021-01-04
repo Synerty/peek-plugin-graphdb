@@ -18,7 +18,7 @@ class TraceConfigLoadRpc:
         self._dbSessionCreator = dbSessionCreator
 
     def makeHandlers(self):
-        """ Make Handlers
+        """Make Handlers
 
         In this method we start all the RPC handlers
         start() returns an instance of it's self so we can simply yield the result
@@ -30,23 +30,31 @@ class TraceConfigLoadRpc:
         logger.debug("RPCs started")
 
     # -------------
-    @vortexRPC(peekServerName, acceptOnlyFromVortex=peekBackendNames, timeoutSeconds=60,
-               additionalFilt=graphDbFilt, deferToThread=True)
-    def loadTraceConfigs(self, offset: int, count: int) -> List[GraphDbTraceConfigTuple]:
-        """ Load Trace Configs
+    @vortexRPC(
+        peekServerName,
+        acceptOnlyFromVortex=peekBackendNames,
+        timeoutSeconds=60,
+        additionalFilt=graphDbFilt,
+        deferToThread=True,
+    )
+    def loadTraceConfigs(
+        self, offset: int, count: int
+    ) -> List[GraphDbTraceConfigTuple]:
+        """Load Trace Configs
 
         Allow the client to incrementally load the trace configs.
 
         """
         session = self._dbSessionCreator()
         try:
-            ormObjs = (session
-                      .query(GraphDbTraceConfig)
-                      .options(joinedload(GraphDbTraceConfig.modelSet))
-                      .options(joinedload(GraphDbTraceConfig.rules))
-                      .order_by(GraphDbTraceConfig.id)
-                      .offset(offset)
-                      .limit(count))
+            ormObjs = (
+                session.query(GraphDbTraceConfig)
+                .options(joinedload(GraphDbTraceConfig.modelSet))
+                .options(joinedload(GraphDbTraceConfig.rules))
+                .order_by(GraphDbTraceConfig.id)
+                .offset(offset)
+                .limit(count)
+            )
 
             return [ormObj.toTuple() for ormObj in ormObjs]
 

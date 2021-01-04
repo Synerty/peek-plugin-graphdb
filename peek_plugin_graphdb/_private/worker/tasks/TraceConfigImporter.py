@@ -12,8 +12,7 @@ from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
 from peek_plugin_base.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import \
-    GraphDbTraceConfigTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
 
 logger = logging.getLogger(__name__)
 
@@ -33,21 +32,26 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
         modelSetId = modelSetIdByKey[modelSetKey]
 
         conn.execute(
-            traceConfigTable.delete(and_(traceConfigTable.c.key.in_(traceConfigKeys),
-                                         traceConfigTable.c.modelSetId == modelSetId))
+            traceConfigTable.delete(
+                and_(
+                    traceConfigTable.c.key.in_(traceConfigKeys),
+                    traceConfigTable.c.modelSetId == modelSetId,
+                )
+            )
         )
 
         transaction.commit()
 
-        logger.info("Deleted %s trace configs in %s",
-                     len(traceConfigKeys),
-                     (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Deleted %s trace configs in %s",
+            len(traceConfigKeys),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     except Exception as e:
         transaction.rollback()
         logger.debug("Retrying import graphDb objects, %s", e)
         raise self.retry(exc=e, countdown=3)
-
 
     finally:
         conn.close()
@@ -55,8 +59,9 @@ def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Non
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def createOrUpdateTraceConfigs(self, traceConfigEncodedPayload: bytes
-                               ) -> Dict[str, List[str]]:
+def createOrUpdateTraceConfigs(
+    self, traceConfigEncodedPayload: bytes
+) -> Dict[str, List[str]]:
     # Decode arguments
     newTraceConfigs: List[GraphDbTraceConfigTuple] = (
         Payload().fromEncodedPayload(traceConfigEncodedPayload).tuples
@@ -90,8 +95,7 @@ def createOrUpdateTraceConfigs(self, traceConfigEncodedPayload: bytes
         raise self.retry(exc=e, countdown=3)
 
 
-def _validateNewTraceConfigs(
-        newTraceConfigs: List[GraphDbTraceConfigTuple]) -> None:
+def _validateNewTraceConfigs(newTraceConfigs: List[GraphDbTraceConfigTuple]) -> None:
     for traceConfig in newTraceConfigs:
         if not traceConfig.key:
             raise Exception("key is empty for %s" % traceConfig)
@@ -109,9 +113,9 @@ def _loadModelSets() -> Dict[str, int]:
     conn = engine.connect()
     try:
         modelSetTable = GraphDbModelSet.__table__
-        results = list(conn.execute(select(
-            columns=[modelSetTable.c.id, modelSetTable.c.key]
-        )))
+        results = list(
+            conn.execute(select(columns=[modelSetTable.c.id, modelSetTable.c.key]))
+        )
         modelSetIdByKey = {o.key: o.id for o in results}
         del results
 
@@ -133,9 +137,10 @@ def _makeModelSet(modelSetKey: str) -> int:
         dbSession.close()
 
 
-def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbTraceConfigTuple],
-                           modelSetId: int) -> None:
-    """ Insert or Update Objects
+def _insertOrUpdateObjects(
+    newTraceConfigs: List[GraphDbTraceConfigTuple], modelSetId: int
+) -> None:
+    """Insert or Update Objects
 
     1) Find objects and update them
     2) Insert object if the are missing
@@ -152,8 +157,7 @@ def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbTraceConfigTuple],
         keysToDelete = {i.key for i in newTraceConfigs}
 
         dbSession.execute(
-            traceConfigTable.delete(
-                traceConfigTable.c.key.in_(keysToDelete))
+            traceConfigTable.delete(traceConfigTable.c.key.in_(keysToDelete))
         )
 
         # Create state arrays
@@ -165,14 +169,15 @@ def _insertOrUpdateObjects(newTraceConfigs: List[GraphDbTraceConfigTuple],
 
         dbSession.commit()
 
-        logger.info("Inserted %s trace configs in %s",
-                     len(inserts),
-                     (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Inserted %s trace configs in %s",
+            len(inserts),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     except Exception:
         dbSession.rollback()
         raise
-
 
     finally:
         dbSession.close()

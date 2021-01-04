@@ -6,12 +6,13 @@ from vortex.Tuple import Tuple, addTupleType, TupleField
 
 @addTupleType
 class GraphDbModelSetTuple(Tuple):
-    """ GraphDB Model Set Tuple
+    """GraphDB Model Set Tuple
 
     This tuple is the publicly exposed ModelSet
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbModelSetTuple'
+
+    __tupleType__ = graphDbTuplePrefix + "GraphDbModelSetTuple"
 
     #:  A private variable
     id: int = TupleField()

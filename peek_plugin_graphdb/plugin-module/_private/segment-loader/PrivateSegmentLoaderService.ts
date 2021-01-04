@@ -12,7 +12,11 @@ import {
     VortexStatusService
 } from "@synerty/vortexjs"
 
-import { graphDbCacheStorageName, graphDbFilt, graphDbTuplePrefix } from "../PluginNames"
+import {
+    graphDbCacheStorageName,
+    graphDbFilt,
+    graphDbTuplePrefix
+} from "../PluginNames"
 
 import { Subject } from "rxjs"
 import { Observable } from "rxjs"

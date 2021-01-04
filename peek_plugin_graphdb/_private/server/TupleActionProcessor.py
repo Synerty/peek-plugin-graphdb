@@ -9,5 +9,6 @@ def makeTupleActionProcessorHandler(mainController: MainController):
     processor = TupleActionProcessor(
         tupleActionProcessorName=graphDbActionProcessorName,
         additionalFilt=graphDbFilt,
-        defaultDelegate=mainController)
+        defaultDelegate=mainController,
+    )
     return processor

@@ -6,11 +6,12 @@ from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 
 
 class GraphDbLinkedSegment:
-    """ Linked Segment
+    """Linked Segment
 
     This tuple is the publicly exposed Segment
 
     """
+
     #:  The unique key of this segment
     key: str = None
 
@@ -27,8 +28,9 @@ class GraphDbLinkedSegment:
         self.edgeByKey = {}
         self.vertexByKey = {}
 
-    def unpackJson(self, jsonDict: Dict, segmentKey: str,
-                   modelSetKey: str) -> 'GraphDbLinkedSegment':
+    def unpackJson(
+        self, jsonDict: Dict, segmentKey: str, modelSetKey: str
+    ) -> "GraphDbLinkedSegment":
         self.key = segmentKey
         self.modelSetKey = modelSetKey
 

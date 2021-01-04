@@ -4,15 +4,16 @@ logger = logging.getLogger(__name__)
 
 BUCKET_COUNT = 8192
 
+
 def makeChunkKeyForSegmentKey(modelSetKey: str, key: str) -> str:
-    """ Make Chunk Key
+    """Make Chunk Key
 
-    This is simple, and provides a reasonable distribution
-ß
-    :param modelSetKey:
-    :param key:
+        This is simple, and provides a reasonable distribution
+    ß
+        :param modelSetKey:
+        :param key:
 
-    :return: chunkKey
+        :return: chunkKey
 
     """
 
@@ -29,5 +30,4 @@ def makeChunkKeyForSegmentKey(modelSetKey: str, key: str) -> str:
 
     bucket = bucket & (BUCKET_COUNT - 1)
 
-    return '%s.%s' % (modelSetKey, bucket)
-
+    return "%s.%s" % (modelSetKey, bucket)

@@ -4,8 +4,9 @@ logger = logging.getLogger(__name__)
 
 BUCKET_COUNT = 8192
 
+
 def makeChunkKeyForItemKey(modelSetKey: str, key: str) -> str:
-    """ Make Chunk Key
+    """Make Chunk Key
 
     This is simple, and provides a reasonable distribution
 
@@ -29,5 +30,4 @@ def makeChunkKeyForItemKey(modelSetKey: str, key: str) -> str:
 
     bucket = bucket & (BUCKET_COUNT - 1)
 
-    return '%s.%s' % (modelSetKey, bucket)
-
+    return "%s.%s" % (modelSetKey, bucket)

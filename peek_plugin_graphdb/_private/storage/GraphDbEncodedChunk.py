@@ -6,25 +6,26 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index
 
-from peek_abstract_chunked_index.private.tuples.ACIEncodedChunkTupleABC import \
-    ACIEncodedChunkTupleABC
+from peek_abstract_chunked_index.private.tuples.ACIEncodedChunkTupleABC import (
+    ACIEncodedChunkTupleABC,
+)
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import \
-    GraphDbEncodedChunkTuple
+from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import (
+    GraphDbEncodedChunkTuple,
+)
 from .DeclarativeBase import DeclarativeBase
 
 logger = logging.getLogger(__name__)
 
 
-class GraphDbEncodedChunk(DeclarativeBase,
-                          ACIEncodedChunkTupleABC):
-    __tablename__ = 'GraphDbEncodedChunk'
+class GraphDbEncodedChunk(DeclarativeBase, ACIEncodedChunkTupleABC):
+    __tablename__ = "GraphDbEncodedChunk"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
-    modelSetId = Column(Integer,
-                        ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),
-                        nullable=False)
+    modelSetId = Column(
+        Integer, ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"), nullable=False
+    )
     modelSet = relationship(GraphDbModelSet, lazy=False)
 
     chunkKey = Column(String, nullable=False)
@@ -58,8 +59,10 @@ class GraphDbEncodedChunk(DeclarativeBase,
 
     @classmethod
     def sqlCoreLoad(cls, row):
-        return GraphDbEncodedChunkTuple(modelSetKey=row.key,
-                                        chunkKey=row.chunkKey,
-                                        encodedData=row.encodedData,
-                                        encodedHash=row.encodedHash,
-                                        lastUpdate=row.lastUpdate)
+        return GraphDbEncodedChunkTuple(
+            modelSetKey=row.key,
+            chunkKey=row.chunkKey,
+            encodedData=row.encodedData,
+            encodedHash=row.encodedHash,
+            lastUpdate=row.lastUpdate,
+        )

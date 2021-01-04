@@ -1,17 +1,14 @@
-import {addTupleType, Tuple} from "@synerty/vortexjs";
-import {graphDbTuplePrefix} from "../PluginNames";
-
+import { addTupleType, Tuple } from "@synerty/vortexjs"
+import { graphDbTuplePrefix } from "../PluginNames"
 
 @addTupleType
 export class SegmentIndexUpdateDateTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "SegmentIndexUpdateDateTuple";
-
+    public static readonly tupleName = graphDbTuplePrefix + "SegmentIndexUpdateDateTuple"
+    initialLoadComplete: boolean = false
+    updateDateByChunkKey: {} = {}
     // Improve performance of the JSON serialisation
-    protected _rawJonableFields = ['initialLoadComplete', 'updateDateByChunkKey'];
-
-    initialLoadComplete: boolean = false;
-    updateDateByChunkKey: {} = {};
-
+    protected _rawJonableFields = ["initialLoadComplete", "updateDateByChunkKey"]
+    
     constructor() {
         super(SegmentIndexUpdateDateTuple.tupleName)
     }

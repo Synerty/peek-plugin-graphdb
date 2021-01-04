@@ -1,20 +1,28 @@
 import logging
 
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import \
-    ACIProcessorQueueControllerABC, ACIProcessorQueueBlockItem
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import \
-    ACIProcessorStatusNotifierABC
-from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import \
-    ACIProcessorQueueTupleABC
-from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkUpdateHandler import \
-    ItemKeyIndexChunkUpdateHandler
-from peek_plugin_graphdb._private.server.controller.StatusController import \
-    StatusController
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import (
+    ACIProcessorQueueControllerABC,
+    ACIProcessorQueueBlockItem,
+)
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import (
+    ACIProcessorStatusNotifierABC,
+)
+from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import (
+    ACIProcessorQueueTupleABC,
+)
+from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkUpdateHandler import (
+    ItemKeyIndexChunkUpdateHandler,
+)
+from peek_plugin_graphdb._private.server.controller.StatusController import (
+    StatusController,
+)
 from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
-from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
-    ItemKeyIndexCompilerQueue
-from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
-    ItemKeyIndexEncodedChunk
+from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import (
+    ItemKeyIndexCompilerQueue,
+)
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
+    ItemKeyIndexEncodedChunk,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +37,9 @@ class _Notifier(ACIProcessorStatusNotifierABC):
         self._adminStatusController.notify()
 
     def addToProcessorTotal(self, delta: int):
-        self._adminStatusController.status.itemKeyIndexCompilerQueueProcessedTotal += delta
+        self._adminStatusController.status.itemKeyIndexCompilerQueueProcessedTotal += (
+            delta
+        )
         self._adminStatusController.notify()
 
     def setProcessorError(self, error: str):
@@ -48,20 +58,28 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
 
     _logger = logger
     _QueueDeclarative: ACIProcessorQueueTupleABC = ItemKeyIndexCompilerQueue
-    _VacuumDeclaratives = (ItemKeyIndexCompilerQueue, ItemKeyIndex,
-                           ItemKeyIndexEncodedChunk)
+    _VacuumDeclaratives = (
+        ItemKeyIndexCompilerQueue,
+        ItemKeyIndex,
+        ItemKeyIndexEncodedChunk,
+    )
 
-    def __init__(self, dbSessionCreator,
-                 statusController: StatusController,
-                 clientUpdateHandler: ItemKeyIndexChunkUpdateHandler):
-        ACIProcessorQueueControllerABC.__init__(self, dbSessionCreator,
-                                                _Notifier(statusController))
+    def __init__(
+        self,
+        dbSessionCreator,
+        statusController: StatusController,
+        clientUpdateHandler: ItemKeyIndexChunkUpdateHandler,
+    ):
+        ACIProcessorQueueControllerABC.__init__(
+            self, dbSessionCreator, _Notifier(statusController)
+        )
 
         self._clientUpdateHandler: ItemKeyIndexChunkUpdateHandler = clientUpdateHandler
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
-        from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompiler import \
-            compileItemKeyIndexChunk
+        from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompiler import (
+            compileItemKeyIndexChunk,
+        )
 
         return compileItemKeyIndexChunk.delay(block.itemsEncodedPayload)
 
@@ -69,7 +87,7 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         self._clientUpdateHandler.sendChunks(results)
 
     def _dedupeQueueSql(self, lastFetchedId: int, dedupeLimit: int):
-        return '''
+        return """
                  with sq_raw as (
                     SELECT "id", "chunkKey"
                     FROM pl_graphdb."ItemKeyIndexCompilerQueue"
@@ -88,4 +106,7 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
                     AND pl_graphdb."ItemKeyIndexCompilerQueue"."id" > %(id)s
                     AND pl_graphdb."ItemKeyIndexCompilerQueue"."chunkKey" = sq1."chunkKey"
 
-            ''' % {'id': lastFetchedId, 'limit': dedupeLimit}
+            """ % {
+            "id": lastFetchedId,
+            "limit": dedupeLimit,
+        }

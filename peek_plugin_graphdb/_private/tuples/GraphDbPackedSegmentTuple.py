@@ -7,13 +7,14 @@ from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 
 @addTupleType
 class GraphDbPackedSegmentTuple(Tuple):
-    """ Packed Segment
+    """Packed Segment
 
     This tuple transports the Segment JSON that is packed in the encoded segment.
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbPackedSegmentTuple'
-    __rawJonableFields__ = ['key', 'jsonDict']
+
+    __tupleType__ = graphDbTuplePrefix + "GraphDbPackedSegmentTuple"
+    __rawJonableFields__ = ["key", "jsonDict"]
 
     #:  The unique key of this segment
     key: str = None

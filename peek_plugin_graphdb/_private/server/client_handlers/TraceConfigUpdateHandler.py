@@ -10,8 +10,9 @@ from vortex.PayloadFilterKeys import plDeleteKey
 from vortex.VortexFactory import VortexFactory, NoVortexException
 
 from peek_plugin_base.PeekVortexUtil import peekBackendNames
-from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
-    clientTraceConfigUpdateFromServerFilt
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import (
+    clientTraceConfigUpdateFromServerFilt,
+)
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class TraceConfigUpdateHandler:
-    """ Client Segment Update Controller
+    """Client Segment Update Controller
 
     This controller handles sending updates the the client.
 
@@ -41,7 +42,7 @@ class TraceConfigUpdateHandler:
 
     @inlineCallbacks
     def sendDeleted(self, modelSetKey: str, traceConfigKeys: List[str]) -> None:
-        """ Send Deleted
+        """Send Deleted
 
         Send grid updates to the client services
 
@@ -54,34 +55,33 @@ class TraceConfigUpdateHandler:
             return
 
         vortexNamesToSendTo = set(peekBackendNames) & set(
-            VortexFactory.getRemoteVortexName())
+            VortexFactory.getRemoteVortexName()
+        )
 
         if not vortexNamesToSendTo:
             self._logger.debug(
-                "No clients are online to send the doc chunk to, %s",
-                traceConfigKeys)
+                "No clients are online to send the doc chunk to, %s", traceConfigKeys
+            )
             return
 
         payload = Payload(filt=copy(clientTraceConfigUpdateFromServerFilt))
         payload.filt[plDeleteKey] = True
-        payload.tuples = dict(modelSetKey=modelSetKey,
-                              traceConfigKeys=traceConfigKeys)
+        payload.tuples = dict(modelSetKey=modelSetKey, traceConfigKeys=traceConfigKeys)
 
         payloadEnvelope = yield payload.makePayloadEnvelopeDefer()
         vortexMsg = yield payloadEnvelope.toVortexMsgDefer()
 
         try:
             for vortexName in vortexNamesToSendTo:
-                VortexFactory.sendVortexMsg(
-                    vortexMsg, destVortexName=vortexName
-                )
+                VortexFactory.sendVortexMsg(vortexMsg, destVortexName=vortexName)
 
         except Exception as e:
             logger.exception(e)
 
-    def sendCreatedOrUpdatedUpdates(self, modelSetKey: str,
-                                    traceConfigKeys: List[str]) -> None:
-        """ Send Create or Updated Updates
+    def sendCreatedOrUpdatedUpdates(
+        self, modelSetKey: str, traceConfigKeys: List[str]
+    ) -> None:
+        """Send Create or Updated Updates
 
         Send grid updates to the client services
 
@@ -94,20 +94,20 @@ class TraceConfigUpdateHandler:
             return
 
         vortexNamesToSendTo = set(peekBackendNames) & set(
-            VortexFactory.getRemoteVortexName())
+            VortexFactory.getRemoteVortexName()
+        )
 
         if not vortexNamesToSendTo:
             self._logger.debug(
                 "No clients are online to send the trace configs to, %s",
-                traceConfigKeys)
+                traceConfigKeys,
+            )
             return
 
         def send(vortexMsg: bytes):
             if vortexMsg:
                 for vortexName in vortexNamesToSendTo:
-                    VortexFactory.sendVortexMsg(
-                        vortexMsg, destVortexName=vortexName
-                    )
+                    VortexFactory.sendVortexMsg(vortexMsg, destVortexName=vortexName)
 
         d: Deferred = self._loadTraceConfigs(modelSetKey, traceConfigKeys)
         d.addCallback(send)
@@ -117,35 +117,40 @@ class TraceConfigUpdateHandler:
 
         if failure.check(NoVortexException):
             logger.debug(
-                "No clients are online to send the doc chunk to, %s", traceConfigKeys)
+                "No clients are online to send the doc chunk to, %s", traceConfigKeys
+            )
             return
 
         vortexLogFailure(failure, logger)
 
     @deferToThreadWrapWithLogger(logger)
-    def _loadTraceConfigs(self, modelSetKey: str, traceConfigKeys: List[str]
-                          ) -> Optional[bytes]:
+    def _loadTraceConfigs(
+        self, modelSetKey: str, traceConfigKeys: List[str]
+    ) -> Optional[bytes]:
 
         session = self._dbSessionCreator()
         try:
             results = list(
                 session.query(GraphDbTraceConfig)
-                    .options(joinedload(GraphDbTraceConfig.modelSet))
-                    .options(joinedload(GraphDbTraceConfig.rules))
-                    .filter(GraphDbTraceConfig.key.in_(traceConfigKeys))
-                    .join(GraphDbModelSet,
-                          GraphDbTraceConfig.modelSetId == GraphDbModelSet.id)
-                    .filter(GraphDbModelSet.key == modelSetKey)
+                .options(joinedload(GraphDbTraceConfig.modelSet))
+                .options(joinedload(GraphDbTraceConfig.rules))
+                .filter(GraphDbTraceConfig.key.in_(traceConfigKeys))
+                .join(
+                    GraphDbModelSet, GraphDbTraceConfig.modelSetId == GraphDbModelSet.id
+                )
+                .filter(GraphDbModelSet.key == modelSetKey)
             )
 
             if not results:
                 return None
 
-            data = dict(tuples=[ormObj.toTuple() for ormObj in results],
-                        modelSetKey=modelSetKey)
+            data = dict(
+                tuples=[ormObj.toTuple() for ormObj in results], modelSetKey=modelSetKey
+            )
             return (
                 Payload(filt=clientTraceConfigUpdateFromServerFilt, tuples=data)
-                    .makePayloadEnvelope().toVortexMsg()
+                .makePayloadEnvelope()
+                .toVortexMsg()
             )
 
         finally:

@@ -3,10 +3,13 @@ from typing import List
 from twisted.internet import defer
 from twisted.internet.defer import Deferred
 
-from peek_plugin_graphdb._private.server.controller.ImportController import \
-    ImportController
+from peek_plugin_graphdb._private.server.controller.ImportController import (
+    ImportController,
+)
 from peek_plugin_graphdb.server.GraphDbApiABC import GraphDbApiABC
-from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import GraphDbImportSegmentTuple
+from peek_plugin_graphdb.tuples.GraphDbImportSegmentTuple import (
+    GraphDbImportSegmentTuple,
+)
 
 
 class GraphDbApi(GraphDbApiABC):
@@ -17,18 +20,17 @@ class GraphDbApi(GraphDbApiABC):
         self._importController = None
 
     def createOrUpdateSegment(self, graphSegmentEncodedPayload: bytes) -> Deferred:
-        
-        return self._importController.createOrUpdateSegments(
-             graphSegmentEncodedPayload
-        )
+        return self._importController.createOrUpdateSegments(graphSegmentEncodedPayload)
 
-    def deleteSegments(self, modelSetKey: str, importGroupHashes: List[str]) -> Deferred:
+    def deleteSegments(
+        self, modelSetKey: str, importGroupHashes: List[str]
+    ) -> Deferred:
         return self._importController.deleteSegment(modelSetKey, importGroupHashes)
 
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
-        return self._importController.createOrUpdateTraceConfig(
-            traceEncodedPayload
-        )
+        return self._importController.createOrUpdateTraceConfig(traceEncodedPayload)
 
-    def deleteTraceConfig(self, modelSetKey:str, traceConfigKeys: List[str]) -> Deferred:
+    def deleteTraceConfig(
+        self, modelSetKey: str, traceConfigKeys: List[str]
+    ) -> Deferred:
         return self._importController.deleteTraceConfig(modelSetKey, traceConfigKeys)

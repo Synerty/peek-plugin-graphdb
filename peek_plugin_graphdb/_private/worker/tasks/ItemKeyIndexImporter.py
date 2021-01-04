@@ -7,25 +7,25 @@ import pytz
 from sqlalchemy import select, and_
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_graphdb._private.storage.ItemKeyIndex import \
-    ItemKeyIndex
-from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
-    ItemKeyIndexCompilerQueue
-from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import \
-    makeChunkKeyForItemKey
+from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
+from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import (
+    ItemKeyIndexCompilerQueue,
+)
+from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import (
+    makeChunkKeyForItemKey,
+)
 
 logger = logging.getLogger(__name__)
 
 ItemKeyImportTuple = namedtuple(
-    "ItemKeyImportTuple",
-    ["importGroupHash", "itemKey", "itemType", "segmentKey"]
+    "ItemKeyImportTuple", ["importGroupHash", "itemKey", "itemType", "segmentKey"]
 )
 
 
-def loadItemKeys(conn,
-                 newItemKeys: List[ItemKeyImportTuple],
-                 modelSetId: int, modelSetKey: str) -> None:
-    """ Insert or Update Objects
+def loadItemKeys(
+    conn, newItemKeys: List[ItemKeyImportTuple], modelSetId: int, modelSetKey: str
+) -> None:
+    """Insert or Update Objects
 
     1) Find objects and update them
     2) Insert object if the are missing
@@ -61,7 +61,7 @@ def loadItemKeys(conn,
             itemType=importItemKey.itemType,
             itemKey=importItemKey.itemKey,
             segmentKey=importItemKey.segmentKey,
-            chunkKey=makeChunkKeyForItemKey(modelSetKey, importItemKey.itemKey)
+            chunkKey=makeChunkKeyForItemKey(modelSetKey, importItemKey.itemKey),
         )
         inserts.append(insertObject.tupleToSqlaBulkInsertDict())
 
@@ -69,8 +69,9 @@ def loadItemKeys(conn,
 
     if importHashSet:
         conn.execute(
-            itemKeyIndexTable
-                .delete(itemKeyIndexTable.c.importGroupHash.in_(importHashSet))
+            itemKeyIndexTable.delete(
+                itemKeyIndexTable.c.importGroupHash.in_(importHashSet)
+            )
         )
 
     # Insert the ItemKeyIndex Objects
@@ -80,12 +81,15 @@ def loadItemKeys(conn,
     if chunkKeysForQueue:
         conn.execute(
             queueTable.insert(),
-            [dict(modelSetId=m, chunkKey=c) for m, c in chunkKeysForQueue]
+            [dict(modelSetId=m, chunkKey=c) for m, c in chunkKeysForQueue],
         )
 
-    logger.debug("Inserted %s ItemKeys queued %s chunks in %s",
-                 len(inserts), len(chunkKeysForQueue),
-                 (datetime.now(pytz.utc) - startTime))
+    logger.debug(
+        "Inserted %s ItemKeys queued %s chunks in %s",
+        len(inserts),
+        len(chunkKeysForQueue),
+        (datetime.now(pytz.utc) - startTime),
+    )
 
 
 def deleteItemKeys(conn, modelSetId: int, importGroupHashes: List[str]) -> None:
@@ -95,9 +99,13 @@ def deleteItemKeys(conn, modelSetId: int, importGroupHashes: List[str]) -> None:
     queueTable = ItemKeyIndexCompilerQueue.__table__
 
     chunkKeys = conn.execute(
-        select([itemKeyIndexTable.c.modelSetId, itemKeyIndexTable.c.chunkKey],
-               and_(itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
-                    itemKeyIndexTable.c.modelSetId == modelSetId))
+        select(
+            [itemKeyIndexTable.c.modelSetId, itemKeyIndexTable.c.chunkKey],
+            and_(
+                itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
+                itemKeyIndexTable.c.modelSetId == modelSetId,
+            ),
+        )
     ).fetchall()
 
     if not chunkKeys:
@@ -105,13 +113,18 @@ def deleteItemKeys(conn, modelSetId: int, importGroupHashes: List[str]) -> None:
 
     conn.execute(
         itemKeyIndexTable.delete(
-            and_(itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
-                 itemKeyIndexTable.c.modelSetId == modelSetId)
+            and_(
+                itemKeyIndexTable.c.importGroupHash.in_(importGroupHashes),
+                itemKeyIndexTable.c.modelSetId == modelSetId,
+            )
         )
     )
 
     conn.execute(queueTable.insert(), chunkKeys)
 
-    logger.debug("Deleted %s, queued %s chunks in %s",
-                 len(importGroupHashes), len(chunkKeys),
-                 (datetime.now(pytz.utc) - startTime))
+    logger.debug(
+        "Deleted %s, queued %s chunks in %s",
+        len(importGroupHashes),
+        len(chunkKeys),
+        (datetime.now(pytz.utc) - startTime),
+    )

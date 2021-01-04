@@ -5,11 +5,12 @@ from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 
 
 class GraphDbLinked:
-    """ Linked Model
+    """Linked Model
 
     This tuple is the publicly exposed Segment
 
     """
+
     #:  The model set of this model
     modelSetKey: str = None
 

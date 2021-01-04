@@ -1,6 +1,10 @@
 import { Injectable } from "@angular/core"
 import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
-import { TupleSelector, VortexService, VortexStatusService } from "@synerty/vortexjs"
+import {
+    TupleSelector,
+    VortexService,
+    VortexStatusService
+} from "@synerty/vortexjs"
 import { OfflineConfigTuple } from "../tuples/OfflineConfigTuple"
 import { PrivateSegmentLoaderService } from "../segment-loader/PrivateSegmentLoaderService"
 import { GraphDbTupleService } from "../GraphDbTupleService"

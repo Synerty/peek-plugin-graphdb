@@ -14,10 +14,12 @@ from vortex.Payload import Payload
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb._private.storage.ItemKeyIndex import ItemKeyIndex
-from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import \
-    ItemKeyIndexCompilerQueue
-from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import \
-    ItemKeyIndexEncodedChunk
+from peek_plugin_graphdb._private.storage.ItemKeyIndexCompilerQueue import (
+    ItemKeyIndexCompilerQueue,
+)
+from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
+    ItemKeyIndexEncodedChunk,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,7 @@ Compile the graphdbindexes
 @DeferrableTask
 @celeryApp.task(bind=True)
 def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> List[int]:
-    """ Compile ItemKeyIndex Index Task
+    """Compile ItemKeyIndex Index Task
 
     :param self: A celery reference to this task
     :param payloadEncodedArgs: An encoded payload containing the queue tuples.
@@ -73,9 +75,9 @@ def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> List[int]:
     return list(set([i.chunkKey for i in queueItems]))
 
 
-def _compileItemKeyIndexChunk(conn, transaction,
-                              modelSetId: int,
-                              queueItems: List[ItemKeyIndexCompilerQueue]) -> None:
+def _compileItemKeyIndexChunk(
+    conn, transaction, modelSetId: int, queueItems: List[ItemKeyIndexCompilerQueue]
+) -> None:
     chunkKeys = list(set([i.chunkKey for i in queueItems]))
 
     compiledTable = ItemKeyIndexEncodedChunk.__table__
@@ -83,8 +85,11 @@ def _compileItemKeyIndexChunk(conn, transaction,
 
     startTime = datetime.now(pytz.utc)
 
-    logger.debug("Staring compile of %s queueItems in %s",
-                 len(queueItems), (datetime.now(pytz.utc) - startTime))
+    logger.debug(
+        "Staring compile of %s queueItems in %s",
+        len(queueItems),
+        (datetime.now(pytz.utc) - startTime),
+    )
 
     # Get Model Sets
 
@@ -107,21 +112,22 @@ def _compileItemKeyIndexChunk(conn, transaction,
                 continue
 
         chunksToDelete.append(chunkKey)
-        inserts.append(dict(
-            modelSetId=modelSetId,
-            chunkKey=chunkKey,
-            encodedData=graphDbIndexChunkEncodedPayload,
-            encodedHash=encodedHash,
-            lastUpdate=lastUpdate))
+        inserts.append(
+            dict(
+                modelSetId=modelSetId,
+                chunkKey=chunkKey,
+                encodedData=graphDbIndexChunkEncodedPayload,
+                encodedHash=encodedHash,
+                lastUpdate=lastUpdate,
+            )
+        )
 
     # Add any chnuks that we need to delete that we don't have new data for, here
     chunksToDelete.extend(list(existingHashes))
 
     if chunksToDelete:
         # Delete the old chunks
-        conn.execute(
-            compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete))
-        )
+        conn.execute(compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete)))
 
     if inserts:
         newIdGen = CeleryDbConn.prefetchDeclarativeIds(ItemKeyIndex, len(inserts))
@@ -134,24 +140,32 @@ def _compileItemKeyIndexChunk(conn, transaction,
     if inserts:
         conn.execute(compiledTable.insert(), inserts)
 
-    logger.debug("Compiled %s ItemKeyIndexs, %s missing, in %s",
-                 len(inserts),
-                 len(chunkKeys) - len(inserts), (datetime.now(pytz.utc) - startTime))
+    logger.debug(
+        "Compiled %s ItemKeyIndexs, %s missing, in %s",
+        len(inserts),
+        len(chunkKeys) - len(inserts),
+        (datetime.now(pytz.utc) - startTime),
+    )
 
     total += len(inserts)
 
     transaction.commit()
-    logger.info("Compiled and Committed %s EncodedItemKeyIndexChunks in %s",
-                total, (datetime.now(pytz.utc) - startTime))
+    logger.info(
+        "Compiled and Committed %s EncodedItemKeyIndexChunks in %s",
+        total,
+        (datetime.now(pytz.utc) - startTime),
+    )
 
 
 def _loadExistingHashes(conn, chunkKeys: List[str]) -> Dict[str, str]:
     compiledTable = ItemKeyIndexEncodedChunk.__table__
 
-    results = conn.execute(select(
-        columns=[compiledTable.c.chunkKey, compiledTable.c.encodedHash],
-        whereclause=compiledTable.c.chunkKey.in_(chunkKeys)
-    )).fetchall()
+    results = conn.execute(
+        select(
+            columns=[compiledTable.c.chunkKey, compiledTable.c.encodedHash],
+            whereclause=compiledTable.c.chunkKey.in_(chunkKeys),
+        )
+    ).fetchall()
 
     return {result[0]: result[1] for result in results}
 
@@ -161,14 +175,17 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
 
     try:
         indexQry = (
-            session.query(ItemKeyIndex.chunkKey, ItemKeyIndex.itemKey,
-                          ItemKeyIndex.itemKey,
-                          # ItemKeyIndex.itemType,
-                          ItemKeyIndex.segmentKey)
-                .filter(ItemKeyIndex.chunkKey.in_(chunkKeys))
-                .order_by(ItemKeyIndex.itemKey, ItemKeyIndex.segmentKey)
-                .yield_per(1000)
-                .all()
+            session.query(
+                ItemKeyIndex.chunkKey,
+                ItemKeyIndex.itemKey,
+                ItemKeyIndex.itemKey,
+                # ItemKeyIndex.itemType,
+                ItemKeyIndex.segmentKey,
+            )
+            .filter(ItemKeyIndex.chunkKey.in_(chunkKeys))
+            .order_by(ItemKeyIndex.itemKey, ItemKeyIndex.segmentKey)
+            .yield_per(1000)
+            .all()
         )
 
         # Create the ChunkKey -> {id -> packedJson, id -> packedJson, ....]
@@ -176,8 +193,9 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
 
         for item in indexQry:
             (
-                packagedJsonByObjIdByChunkKey[item.chunkKey][item.itemKey]
-                    .append(item.segmentKey)
+                packagedJsonByObjIdByChunkKey[item.chunkKey][item.itemKey].append(
+                    item.segmentKey
+                )
             )
 
         encPayloadByChunkKey = {}

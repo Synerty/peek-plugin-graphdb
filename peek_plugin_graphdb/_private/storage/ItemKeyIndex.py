@@ -11,16 +11,16 @@ from vortex.Tuple import Tuple, addTupleType
 
 @addTupleType
 class ItemKeyIndex(Tuple, DeclarativeBase):
-    __tablename__ = 'ItemKeyIndex'
-    __tupleType__ = graphDbTuplePrefix + 'ItemKeyIndexTable'
+    __tablename__ = "ItemKeyIndex"
+    __tupleType__ = graphDbTuplePrefix + "ItemKeyIndexTable"
 
     #:  The unique ID of this itemKeyIndex (database generated)
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     #:  The model set for this itemKeyIndex
-    modelSetId = Column(Integer,
-                        ForeignKey('GraphDbModelSet.id', ondelete='CASCADE'),
-                        nullable=False)
+    modelSetId = Column(
+        Integer, ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"), nullable=False
+    )
     modelSet = relationship(GraphDbModelSet)
 
     importGroupHash = Column(String, nullable=False)

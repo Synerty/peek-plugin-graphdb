@@ -6,12 +6,13 @@ from vortex.Tuple import Tuple, addTupleType, TupleField
 
 @addTupleType
 class GraphDbImportSegmentLinkTuple(Tuple):
-    """ Segment Link Tuple
+    """Segment Link Tuple
 
     This tuple is the publicly exposed Segment Links
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbImportSegmentLinkTuple'
+
+    __tupleType__ = graphDbTuplePrefix + "GraphDbImportSegmentLinkTuple"
 
     #:  The key of the vertex that joins the two segments
     vertexKey: str = TupleField()
@@ -20,7 +21,4 @@ class GraphDbImportSegmentLinkTuple(Tuple):
     segmentKey: str = TupleField()
 
     def packJsonDict(self) -> Dict[str, Any]:
-        return dict(
-            vk=self.vertexKey,
-            sk=self.segmentKey
-        )
+        return dict(vk=self.vertexKey, sk=self.segmentKey)

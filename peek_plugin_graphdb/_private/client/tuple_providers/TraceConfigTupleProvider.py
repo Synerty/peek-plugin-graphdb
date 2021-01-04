@@ -6,8 +6,9 @@ from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
 from vortex.handler.TupleDataObservableHandler import TuplesProviderABC
 
-from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
-    TraceConfigCacheController
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import (
+    TraceConfigCacheController,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,9 @@ class TraceConfigTupleProvider(TuplesProviderABC):
         self._cacheHandler = cacheHandler
 
     @deferToThreadWrapWithLogger(logger)
-    def makeVortexMsg(self, filt: dict,
-                      tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+    def makeVortexMsg(
+        self, filt: dict, tupleSelector: TupleSelector
+    ) -> Union[Deferred, bytes]:
         # the UI doesn't supply the model set at present.
         modelSetKey = tupleSelector.selector.get("modelSetKey")
 

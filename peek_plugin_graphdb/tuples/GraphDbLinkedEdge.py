@@ -5,11 +5,12 @@ from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 
 
 class GraphDbLinkedEdge:
-    """ Graph DB Linked Edge
+    """Graph DB Linked Edge
 
     This tuple is a connection between two vertices.
 
     """
+
     __slots__ = ("_k", "_s", "_d", "_sd", "_p")
 
     DIR_UNKNOWN = GraphDbImportEdgeTuple.DIR_UNKNOWN

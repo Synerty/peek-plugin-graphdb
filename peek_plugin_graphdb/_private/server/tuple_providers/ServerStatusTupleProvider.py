@@ -1,8 +1,9 @@
 import logging
 from typing import Union
 
-from peek_plugin_graphdb._private.server.controller.StatusController import \
-    StatusController
+from peek_plugin_graphdb._private.server.controller.StatusController import (
+    StatusController,
+)
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -16,8 +17,9 @@ class ServerStatusTupleProvider(TuplesProviderABC):
         self._segmentIndexStatus = segmentIndexStatus
 
     @inlineCallbacks
-    def makeVortexMsg(self, filt: dict,
-                      tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+    def makeVortexMsg(
+        self, filt: dict, tupleSelector: TupleSelector
+    ) -> Union[Deferred, bytes]:
         tuples = [self._segmentIndexStatus.status]
 
         payloadEnvelope = yield Payload(filt, tuples=tuples).makePayloadEnvelopeDefer()

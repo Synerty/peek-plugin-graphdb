@@ -9,8 +9,8 @@ Create Date: 2020-05-01 23:59:25.420658
 """
 
 # revision identifiers, used by Alembic.
-revision = 'd762bc44dbb3'
-down_revision = '26f8d213ba06'
+revision = "d762bc44dbb3"
+down_revision = "26f8d213ba06"
 branch_labels = None
 depends_on = None
 
@@ -20,7 +20,7 @@ import geoalchemy2
 
 
 def _alterColumnPkBigInt(schemaName, tableName):
-    return '''
+    return """
         
         DO $$
             DECLARE
@@ -69,20 +69,19 @@ def _alterColumnPkBigInt(schemaName, tableName):
         ALTER TABLE %(schemaName)s."%(tableName)s"
         ALTER COLUMN "%(columnName)s" SET DEFAULT 
             nextval('%(schemaName)s."%(tableName)s_%(columnName)s_seq"'::regclass);
-        ''' % dict(schemaName=schemaName,
-                   tableName=tableName,
-                   columnName='id')
+        """ % dict(
+        schemaName=schemaName, tableName=tableName, columnName="id"
+    )
 
 
 def upgrade():
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "GraphDbChunkQueue"))
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "GraphDbEncodedChunk"))
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "GraphDbSegment"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "GraphDbChunkQueue"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "GraphDbEncodedChunk"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "GraphDbSegment"))
 
-
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "ItemKeyIndex"))
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "ItemKeyIndexCompilerQueue"))
-    op.execute(_alterColumnPkBigInt('pl_graphdb', "ItemKeyIndexEncodedChunk"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "ItemKeyIndex"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "ItemKeyIndexCompilerQueue"))
+    op.execute(_alterColumnPkBigInt("pl_graphdb", "ItemKeyIndexEncodedChunk"))
 
 
 def downgrade():

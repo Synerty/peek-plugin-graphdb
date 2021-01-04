@@ -1,16 +1,24 @@
 import logging
 
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import \
-    ACIProcessorQueueControllerABC, ACIProcessorQueueBlockItem
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import \
-    ACIProcessorStatusNotifierABC
-from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import \
-    ACIProcessorQueueTupleABC
-from peek_plugin_graphdb._private.server.client_handlers.SegmentChunkIndexUpdateHandler import \
-    SegmentChunkIndexUpdateHandler
-from peek_plugin_graphdb._private.server.controller.StatusController import \
-    StatusController
-from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import GraphDbCompilerQueue
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import (
+    ACIProcessorQueueControllerABC,
+    ACIProcessorQueueBlockItem,
+)
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import (
+    ACIProcessorStatusNotifierABC,
+)
+from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import (
+    ACIProcessorQueueTupleABC,
+)
+from peek_plugin_graphdb._private.server.client_handlers.SegmentChunkIndexUpdateHandler import (
+    SegmentChunkIndexUpdateHandler,
+)
+from peek_plugin_graphdb._private.server.controller.StatusController import (
+    StatusController,
+)
+from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import (
+    GraphDbCompilerQueue,
+)
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 
@@ -48,18 +56,24 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
     _QueueDeclarative: ACIProcessorQueueTupleABC = GraphDbCompilerQueue
     _VacuumDeclaratives = (GraphDbCompilerQueue, GraphDbEncodedChunk, GraphDbSegment)
 
-    def __init__(self, dbSessionCreator,
-                 statusController: StatusController,
-                 clientChunkUpdateHandler: SegmentChunkIndexUpdateHandler):
-        ACIProcessorQueueControllerABC.__init__(self, dbSessionCreator,
-                                                _Notifier(statusController))
+    def __init__(
+        self,
+        dbSessionCreator,
+        statusController: StatusController,
+        clientChunkUpdateHandler: SegmentChunkIndexUpdateHandler,
+    ):
+        ACIProcessorQueueControllerABC.__init__(
+            self, dbSessionCreator, _Notifier(statusController)
+        )
 
-        self._clientChunkUpdateHandler: SegmentChunkIndexUpdateHandler \
-            = clientChunkUpdateHandler
+        self._clientChunkUpdateHandler: SegmentChunkIndexUpdateHandler = (
+            clientChunkUpdateHandler
+        )
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
-        from peek_plugin_graphdb._private.worker.tasks.SegmentIndexCompiler import \
-            compileSegmentChunk
+        from peek_plugin_graphdb._private.worker.tasks.SegmentIndexCompiler import (
+            compileSegmentChunk,
+        )
 
         return compileSegmentChunk.delay(block.itemsEncodedPayload)
 
@@ -67,7 +81,7 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         self._clientChunkUpdateHandler.sendChunks(results)
 
     def _dedupeQueueSql(self, lastFetchedId: int, dedupeLimit: int):
-        return '''
+        return """
                  with sq_raw as (
                     SELECT "id", "chunkKey"
                     FROM pl_graphdb."GraphDbChunkQueue"
@@ -86,4 +100,7 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
                     AND pl_graphdb."GraphDbChunkQueue"."id" > %(id)s
                     AND pl_graphdb."GraphDbChunkQueue"."chunkKey" = sq1."chunkKey"
 
-            ''' % {'id': lastFetchedId, 'limit': dedupeLimit}
+            """ % {
+            "id": lastFetchedId,
+            "limit": dedupeLimit,
+        }

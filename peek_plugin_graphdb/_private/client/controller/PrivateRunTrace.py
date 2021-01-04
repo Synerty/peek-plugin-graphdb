@@ -19,14 +19,17 @@ from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraph
 from peek_plugin_graphdb.tuples.GraphDbLinkedEdge import GraphDbLinkedEdge
 from peek_plugin_graphdb.tuples.GraphDbLinkedSegment import GraphDbLinkedSegment
 from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
-from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import \
-    GraphDbTraceConfigRuleTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import (
+    GraphDbTraceConfigRuleTuple,
+)
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
-from peek_plugin_graphdb.tuples.GraphDbTraceResultEdgeTuple import \
-    GraphDbTraceResultEdgeTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultEdgeTuple import (
+    GraphDbTraceResultEdgeTuple,
+)
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
-from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import \
-    GraphDbTraceResultVertexTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import (
+    GraphDbTraceResultVertexTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +41,15 @@ class _TraceAbortedWithMessageException(Exception):
 
 
 class PrivateRunTrace:
-    def __init__(self, result: GraphDbTraceResultTuple,
-                 traceConfig: GraphDbTraceConfigTuple,
-                 fastDb: FastGraphDbModel,
-                 startVertexOrEdgeKey: str, startSegmentKeys: List[str],
-                 maxVertexes: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        result: GraphDbTraceResultTuple,
+        traceConfig: GraphDbTraceConfigTuple,
+        fastDb: FastGraphDbModel,
+        startVertexOrEdgeKey: str,
+        startSegmentKeys: List[str],
+        maxVertexes: Optional[int] = None,
+    ) -> None:
 
         self._traceConfigKey = traceConfig.key
         self._traceRules = list(filter(lambda r: r.isEnabled, traceConfig.rules))
@@ -80,8 +87,11 @@ class PrivateRunTrace:
                     self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, None))
                     continue
 
-                raise Exception("Could not find vertex/edge with key %s in segment %s",
-                                self._startVertexOrEdgeKey, segment.key)
+                raise Exception(
+                    "Could not find vertex/edge with key %s in segment %s",
+                    self._startVertexOrEdgeKey,
+                    segment.key,
+                )
 
             # Drain the trace queue
             while self._traceEdgeQueue:
@@ -95,12 +105,16 @@ class PrivateRunTrace:
             self._result.traceAbortedMessage = "The trace stopped on the start device."
 
         # Log the complete
-        logger.debug("Trace completed. Trace Config '%s', Start Vertex or Edge '%s'"
-                     " %s vertexes, %s edges, error:'%s', in %s",
-                     self._traceConfigKey, self._startVertexOrEdgeKey,
-                     len(self._result.vertexes), len(self._result.edges),
-                     self._result.traceAbortedMessage,
-                     (datetime.now(pytz.utc) - startTime))
+        logger.debug(
+            "Trace completed. Trace Config '%s', Start Vertex or Edge '%s'"
+            " %s vertexes, %s edges, error:'%s', in %s",
+            self._traceConfigKey,
+            self._startVertexOrEdgeKey,
+            len(self._result.vertexes),
+            len(self._result.edges),
+            self._result.traceAbortedMessage,
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     # ---------------
     # Rule sort comparator
@@ -109,12 +123,16 @@ class PrivateRunTrace:
         R = GraphDbTraceConfigRuleTuple
 
         # First, Order the rules that apply to the start vertex first
-        if r1.applyTo == R.APPLY_TO_START_VERTEX \
-                and r2.applyTo != R.APPLY_TO_START_VERTEX:
+        if (
+            r1.applyTo == R.APPLY_TO_START_VERTEX
+            and r2.applyTo != R.APPLY_TO_START_VERTEX
+        ):
             return -1
 
-        if r1.applyTo != R.APPLY_TO_START_VERTEX \
-                and r2.applyTo == R.APPLY_TO_START_VERTEX:
+        if (
+            r1.applyTo != R.APPLY_TO_START_VERTEX
+            and r2.applyTo == R.APPLY_TO_START_VERTEX
+        ):
             return 1
 
         # Then just compare by order
@@ -125,9 +143,12 @@ class PrivateRunTrace:
     # ---------------
     # Traversing methods
 
-    def _traceEdge(self, segment: GraphDbLinkedSegment,
-                   edge: GraphDbLinkedEdge,
-                   fromVertex: Optional[GraphDbLinkedVertex] = None):
+    def _traceEdge(
+        self,
+        segment: GraphDbLinkedSegment,
+        edge: GraphDbLinkedEdge,
+        fromVertex: Optional[GraphDbLinkedVertex] = None,
+    ):
 
         if self._checkAlreadyTraced(None, edge.key):
             return
@@ -146,8 +167,9 @@ class PrivateRunTrace:
             self._traceVertex(segment, edge.srcVertex)
             self._traceVertex(segment, edge.dstVertex)
 
-    def _traceVertex(self, segment: GraphDbLinkedSegment,
-                     vertex: GraphDbLinkedVertex) -> None:
+    def _traceVertex(
+        self, segment: GraphDbLinkedSegment, vertex: GraphDbLinkedVertex
+    ) -> None:
 
         if self._checkAlreadyTraced(vertex.key, None):
             return
@@ -171,7 +193,8 @@ class PrivateRunTrace:
         vertex = segment.vertexByKey.get(vertexKey)
         if not vertex:
             raise Exception(
-                "Vertex '%s' is not in segment '%s'" % (vertexKey, segmentKey))
+                "Vertex '%s' is not in segment '%s'" % (vertexKey, segmentKey)
+            )
 
         for edge in vertex.edges:
             self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, vertex))
@@ -184,28 +207,31 @@ class PrivateRunTrace:
         raise _TraceAbortedWithMessageException()
 
     def _addEdge(self, edge: GraphDbLinkedEdge):
-        self._result.edges.append(GraphDbTraceResultEdgeTuple(
-            key=edge.key,
-            srcVertexKey=edge.srcVertex.key,
-            dstVertexKey=edge.dstVertex.key,
-            props=edge.props
-        ))
+        self._result.edges.append(
+            GraphDbTraceResultEdgeTuple(
+                key=edge.key,
+                srcVertexKey=edge.srcVertex.key,
+                dstVertexKey=edge.dstVertex.key,
+                props=edge.props,
+            )
+        )
 
     def _addVertex(self, vertex: GraphDbLinkedVertex):
         if self._maxVertexes and len(self._result.vertexes) >= self._maxVertexes:
-            self._setTraceAborted("Trace exceeded maximum vertexes of %s"
-                                  % self._maxVertexes)
+            self._setTraceAborted(
+                "Trace exceeded maximum vertexes of %s" % self._maxVertexes
+            )
 
-        self._result.vertexes.append(GraphDbTraceResultVertexTuple(
-            key=vertex.key,
-            props=vertex.props
-        ))
+        self._result.vertexes.append(
+            GraphDbTraceResultVertexTuple(key=vertex.key, props=vertex.props)
+        )
 
     # ---------------
     # Already Traced State
 
-    def _checkAlreadyTraced(self, vertexKey: Optional[str],
-                            edgeKey: Optional[str]) -> bool:
+    def _checkAlreadyTraced(
+        self, vertexKey: Optional[str], edgeKey: Optional[str]
+    ) -> bool:
         traced = (vertexKey, edgeKey) in self._alreadyTracedSet
         if not traced:
             self._alreadyTracedSet.add((vertexKey, edgeKey))
@@ -214,9 +240,12 @@ class PrivateRunTrace:
 
     # ---------------
     # Match Vertex Rules
-    def _matchTraceRules(self, vertex: Optional[GraphDbLinkedVertex] = None,
-                         edge: Optional[GraphDbLinkedEdge] = None,
-                         fromSrcVertex: Optional[bool] = None) -> bool:
+    def _matchTraceRules(
+        self,
+        vertex: Optional[GraphDbLinkedVertex] = None,
+        edge: Optional[GraphDbLinkedEdge] = None,
+        fromSrcVertex: Optional[bool] = None,
+    ) -> bool:
         isVertex = vertex is not None
         isEdge = edge is not None
         isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
@@ -262,10 +291,13 @@ class PrivateRunTrace:
 
     # ---------------
     # Match The Properties
-    def _matchProps(self, props: Dict,
-                    rule: GraphDbTraceConfigRuleTuple,
-                    fromSrcVertex: Optional[bool],
-                    edge: Optional[GraphDbLinkedEdge]):
+    def _matchProps(
+        self,
+        props: Dict,
+        rule: GraphDbTraceConfigRuleTuple,
+        fromSrcVertex: Optional[bool],
+        edge: Optional[GraphDbLinkedEdge],
+    ):
         propVal = str(props.get(rule.propertyName))
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE:
@@ -301,9 +333,12 @@ class PrivateRunTrace:
             goingBoth = edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_BOTH
 
             bitVal = 0
-            if goingDownstream: bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM
-            if goingUpstream: bitVal += rule.PROP_VAL_TRACE_UPSTREAM
-            if goingBoth: bitVal += rule.PROP_VAL_TRACE_BOTH
+            if goingDownstream:
+                bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM
+            if goingUpstream:
+                bitVal += rule.PROP_VAL_TRACE_UPSTREAM
+            if goingBoth:
+                bitVal += rule.PROP_VAL_TRACE_BOTH
 
             try:
                 return bool(bitVal & int(rule.propertyValue))
@@ -316,5 +351,6 @@ class PrivateRunTrace:
         if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
             return rule.preparedRegex.match(propVal)
 
-        raise NotImplementedError("rule.propertyValueType  = %s"
-                                  % rule.propertyValueType)
+        raise NotImplementedError(
+            "rule.propertyValueType  = %s" % rule.propertyValueType
+        )

@@ -7,11 +7,15 @@ import logging
 from typing import Optional
 
 from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
-    ItemKeyIndexCacheController
-from peek_plugin_graphdb._private.client.controller.PrivateRunTrace import PrivateRunTrace
-from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import \
-    TraceConfigCacheController
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
+    ItemKeyIndexCacheController,
+)
+from peek_plugin_graphdb._private.client.controller.PrivateRunTrace import (
+    PrivateRunTrace,
+)
+from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import (
+    TraceConfigCacheController,
+)
 from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
@@ -19,9 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 class TracerController:
-    def __init__(self, fastGraphDb: FastGraphDb,
-                 itemKeyCacheController: ItemKeyIndexCacheController,
-                 traceConfigCacheController: TraceConfigCacheController):
+    def __init__(
+        self,
+        fastGraphDb: FastGraphDb,
+        itemKeyCacheController: ItemKeyIndexCacheController,
+        traceConfigCacheController: TraceConfigCacheController,
+    ):
         self._fastGraphDb = fastGraphDb
         self._itemKeyCacheController = itemKeyCacheController
         self._traceConfigCacheController = traceConfigCacheController
@@ -32,9 +39,13 @@ class TracerController:
         self._traceConfigCacheController = None
 
     @deferToThreadWrapWithLogger(logger)
-    def runTrace(self, modelSetKey, traceConfigKey,
-                 startVertexKey,
-                 maxVertexes: Optional[int] = None) -> GraphDbTraceResultTuple:
+    def runTrace(
+        self,
+        modelSetKey,
+        traceConfigKey,
+        startVertexKey,
+        maxVertexes: Optional[int] = None,
+    ) -> GraphDbTraceResultTuple:
         traceConfig = self._traceConfigCacheController.traceConfigTuple(
             modelSetKey=modelSetKey, traceConfigKey=traceConfigKey
         )
@@ -53,10 +64,16 @@ class TracerController:
         result = GraphDbTraceResultTuple(
             modelSetKey=modelSetKey,
             traceConfigKey=traceConfigKey,
-            startVertexKey=startVertexKey
+            startVertexKey=startVertexKey,
         )
 
-        PrivateRunTrace(result, traceConfig, fastGraphDbModel,
-                        startVertexKey, startSegmentKeys, maxVertexes).run()
+        PrivateRunTrace(
+            result,
+            traceConfig,
+            fastGraphDbModel,
+            startVertexKey,
+            startSegmentKeys,
+            maxVertexes,
+        ).run()
 
         return result

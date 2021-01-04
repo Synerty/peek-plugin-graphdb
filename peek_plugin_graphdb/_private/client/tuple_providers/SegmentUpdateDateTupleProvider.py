@@ -1,10 +1,12 @@
 import logging
 from typing import Union
 
-from peek_plugin_graphdb._private.client.controller.SegmentCacheController import \
-    SegmentCacheController
-from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import \
-    SegmentIndexUpdateDateTuple
+from peek_plugin_graphdb._private.client.controller.SegmentCacheController import (
+    SegmentCacheController,
+)
+from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import (
+    SegmentIndexUpdateDateTuple,
+)
 from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
@@ -18,8 +20,9 @@ class SegmentUpdateDateTupleProvider(TuplesProviderABC):
         self._cacheHandler = cacheHandler
 
     @inlineCallbacks
-    def makeVortexMsg(self, filt: dict,
-                      tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+    def makeVortexMsg(
+        self, filt: dict, tupleSelector: TupleSelector
+    ) -> Union[Deferred, bytes]:
         tuple_ = SegmentIndexUpdateDateTuple()
         tuple_.updateDateByChunkKey = {
             key: self._cacheHandler.encodedChunk(key).lastUpdate

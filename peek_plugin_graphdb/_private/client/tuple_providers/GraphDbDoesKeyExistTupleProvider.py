@@ -6,8 +6,9 @@ from vortex.Payload import Payload
 from vortex.TupleSelector import TupleSelector
 from vortex.handler.TupleDataObservableHandler import TuplesProviderABC
 
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import \
-    ItemKeyIndexCacheController
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
+    ItemKeyIndexCacheController,
+)
 from peek_plugin_graphdb.tuples.GraphDbDoesKeyExistTuple import GraphDbDoesKeyExistTuple
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,9 @@ class GraphDbDoesKeyExistTupleProvider(TuplesProviderABC):
         self._itemKeyCacheController = itemKeyCacheController
 
     @inlineCallbacks
-    def makeVortexMsg(self, filt: dict,
-                      tupleSelector: TupleSelector) -> Union[Deferred, bytes]:
+    def makeVortexMsg(
+        self, filt: dict, tupleSelector: TupleSelector
+    ) -> Union[Deferred, bytes]:
         modelSetKey = tupleSelector.selector["modelSetKey"]
         vertexOrEdgeKey = tupleSelector.selector["vertexOrEdgeKey"]
 

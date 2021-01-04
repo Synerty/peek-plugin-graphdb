@@ -3,8 +3,9 @@ from typing import List
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 
-from peek_plugin_graphdb._private.server.client_handlers.TraceConfigUpdateHandler import \
-    TraceConfigUpdateHandler
+from peek_plugin_graphdb._private.server.client_handlers.TraceConfigUpdateHandler import (
+    TraceConfigUpdateHandler,
+)
 from peek_plugin_graphdb._private.worker.tasks import SegmentIndexImporter
 from peek_plugin_graphdb._private.worker.tasks import TraceConfigImporter
 
@@ -40,11 +41,9 @@ class ImportController:
             )
 
     @inlineCallbacks
-    def deleteTraceConfig(self, modelSetKey: str, traceConfigKeys: List[str]) -> Deferred:
-        yield TraceConfigImporter.deleteTraceConfig.delay(
-            modelSetKey, traceConfigKeys
-        )
+    def deleteTraceConfig(
+        self, modelSetKey: str, traceConfigKeys: List[str]
+    ) -> Deferred:
+        yield TraceConfigImporter.deleteTraceConfig.delay(modelSetKey, traceConfigKeys)
 
-        self._traceConfigUpdateHandler.sendDeleted(
-            modelSetKey, traceConfigKeys
-        )
+        self._traceConfigUpdateHandler.sendDeleted(modelSetKey, traceConfigKeys)

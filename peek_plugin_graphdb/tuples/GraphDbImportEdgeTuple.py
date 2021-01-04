@@ -7,12 +7,13 @@ from peek_plugin_graphdb._private.PluginNames import graphDbTuplePrefix
 
 @addTupleType
 class GraphDbImportEdgeTuple(Tuple):
-    """ Graph DB Edge Tuple
+    """Graph DB Edge Tuple
 
     This tuple represents a connection between two vertices.
 
     """
-    __tupleType__ = graphDbTuplePrefix + 'GraphDbImportEdgeTuple'
+
+    __tupleType__ = graphDbTuplePrefix + "GraphDbImportEdgeTuple"
     __slots__ = ("k", "sk", "dk", "p", "sd")
     __rawJonableFields__ = ["p"]
 
@@ -64,7 +65,7 @@ class GraphDbImportEdgeTuple(Tuple):
         self.p = val
 
     def __repr__(self):
-        return '%s.%s.%s.%s.%s' % (self.k, self.sk, self.dk, self.sd, self.p)
+        return "%s.%s.%s.%s.%s" % (self.k, self.sk, self.dk, self.sd, self.p)
 
     def sortSrcDstForHash(self) -> None:
         if self.srcVertexKey < self.dstVertexKey:
@@ -80,12 +81,7 @@ class GraphDbImportEdgeTuple(Tuple):
             self.srcDirection = self.DIR_SRC_IS_DOWNSTREAM
 
     def packJsonDict(self) -> Dict[str, Any]:
-        jsonDict = dict(
-            k=self.k,
-            sk=self.sk,
-            dk=self.dk,
-            p=self.p
-        )
+        jsonDict = dict(k=self.k, sk=self.sk, dk=self.dk, p=self.p)
         if self.sd:
             jsonDict["sd"] = self.sd
         return jsonDict

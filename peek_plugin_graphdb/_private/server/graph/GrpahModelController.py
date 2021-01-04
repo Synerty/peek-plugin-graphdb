@@ -9,14 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class GraphModelController(object):
-    def __init__(self, dbSessionCreator,
-                 readApi: GraphDbReadApi,
-                 modelSet: GraphDbModelSet):
-
+    def __init__(
+        self, dbSessionCreator, readApi: GraphDbReadApi, modelSet: GraphDbModelSet
+    ):
         self._dbSessionCreator = dbSessionCreator
         self._readApi = readApi
         self._modelSet = modelSet
-
 
     # ---------------
     # Accessor methods
@@ -30,14 +28,18 @@ class GraphModelController(object):
     # ---------------
     # Context methods
 
-    def newUpdateContext(self) -> 'GraphUpdateContext':
-        from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import \
-            GraphUpdateContext
+    def newUpdateContext(self) -> "GraphUpdateContext":
+        from peek_plugin_graphdb._private.server.graph.GraphUpdateContext import (
+            GraphUpdateContext,
+        )
+
         return GraphUpdateContext(self, self._readApi, self._dbSessionCreator)
 
-    def newSegmentImporter(self) -> 'GraphSegmentImporter':
-        from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import \
-            GraphSegmentImporter
+    def newSegmentImporter(self) -> "GraphSegmentImporter":
+        from peek_plugin_graphdb._private.server.graph.GraphSegmentImporter import (
+            GraphSegmentImporter,
+        )
+
         return GraphSegmentImporter(self)
 
     # ---------------

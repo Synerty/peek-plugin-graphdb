@@ -9,7 +9,7 @@ from .DeclarativeBase import DeclarativeBase
 
 @addTupleType
 class GraphDbModelSet(Tuple, DeclarativeBase):
-    __tablename__ = 'GraphDbModelSet'
+    __tablename__ = "GraphDbModelSet"
     __tupleType__ = graphDbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -25,7 +25,7 @@ class GraphDbModelSet(Tuple, DeclarativeBase):
             key=self.key,
             name=self.name,
             comment=self.comment,
-            propsJson=self.propsJson
+            propsJson=self.propsJson,
         )
 
 
