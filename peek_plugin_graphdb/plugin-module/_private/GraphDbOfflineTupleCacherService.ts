@@ -1,9 +1,12 @@
 import { Injectable } from "@angular/core"
-import { TupleSelector, VortexStatusService } from "@synerty/vortexjs"
+import {
+    NgLifeCycleEvents,
+    TupleSelector,
+    VortexStatusService
+} from "@synerty/vortexjs"
 import { GraphDbTupleService } from "./GraphDbTupleService"
 import { GraphDbModelSetTuple } from "../GraphDbModelSetTuple"
 import { GraphDbTraceConfigTuple } from "./tuples/GraphDbTraceConfigTuple"
-import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 
 /** Diagram Lookups offline cacher
  *

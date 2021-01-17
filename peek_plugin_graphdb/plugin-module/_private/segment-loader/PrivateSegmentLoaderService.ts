@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core"
-import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 import {
     extend,
+    NgLifeCycleEvents,
     Payload,
     PayloadEnvelope,
     TupleOfflineStorageNameService,
@@ -18,8 +18,7 @@ import {
     graphDbTuplePrefix
 } from "../PluginNames"
 
-import { Subject } from "rxjs"
-import { Observable } from "rxjs"
+import { Observable, Subject } from "rxjs"
 import { EncodedSegmentChunkTuple } from "./EncodedSegmentChunkTuple"
 import { SegmentIndexUpdateDateTuple } from "./SegmentIndexUpdateDateTuple"
 import { GraphDbLinkedSegment } from "../../GraphDbLinkedSegment"

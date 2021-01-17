@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core"
-import { NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
 import {
+    NgLifeCycleEvents,
     TupleSelector,
     VortexService,
     VortexStatusService

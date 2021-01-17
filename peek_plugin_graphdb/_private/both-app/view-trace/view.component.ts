@@ -2,9 +2,9 @@ import { Component, OnInit } from "@angular/core"
 import { ActivatedRoute, Params } from "@angular/router"
 import {
     BalloonMsgService,
-    NgLifeCycleEvents,
     HeaderService
 } from "@synerty/peek-plugin-base-js"
+import { NgLifeCycleEvents } from "@synerty/vortexjs"
 import { VortexStatusService } from "@synerty/vortexjs"
 import {
     GraphDbService,
