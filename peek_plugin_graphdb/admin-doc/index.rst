@@ -17,4 +17,4 @@ that has a topology.
     overview
     status/status
     admin_tasks
-
+    trace_logic
