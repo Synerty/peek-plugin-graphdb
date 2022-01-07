@@ -16,13 +16,18 @@
         "admin",
         "field",
         "office",
-        "admin-doc"
+        "admin-doc",
+        "office-doc"
     ],
     "admin-doc": {
         "docDir": "admin-doc",
         "docRst": "index.rst",
         "hasApi": true
     },
+        "office-doc": {
+            "docDir": "both-doc",
+            "docRst": "index.rst"
+        },
     "logic": {
     },
     "storage": {
