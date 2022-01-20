@@ -24,12 +24,11 @@
         "docRst": "index.rst",
         "hasApi": true
     },
-        "office-doc": {
-            "docDir": "both-doc",
-            "docRst": "index.rst"
-        },
-    "logic": {
+    "office-doc": {
+        "docDir": "both-doc",
+        "docRst": "index.rst"
     },
+    "logic": {},
     "storage": {
         "alembicDir": "_private/alembic"
     },

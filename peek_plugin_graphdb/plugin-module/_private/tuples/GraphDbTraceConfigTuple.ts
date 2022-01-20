@@ -1,33 +1,34 @@
-import { addTupleType, Tuple } from "@synerty/vortexjs"
-import { graphDbTuplePrefix } from "../PluginNames"
-import { GraphDbTraceConfigRuleTuple } from "./GraphDbTraceConfigRuleTuple"
+import { addTupleType, Tuple } from "@synerty/vortexjs";
+import { graphDbTuplePrefix } from "../PluginNames";
+import { GraphDbTraceConfigRuleTuple } from "./GraphDbTraceConfigRuleTuple";
 
 @addTupleType
 export class GraphDbTraceConfigTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbTraceConfigTuple"
-    
+    public static readonly tupleName =
+        graphDbTuplePrefix + "GraphDbTraceConfigTuple";
+
     //  The modelSetId for this segment.
-    modelSetKey: string
-    
+    modelSetKey: string;
+
     // The unique key of this trace config [Required]
-    key: string
-    
+    key: string;
+
     // The name for this trace config [Required]
-    name: string
-    
+    name: string;
+
     // The display title for this trace config [Required]
-    title: string
-    
+    title: string;
+
     // The name for this trace config
-    rules: GraphDbTraceConfigRuleTuple[]
-    
+    rules: GraphDbTraceConfigRuleTuple[];
+
     // The comment for this trace config
-    comment: string | null
-    
+    comment: string | null;
+
     // Is this rule enabled [Required]
-    isEnabled: boolean
-    
+    isEnabled: boolean;
+
     constructor() {
-        super(GraphDbTraceConfigTuple.tupleName)
+        super(GraphDbTraceConfigTuple.tupleName);
     }
 }

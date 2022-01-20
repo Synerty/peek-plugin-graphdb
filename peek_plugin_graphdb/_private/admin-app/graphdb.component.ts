@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core"
+import { Component, OnInit } from "@angular/core";
 
 let exampleDocMod = `
     {
@@ -10,17 +10,14 @@ let exampleDocMod = `
             rating: "11kV"
         }
     }
-`
+`;
 
 @Component({
     selector: "graphdb-admin",
-    templateUrl: "graphdb.component.html"
+    templateUrl: "graphdb.component.html",
 })
 export class GraphDbComponent implements OnInit {
-    
-    exampleDoc = exampleDocMod
-    
-    ngOnInit() {
-    
-    }
+    exampleDoc = exampleDocMod;
+
+    ngOnInit() {}
 }

@@ -1,1 +1,1 @@
-export { PrivateTracerService } from "./PrivateTracerService"
+export { PrivateTracerService } from "./PrivateTracerService";

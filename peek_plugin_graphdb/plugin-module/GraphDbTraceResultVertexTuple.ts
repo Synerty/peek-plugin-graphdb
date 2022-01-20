@@ -1,17 +1,18 @@
-import { addTupleType, Tuple } from "@synerty/vortexjs"
-import { graphDbTuplePrefix } from "./_private/PluginNames"
+import { addTupleType, Tuple } from "@synerty/vortexjs";
+import { graphDbTuplePrefix } from "./_private/PluginNames";
 
 @addTupleType
 export class GraphDbTraceResultVertexTuple extends Tuple {
-    public static readonly tupleName = graphDbTuplePrefix + "GraphDbTraceResultVertexTuple"
-    
+    public static readonly tupleName =
+        graphDbTuplePrefix + "GraphDbTraceResultVertexTuple";
+
     //  The key of this vertex
-    key: string
-    
+    key: string;
+
     //  The properties of this vertex
-    props: {}
-    
+    props: {};
+
     constructor() {
-        super(GraphDbTraceResultVertexTuple.tupleName)
+        super(GraphDbTraceResultVertexTuple.tupleName);
     }
 }

@@ -1,15 +1,13 @@
 export class GraphDbLinkedVertex {
-    
     //  he key of the vertex that joins the two segments
-    key: string
-    
+    key: string;
+
     //  The properties of this vertex
-    props: {}
-    
+    props: {};
+
     //  The edges of this vertex
-    edges: any[] = []
-    
+    edges: any[] = [];
+
     //  The other segments that this vertex belongs to
-    linksToSegmentKeys: string[]
-    
+    linksToSegmentKeys: string[];
 }

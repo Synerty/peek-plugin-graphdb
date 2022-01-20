@@ -1,40 +1,32 @@
 <div class="panel panel-default">
-    <div class="panel-heading">Storage Compiling Status
-    </div>
+    <div class="panel-heading">Storage Compiling Status</div>
     <div class="panel-body">
-
         <table class="table">
             <thead>
-
-            <tr>
-                <th></th>
-                <th>Is Running</th>
-                <th>Queue Size</th>
-                <th>Total Processed</th>
-                <th>Last Error</th>
-            </tr>
-
+                <tr>
+                    <th></th>
+                    <th>Is Running</th>
+                    <th>Queue Size</th>
+                    <th>Total Processed</th>
+                    <th>Last Error</th>
+                </tr>
             </thead>
 
             <tbody>
-
-            <tr>
-                <th>Segment Storage</th>
-                <td>{{item.segmentCompilerQueueStatus}}</td>
-                <td>{{item.segmentCompilerQueueSize}}</td>
-                <td>{{item.segmentCompilerQueueProcessedTotal}}</td>
-                <td>{{item.segmentCompilerQueueLastError}}</td>
-
-            </tr>
-            <tr>
-                <th>Item Key Index</th>
-                <td>{{item.itemKeyIndexCompilerQueueStatus}}</td>
-                <td>{{item.itemKeyIndexCompilerQueueSize}}</td>
-                <td>{{item.itemKeyIndexCompilerQueueProcessedTotal}}</td>
-                <td>{{item.itemKeyIndexCompilerQueueLastError}}</td>
-
-            </tr>
-
+                <tr>
+                    <th>Segment Storage</th>
+                    <td>{{ item.segmentCompilerQueueStatus }}</td>
+                    <td>{{ item.segmentCompilerQueueSize }}</td>
+                    <td>{{ item.segmentCompilerQueueProcessedTotal }}</td>
+                    <td>{{ item.segmentCompilerQueueLastError }}</td>
+                </tr>
+                <tr>
+                    <th>Item Key Index</th>
+                    <td>{{ item.itemKeyIndexCompilerQueueStatus }}</td>
+                    <td>{{ item.itemKeyIndexCompilerQueueSize }}</td>
+                    <td>{{ item.itemKeyIndexCompilerQueueProcessedTotal }}</td>
+                    <td>{{ item.itemKeyIndexCompilerQueueLastError }}</td>
+                </tr>
             </tbody>
         </table>
     </div>

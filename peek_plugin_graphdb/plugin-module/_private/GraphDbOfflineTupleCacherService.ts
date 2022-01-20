@@ -1,12 +1,12 @@
-import { Injectable } from "@angular/core"
+import { Injectable } from "@angular/core";
 import {
     NgLifeCycleEvents,
     TupleSelector,
-    VortexStatusService
-} from "@synerty/vortexjs"
-import { GraphDbTupleService } from "./GraphDbTupleService"
-import { GraphDbModelSetTuple } from "../GraphDbModelSetTuple"
-import { GraphDbTraceConfigTuple } from "./tuples/GraphDbTraceConfigTuple"
+    VortexStatusService,
+} from "@synerty/vortexjs";
+import { GraphDbTupleService } from "./GraphDbTupleService";
+import { GraphDbModelSetTuple } from "../GraphDbModelSetTuple";
+import { GraphDbTraceConfigTuple } from "./tuples/GraphDbTraceConfigTuple";
 
 /** Diagram Lookups offline cacher
  *
@@ -18,24 +18,23 @@ import { GraphDbTraceConfigTuple } from "./tuples/GraphDbTraceConfigTuple"
  */
 @Injectable()
 export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
-    
     constructor(
         private tupleService: GraphDbTupleService,
         vortexStatusService: VortexStatusService
     ) {
-        super()
-        
+        super();
+
         // Delete data older than 7 days
-        let date7DaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000)
-        
-        let promise = null
+        let date7DaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+
+        let promise = null;
         if (vortexStatusService.snapshot.isOnline) {
             promise = this.tupleService.offlineStorage
                 .deleteOldTuples(date7DaysAgo)
-                .catch(err => console.log(`ERROR: Failed to delete old tuples`))
-            
-        }
-        else {
+                .catch((err) =>
+                    console.log(`ERROR: Failed to delete old tuples`)
+                );
+        } else {
             vortexStatusService.isOnline
                 .takeUntil(this.onDestroyEvent)
                 .filter((val) => val === true)
@@ -43,19 +42,19 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
                 .subscribe(() => {
                     this.tupleService.offlineStorage
                         .deleteOldTuples(date7DaysAgo)
-                        .catch(err => console.log(`ERROR: Failed to delete old tuples`))
-                })
-            promise = Promise.resolve()
+                        .catch((err) =>
+                            console.log(`ERROR: Failed to delete old tuples`)
+                        );
+                });
+            promise = Promise.resolve();
         }
-        
-        promise
-            .then(() => {
-                this.loadModelSet()
-                this.loadTraceConfigs()
-            })
-        
+
+        promise.then(() => {
+            this.loadModelSet();
+            this.loadTraceConfigs();
+        });
     }
-    
+
     /**
      * Cache Model Set
      *
@@ -63,15 +62,14 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
      *
      */
     private loadModelSet() {
-        
-        let ts = new TupleSelector(GraphDbModelSetTuple.tupleName, {})
-        
+        let ts = new TupleSelector(GraphDbModelSetTuple.tupleName, {});
+
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts))
+            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
     }
-    
+
     /**
      * Cache Trace Configs
      *
@@ -79,14 +77,11 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
      *
      */
     private loadTraceConfigs() {
-        
-        let ts = new TupleSelector(GraphDbTraceConfigTuple.tupleName, {})
-        
+        let ts = new TupleSelector(GraphDbTraceConfigTuple.tupleName, {});
+
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts))
-        
+            .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
     }
-    
 }
