@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core"
+import { Injectable } from "@angular/core";
 import {
     extend,
     NgLifeCycleEvents,
@@ -9,34 +9,36 @@ import {
     TupleSelector,
     TupleStorageFactoryService,
     VortexService,
-    VortexStatusService
-} from "@synerty/vortexjs"
+    VortexStatusService,
+} from "@synerty/vortexjs";
 
 import {
     graphDbCacheStorageName,
     graphDbFilt,
-    graphDbTuplePrefix
-} from "../PluginNames"
+    graphDbTuplePrefix,
+} from "../PluginNames";
 
-import { Observable, Subject } from "rxjs"
-import { ItemKeyIndexEncodedChunkTuple } from "./ItemKeyIndexEncodedChunkTuple"
-import { ItemKeyIndexUpdateDateTuple } from "./ItemKeyIndexUpdateDateTuple"
-import { ItemKeyTuple } from "./ItemKeyTuple"
-import { ItemKeyIndexLoaderStatusTuple } from "./ItemKeyIndexLoaderStatusTuple"
-
-import { OfflineConfigTuple } from "../tuples/OfflineConfigTuple"
-import { GraphDbModelSetTuple } from "../../GraphDbModelSetTuple"
-import { GraphDbTupleService } from "../GraphDbTupleService"
-import { GraphDbPackedItemKeyTuple } from "./GraphDbPackedItemKeyTuple"
+import { Observable, Subject } from "rxjs";
+import { ItemKeyIndexEncodedChunkTuple } from "./ItemKeyIndexEncodedChunkTuple";
+import { ItemKeyIndexUpdateDateTuple } from "./ItemKeyIndexUpdateDateTuple";
+import { ItemKeyTuple } from "./ItemKeyTuple";
+import { ItemKeyIndexLoaderStatusTuple } from "./ItemKeyIndexLoaderStatusTuple";
+import { GraphDbModelSetTuple } from "../../GraphDbModelSetTuple";
+import { GraphDbTupleService } from "../GraphDbTupleService";
+import { GraphDbPackedItemKeyTuple } from "./GraphDbPackedItemKeyTuple";
+import {
+    DeviceOfflineCacheControllerService,
+    OfflineCacheStatusTuple,
+} from "@peek/peek_core_device";
 
 // ----------------------------------------------------------------------------
 
 let clientItemKeyIndexWatchUpdateFromDeviceFilt = extend(
-    {"key": "clientItemKeyIndexWatchUpdateFromDevice"},
+    { key: "clientItemKeyIndexWatchUpdateFromDevice" },
     graphDbFilt
-)
+);
 
-const cacheAll = "cacheAll"
+const cacheAll = "cacheAll";
 
 // ----------------------------------------------------------------------------
 /** ItemKeyIndexChunkTupleSelector
@@ -45,13 +47,12 @@ const cacheAll = "cacheAll"
  */
 
 class ItemKeyIndexChunkTupleSelector extends TupleSelector {
-    
     constructor(private chunkKey: string) {
-        super(graphDbTuplePrefix + "ItemKeyIndexChunkTuple", {key: chunkKey})
+        super(graphDbTuplePrefix + "ItemKeyIndexChunkTuple", { key: chunkKey });
     }
-    
+
     toOrderedJsonStr(): string {
-        return this.chunkKey
+        return this.chunkKey;
     }
 }
 
@@ -62,19 +63,16 @@ class ItemKeyIndexChunkTupleSelector extends TupleSelector {
  */
 class UpdateDateTupleSelector extends TupleSelector {
     constructor() {
-        super(ItemKeyIndexUpdateDateTuple.tupleName, {})
+        super(ItemKeyIndexUpdateDateTuple.tupleName, {});
     }
 }
 
 // ----------------------------------------------------------------------------
 /** hash method
  */
-let BUCKET_COUNT = 8192
+let BUCKET_COUNT = 8192;
 
-function keyChunk(
-    modelSetKey: string,
-    key: string
-): string {
+function keyChunk(modelSetKey: string, key: string): string {
     /** Object ID Chunk
      
      This method creates an int from 0 to MAX, representing the hash bucket for this
@@ -89,18 +87,18 @@ function keyChunk(
      
      */
     if (key == null || key.length == 0)
-        throw new Error("key is None or zero length")
-    
-    let bucket = 0
-    
+        throw new Error("key is None or zero length");
+
+    let bucket = 0;
+
     for (let i = 0; i < key.length; i++) {
-        bucket = ((bucket << 5) - bucket) + key.charCodeAt(i)
-        bucket |= 0 // Convert to 32bit integer
+        bucket = (bucket << 5) - bucket + key.charCodeAt(i);
+        bucket |= 0; // Convert to 32bit integer
     }
-    
-    bucket = bucket & (BUCKET_COUNT - 1)
-    
-    return `${modelSetKey}.${bucket}`
+
+    bucket = bucket & (BUCKET_COUNT - 1);
+
+    return `${modelSetKey}.${bucket}`;
 }
 
 // ----------------------------------------------------------------------------
@@ -115,75 +113,65 @@ function keyChunk(
  */
 @Injectable()
 export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
-    private UPDATE_CHUNK_FETCH_SIZE = 32
-    private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000 // 15 minutes
-    
-    private index = new ItemKeyIndexUpdateDateTuple()
-    private askServerChunks: ItemKeyIndexUpdateDateTuple[] = []
-    
-    private _hasLoaded = false
-    
-    private _hasLoadedSubject = new Subject<void>()
-    private storage: TupleOfflineStorageService
-    
-    private _statusSubject = new Subject<ItemKeyIndexLoaderStatusTuple>()
-    private _status = new ItemKeyIndexLoaderStatusTuple()
-    
-    private modelSetByIds: { [id: number]: GraphDbModelSetTuple } = {}
-    private _hasModelSetLoaded = false
-    
-    private offlineConfig: OfflineConfigTuple = new OfflineConfigTuple()
-    
+    private UPDATE_CHUNK_FETCH_SIZE = 32;
+    private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000; // 15 minutes
+
+    private index = new ItemKeyIndexUpdateDateTuple();
+    private askServerChunks: ItemKeyIndexUpdateDateTuple[] = [];
+
+    private _hasLoaded = false;
+
+    private _hasLoadedSubject = new Subject<void>();
+    private storage: TupleOfflineStorageService;
+
+    private _statusSubject = new Subject<ItemKeyIndexLoaderStatusTuple>();
+    private _status = new ItemKeyIndexLoaderStatusTuple();
+
+    private modelSetByIds: { [id: number]: GraphDbModelSetTuple } = {};
+    private _hasModelSetLoaded = false;
+
     constructor(
         private vortexService: VortexService,
         private vortexStatusService: VortexStatusService,
         storageFactory: TupleStorageFactoryService,
-        private tupleService: GraphDbTupleService
+        private tupleService: GraphDbTupleService,
+        private deviceCacheControllerService: DeviceOfflineCacheControllerService
     ) {
-        super()
-        
-        this.tupleService.offlineObserver
-            .subscribeToTupleSelector(new TupleSelector(OfflineConfigTuple.tupleName, {}),
-                false, false, true)
-            .takeUntil(this.onDestroyEvent)
-            .filter(v => v.length != 0)
-            .subscribe((tuples: OfflineConfigTuple[]) => {
-                this.offlineConfig = tuples[0]
-                if (this.offlineConfig.cacheChunksForOffline)
-                    this.initialLoad()
-                this._notifyStatus()
-            })
-        
+        super();
+
         this.storage = new TupleOfflineStorageService(
             storageFactory,
             new TupleOfflineStorageNameService(graphDbCacheStorageName)
-        )
-        
-        this.setupVortexSubscriptions()
-        this._notifyStatus()
-        
-        // Check for updates every so often
-        Observable.interval(this.OFFLINE_CHECK_PERIOD_MS)
+        );
+
+        this.setupVortexSubscriptions();
+        this._notifyStatus();
+
+        this.deviceCacheControllerService.triggerCachingObservable
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.askServerForUpdates())
+            .filter((v) => v)
+            .subscribe(() => {
+                this.initialLoad();
+                this._notifyStatus();
+            });
     }
-    
+
     isReady(): boolean {
-        return this._hasLoaded
+        return this._hasLoaded;
     }
-    
+
     isReadyObservable(): Observable<void> {
-        return this._hasLoadedSubject
+        return this._hasLoadedSubject;
     }
-    
+
     statusObservable(): Observable<ItemKeyIndexLoaderStatusTuple> {
-        return this._statusSubject
+        return this._statusSubject;
     }
-    
+
     status(): ItemKeyIndexLoaderStatusTuple {
-        return this._status
+        return this._status;
     }
-    
+
     /** Get Segment Keys
      *
      * Get the objects with matching keywords from the index..
@@ -194,84 +182,102 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         key: string,
         itemType: number = ItemKeyTuple.ITEM_TYPE_VERTEX
     ): Promise<string[]> {
-        return this.getItemKeys(modelSetKey, [key])
-            .then((tuples: ItemKeyTuple[]) => {
-                let keys = []
+        return this.getItemKeys(modelSetKey, [key]).then(
+            (tuples: ItemKeyTuple[]) => {
+                let keys = [];
                 for (let tuple of tuples) {
                     if (tuple.itemType == itemType) {
                         for (let segmentKey of tuple.segmentKeys) {
-                            keys.push(segmentKey)
+                            keys.push(segmentKey);
                         }
                     }
                 }
-                return keys
-            })
+                return keys;
+            }
+        );
     }
-    
+
     private _notifyReady(): void {
         if (this._hasModelSetLoaded && this._hasLoaded)
-            this._hasLoadedSubject.next()
+            this._hasLoadedSubject.next();
     }
-    
+
     private _notifyStatus(): void {
-        this._status.cacheForOfflineEnabled = this.offlineConfig.cacheChunksForOffline
-        this._status.initialLoadComplete = this.index.initialLoadComplete
-        
-        this._status.loadProgress = Object.keys(this.index.updateDateByChunkKey).length
+        this._status.cacheForOfflineEnabled =
+            this.deviceCacheControllerService.cachingEnabled;
+        this._status.initialLoadComplete = this.index.initialLoadComplete;
+
+        this._status.loadProgress = Object.keys(
+            this.index.updateDateByChunkKey
+        ).length;
         for (let chunk of this.askServerChunks)
-            this._status.loadProgress -= Object.keys(chunk.updateDateByChunkKey).length
-        
-        this._statusSubject.next(this._status)
+            this._status.loadProgress -= Object.keys(
+                chunk.updateDateByChunkKey
+            ).length;
+
+        this._statusSubject.next(this._status);
+
+        const status = new OfflineCacheStatusTuple();
+        status.pluginName = "peek_plugin_graphdb";
+        status.indexName = "Key Index";
+        status.loadingQueueCount = this._status.loadProgress;
+        status.totalLoadedCount = this._status.loadTotal;
+        status.lastCheckDate = new Date();
+        status.initialFullLoadComplete = this._status.initialLoadComplete;
+        this.deviceCacheControllerService.updateCachingStatus(status);
     }
-    
+
     /** Initial load
      *
      * Load the dates of the index buckets and ask the server if it has any updates.
      */
     private initialLoad(): void {
-        
-        this.storage.loadTuples(new UpdateDateTupleSelector())
+        this.storage
+            .loadTuples(new UpdateDateTupleSelector())
             .then((tuplesAny: any[]) => {
-                let tuples: ItemKeyIndexUpdateDateTuple[] = tuplesAny
+                let tuples: ItemKeyIndexUpdateDateTuple[] = tuplesAny;
                 if (tuples.length != 0) {
-                    this.index = tuples[0]
-                    
+                    this.index = tuples[0];
+
                     if (this.index.initialLoadComplete) {
-                        this._hasLoaded = true
-                        this._notifyReady()
+                        this._hasLoaded = true;
+                        this._notifyReady();
                     }
-                    
                 }
-                
-                this.askServerForUpdates()
-                this._notifyStatus()
-            })
-        
-        this._notifyStatus()
+
+                this.askServerForUpdates();
+                this._notifyStatus();
+            });
+
+        this._notifyStatus();
     }
-    
+
     private setupVortexSubscriptions(): void {
-        
         // Services don't have destructors, I'm not sure how to unsubscribe.
-        this.vortexService.createEndpointObservable(this, clientItemKeyIndexWatchUpdateFromDeviceFilt)
+        this.vortexService
+            .createEndpointObservable(
+                this,
+                clientItemKeyIndexWatchUpdateFromDeviceFilt
+            )
             .takeUntil(this.onDestroyEvent)
             .subscribe((payloadEnvelope: PayloadEnvelope) => {
-                this.processItemKeyIndexsFromServer(payloadEnvelope)
-            })
-        
+                this.processItemKeyIndexsFromServer(payloadEnvelope);
+            });
+
         // If the vortex service comes back online, update the watch grids.
         this.vortexStatusService.isOnline
-            .filter(isOnline => isOnline == true)
+            .filter((isOnline) => isOnline == true)
             .takeUntil(this.onDestroyEvent)
-            .subscribe(() => this.askServerForUpdates())
-        
+            .subscribe(() => this.askServerForUpdates());
     }
-    
+
     private areWeTalkingToTheServer(): boolean {
-        return this.offlineConfig.cacheChunksForOffline
-            && this.vortexStatusService.snapshot.isOnline
+        return (
+            this.deviceCacheControllerService.cachingEnabled &&
+            this.vortexStatusService.snapshot.isOnline
+        );
     }
-    
+
     /** Ask Server For Updates
      *
      * Tell the server the state of the chunks in our index and ask if there
@@ -279,169 +285,169 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
      *
      */
     private askServerForUpdates() {
-        if (!this.areWeTalkingToTheServer()) return
-        
+        if (!this.areWeTalkingToTheServer()) return;
+
         // If we're still caching, then exit
         if (this.askServerChunks.length != 0) {
-            this.askServerForNextUpdateChunk()
-            return
+            this.askServerForNextUpdateChunk();
+            return;
         }
-        
+
         this.tupleService.observer
             .pollForTuples(new UpdateDateTupleSelector())
             .then((tuplesAny: any) => {
-                let serverIndex: ItemKeyIndexUpdateDateTuple = tuplesAny[0]
-                let keys = Object.keys(serverIndex.updateDateByChunkKey)
-                let keysNeedingUpdate: string[] = []
-                
-                this._status.loadTotal = keys.length
-                
+                let serverIndex: ItemKeyIndexUpdateDateTuple = tuplesAny[0];
+                let keys = Object.keys(serverIndex.updateDateByChunkKey);
+                let keysNeedingUpdate: string[] = [];
+
+                this._status.loadTotal = keys.length;
+
                 // Tuples is an array of strings
                 for (let chunkKey of keys) {
-                    if (!this.index.updateDateByChunkKey.hasOwnProperty(chunkKey)) {
-                        this.index.updateDateByChunkKey[chunkKey] = null
-                        keysNeedingUpdate.push(chunkKey)
-                        
-                    }
-                    else if (this.index.updateDateByChunkKey[chunkKey]
-                        != serverIndex.updateDateByChunkKey[chunkKey]) {
-                        keysNeedingUpdate.push(chunkKey)
+                    if (
+                        !this.index.updateDateByChunkKey.hasOwnProperty(
+                            chunkKey
+                        )
+                    ) {
+                        this.index.updateDateByChunkKey[chunkKey] = null;
+                        keysNeedingUpdate.push(chunkKey);
+                    } else if (
+                        this.index.updateDateByChunkKey[chunkKey] !=
+                        serverIndex.updateDateByChunkKey[chunkKey]
+                    ) {
+                        keysNeedingUpdate.push(chunkKey);
                     }
                 }
-                this.queueChunksToAskServer(keysNeedingUpdate)
-            })
+                this.queueChunksToAskServer(keysNeedingUpdate);
+            });
     }
-    
+
     /** Queue Chunks To Ask Server
      *
      */
     private queueChunksToAskServer(keysNeedingUpdate: string[]) {
-        if (!this.areWeTalkingToTheServer()) return
-        
-        this.askServerChunks = []
-        
-        let count = 0
-        let indexChunk = new ItemKeyIndexUpdateDateTuple()
-        
+        if (!this.areWeTalkingToTheServer()) return;
+
+        this.askServerChunks = [];
+
+        let count = 0;
+        let indexChunk = new ItemKeyIndexUpdateDateTuple();
+
         for (let key of keysNeedingUpdate) {
-            indexChunk.updateDateByChunkKey[key] = this.index.updateDateByChunkKey[key]
-            count++
-            
+            indexChunk.updateDateByChunkKey[key] =
+                this.index.updateDateByChunkKey[key] || "";
+            count++;
+
             if (count == this.UPDATE_CHUNK_FETCH_SIZE) {
-                this.askServerChunks.push(indexChunk)
-                count = 0
-                indexChunk = new ItemKeyIndexUpdateDateTuple()
+                this.askServerChunks.push(indexChunk);
+                count = 0;
+                indexChunk = new ItemKeyIndexUpdateDateTuple();
             }
         }
-        
-        if (count)
-            this.askServerChunks.push(indexChunk)
-        
-        this.askServerForNextUpdateChunk()
-        
-        this._status.lastCheck = new Date()
+
+        if (count) this.askServerChunks.push(indexChunk);
+
+        this.askServerForNextUpdateChunk();
+
+        this._status.lastCheck = new Date();
     }
-    
+
     private askServerForNextUpdateChunk() {
-        if (!this.areWeTalkingToTheServer()) return
-        
-        if (this.askServerChunks.length == 0)
-            return
-        
-        let indexChunk: ItemKeyIndexUpdateDateTuple = this.askServerChunks.pop()
-        let filt = extend({}, clientItemKeyIndexWatchUpdateFromDeviceFilt)
-        filt[cacheAll] = true
-        let pl = new Payload(filt, [indexChunk])
-        this.vortexService.sendPayload(pl)
-        
-        this._status.lastCheck = new Date()
-        this._notifyStatus()
+        if (!this.areWeTalkingToTheServer()) return;
+
+        if (this.askServerChunks.length == 0) return;
+
+        let indexChunk: ItemKeyIndexUpdateDateTuple =
+            this.askServerChunks.pop();
+        let filt = extend({}, clientItemKeyIndexWatchUpdateFromDeviceFilt);
+        filt[cacheAll] = true;
+        let pl = new Payload(filt, [indexChunk]);
+        this.vortexService.sendPayload(pl);
+
+        this._status.lastCheck = new Date();
+        this._notifyStatus();
     }
-    
+
     /** Process ItemKeyIndexes From Server
      *
      * Process the grids the server has sent us.
      */
     private processItemKeyIndexsFromServer(payloadEnvelope: PayloadEnvelope) {
-        
         if (payloadEnvelope.result != null && payloadEnvelope.result != true) {
-            console.log(`ERROR: ${payloadEnvelope.result}`)
-            return
+            console.log(`ERROR: ${payloadEnvelope.result}`);
+            return;
         }
-        
+
         payloadEnvelope
             .decodePayload()
             .then((payload: Payload) => this.storeItemKeyIndexPayload(payload))
             .then(() => {
                 if (this.askServerChunks.length == 0) {
-                    this.index.initialLoadComplete = true
-                    this._hasLoaded = true
-                    this._hasLoadedSubject.next()
-                    
+                    this.index.initialLoadComplete = true;
+                    this._hasLoaded = true;
+                    this._hasLoadedSubject.next();
+                } else if (payloadEnvelope.filt[cacheAll] == true) {
+                    this.askServerForNextUpdateChunk();
                 }
-                else if (payloadEnvelope.filt[cacheAll] == true) {
-                    this.askServerForNextUpdateChunk()
-                    
-                }
-                
             })
             .then(() => this._notifyStatus())
-            .catch(e =>
-                `ItemKeyIndexCache.processItemKeyIndexsFromServer failed: ${e}`
-            )
-        
+            .catch(
+                (e) =>
+                    `ItemKeyIndexCache.processItemKeyIndexsFromServer failed: ${e}`
+            );
     }
-    
+
     private storeItemKeyIndexPayload(payload: Payload) {
-        
-        let tuplesToSave: ItemKeyIndexEncodedChunkTuple[] = <ItemKeyIndexEncodedChunkTuple[]>payload.tuples
-        if (tuplesToSave.length == 0)
-            return
-        
+        let tuplesToSave: ItemKeyIndexEncodedChunkTuple[] = <
+            ItemKeyIndexEncodedChunkTuple[]
+        >payload.tuples;
+        if (tuplesToSave.length == 0) return;
+
         // 2) Store the index
         this.storeItemKeyIndexChunkTuples(tuplesToSave)
             .then(() => {
                 // 3) Store the update date
-                
+
                 for (let graphDbIndex of tuplesToSave) {
-                    this.index.updateDateByChunkKey[graphDbIndex.chunkKey] = graphDbIndex.lastUpdate
+                    this.index.updateDateByChunkKey[graphDbIndex.chunkKey] =
+                        graphDbIndex.lastUpdate;
                 }
-                
-                return this.storage.saveTuples(
-                    new UpdateDateTupleSelector(), [this.index]
-                )
-                
+
+                return this.storage.saveTuples(new UpdateDateTupleSelector(), [
+                    this.index,
+                ]);
             })
-            .catch(e => console.log(
-                `ItemKeyIndexCache.storeItemKeyIndexPayload: ${e}`))
-        
+            .catch((e) =>
+                console.log(`ItemKeyIndexCache.storeItemKeyIndexPayload: ${e}`)
+            );
     }
-    
+
     /** Store Index Bucket
      * Stores the index bucket in the local db.
      */
-    private storeItemKeyIndexChunkTuples(encodedItemKeyIndexChunkTuples: ItemKeyIndexEncodedChunkTuple[]): Promise<void> {
-        let retPromise: any
-        retPromise = this.storage.transaction(true)
-            .then((tx) => {
-                
-                let promises = []
-                
-                for (let encodedItemKeyIndexChunkTuple of encodedItemKeyIndexChunkTuples) {
-                    promises.push(
-                        tx.saveTuplesEncoded(
-                            new ItemKeyIndexChunkTupleSelector(encodedItemKeyIndexChunkTuple.chunkKey),
-                            encodedItemKeyIndexChunkTuple.encodedData
-                        )
+    private storeItemKeyIndexChunkTuples(
+        encodedItemKeyIndexChunkTuples: ItemKeyIndexEncodedChunkTuple[]
+    ): Promise<void> {
+        let retPromise: any;
+        retPromise = this.storage.transaction(true).then((tx) => {
+            let promises = [];
+
+            for (let encodedItemKeyIndexChunkTuple of encodedItemKeyIndexChunkTuples) {
+                promises.push(
+                    tx.saveTuplesEncoded(
+                        new ItemKeyIndexChunkTupleSelector(
+                            encodedItemKeyIndexChunkTuple.chunkKey
+                        ),
+                        encodedItemKeyIndexChunkTuple.encodedData
                     )
-                }
-                
-                return Promise.all(promises)
-                    .then(() => tx.close())
-            })
-        return retPromise
+                );
+            }
+
+            return Promise.all(promises).then(() => tx.close());
+        });
+        return retPromise;
     }
-    
+
     /** Get Segment Keys
      *
      * Get the objects with matching keywords from the index..
@@ -452,52 +458,60 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         keys: string[]
     ): Promise<ItemKeyTuple[]> {
         if (modelSetKey == null || modelSetKey.length == 0) {
-            Promise.reject("We've been passed a null/empty modelSetKey")
+            Promise.reject("We've been passed a null/empty modelSetKey");
         }
-        
+
         if (keys == null || keys.length == 0) {
-            Promise.reject("We've been passed a null/empty keys")
+            Promise.reject("We've been passed a null/empty keys");
         }
-        
+
         // If there is no offline support, or we're online
-        if (!this.offlineConfig.cacheChunksForOffline
-            || this.vortexStatusService.snapshot.isOnline) {
+        if (
+            !this.deviceCacheControllerService.cachingEnabled ||
+            this.vortexStatusService.snapshot.isOnline
+        ) {
             let ts = new TupleSelector(GraphDbPackedItemKeyTuple.tupleName, {
-                "modelSetKey": modelSetKey,
-                "keys": keys
-            })
-            
-            let isOnlinePromise: any = this.vortexStatusService.snapshot.isOnline ?
-                Promise.resolve() :
-                this.vortexStatusService.isOnline
-                    .filter(online => online)
-                    .first()
-                    .toPromise()
-            
+                modelSetKey: modelSetKey,
+                keys: keys,
+            });
+
+            let isOnlinePromise: any = this.vortexStatusService.snapshot
+                .isOnline
+                ? Promise.resolve()
+                : this.vortexStatusService.isOnline
+                      .filter((online) => online)
+                      .first()
+                      .toPromise();
+
             return isOnlinePromise
-                .then(() => this.tupleService.offlineObserver.pollForTuples(ts, false))
+                .then(() =>
+                    this.tupleService.offlineObserver.pollForTuples(ts, false)
+                )
                 .then((packedKeyIndexes: GraphDbPackedItemKeyTuple[]) => {
-                    let itemKeys = []
+                    let itemKeys = [];
                     for (let packed of packedKeyIndexes) {
                         // Create the new object
-                        let newObject = new ItemKeyTuple()
-                        newObject.unpackJson(packed.packedJson, packed.key, modelSetKey)
-                        itemKeys.push(newObject)
+                        let newObject = new ItemKeyTuple();
+                        newObject.unpackJson(
+                            packed.packedJson,
+                            packed.key,
+                            modelSetKey
+                        );
+                        itemKeys.push(newObject);
                     }
-                    return itemKeys
-                })
+                    return itemKeys;
+                });
         }
-        
+
         // If we do have offline support
-        if (this.isReady())
-            return this.getItemKeysWhenReady(modelSetKey, keys)
-        
+        if (this.isReady()) return this.getItemKeysWhenReady(modelSetKey, keys);
+
         return this.isReadyObservable()
             .first()
             .toPromise()
-            .then(() => this.getItemKeysWhenReady(modelSetKey, keys))
+            .then(() => this.getItemKeysWhenReady(modelSetKey, keys));
     }
-    
+
     /** Get ItemKeyIndexs When Ready
      *
      * Get the objects with matching keywords from the index..
@@ -507,38 +521,37 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         modelSetKey: string,
         keys: string[]
     ): Promise<ItemKeyTuple[]> {
-        
-        let keysByChunkKey: { [key: string]: string[]; } = {}
-        let chunkKeys: string[] = []
-        
+        let keysByChunkKey: { [key: string]: string[] } = {};
+        let chunkKeys: string[] = [];
+
         for (let key of keys) {
-            let chunkKey: string = keyChunk(modelSetKey, key)
-            if (keysByChunkKey[chunkKey] == null)
-                keysByChunkKey[chunkKey] = []
-            keysByChunkKey[chunkKey].push(key)
-            chunkKeys.push(chunkKey)
+            let chunkKey: string = keyChunk(modelSetKey, key);
+            if (keysByChunkKey[chunkKey] == null) keysByChunkKey[chunkKey] = [];
+            keysByChunkKey[chunkKey].push(key);
+            chunkKeys.push(chunkKey);
         }
-        
-        let promises = []
+
+        let promises = [];
         for (let chunkKey of chunkKeys) {
-            let keysForThisChunk = keysByChunkKey[chunkKey]
+            let keysForThisChunk = keysByChunkKey[chunkKey];
             promises.push(
                 this.getItemKeysForKeys(keysForThisChunk, modelSetKey, chunkKey)
-            )
+            );
         }
-        
-        return Promise.all(promises)
-            .then((promiseResults: ItemKeyTuple[][]) => {
-                let objects: ItemKeyTuple[] = []
+
+        return Promise.all(promises).then(
+            (promiseResults: ItemKeyTuple[][]) => {
+                let objects: ItemKeyTuple[] = [];
                 for (let results of promiseResults) {
                     for (let result of results) {
-                        objects.push(result)
+                        objects.push(result);
                     }
                 }
-                return objects
-            })
+                return objects;
+            }
+        );
     }
-    
+
     /** Get ItemKeyIndexs for Object ID
      *
      * Get the objects with matching keywords from the index..
@@ -549,49 +562,48 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         modelSetKey: string,
         chunkKey: string
     ): Promise<ItemKeyTuple[]> {
-        
         if (!this.index.updateDateByChunkKey.hasOwnProperty(chunkKey)) {
-            console.log(`ObjectIDs: ${keys} doesn't appear in the index`)
-            return Promise.resolve([])
+            console.log(`ObjectIDs: ${keys} doesn't appear in the index`);
+            return Promise.resolve([]);
         }
-        
-        let retPromise: any
+
+        let retPromise: any;
         retPromise = this.storage
             .loadTuplesEncoded(new ItemKeyIndexChunkTupleSelector(chunkKey))
             .then((vortexMsg: string) => {
                 if (vortexMsg == null) {
-                    return []
+                    return [];
                 }
-                
+
                 return Payload.fromEncodedPayload(vortexMsg)
                     .then((payload: Payload) => JSON.parse(<any>payload.tuples))
-                    .then((chunkData: { [key: number]: string; }) => {
-                        
-                        let foundItemKeyIndexs: ItemKeyTuple[] = []
-                        
+                    .then((chunkData: { [key: number]: string }) => {
+                        let foundItemKeyIndexs: ItemKeyTuple[] = [];
+
                         for (let key of keys) {
                             // Find the keyword, we're just iterating
                             if (!chunkData.hasOwnProperty(key)) {
                                 console.log(
-                                    `WARNING: ItemKeyIndex ${key} is missing from index,`
-                                    + ` chunkKey ${chunkKey}`
-                                )
-                                continue
+                                    `WARNING: ItemKeyIndex ${key} is missing from index,` +
+                                        ` chunkKey ${chunkKey}`
+                                );
+                                continue;
                             }
-                            
-                            let packedJson = chunkData[key]
-                            foundItemKeyIndexs
-                                .push(new ItemKeyTuple().unpackJson(key, packedJson, modelSetKey))
-                            
+
+                            let packedJson = chunkData[key];
+                            foundItemKeyIndexs.push(
+                                new ItemKeyTuple().unpackJson(
+                                    key,
+                                    packedJson,
+                                    modelSetKey
+                                )
+                            );
                         }
-                        
-                        return foundItemKeyIndexs
-                        
-                    })
-            })
-        
-        return retPromise
-        
+
+                        return foundItemKeyIndexs;
+                    });
+            });
+
+        return retPromise;
     }
-    
 }

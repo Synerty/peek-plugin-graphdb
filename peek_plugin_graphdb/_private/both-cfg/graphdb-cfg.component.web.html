@@ -4,15 +4,6 @@
 
 <div class="peek-nav-bar-padding ">
     <div class="peek-information-section">
-        <button
-            (click)="toggleOfflineMode()"
-            [class.bg-success]="segmentIndexStatus.cacheForOfflineEnabled"
-            class="btn"
-        >
-            {{segmentIndexStatus.cacheForOfflineEnabled
-            ? 'Disable Offline Support'
-            : 'Enable Offline Support'}}
-        </button>
         <h3>Segment Index</h3>
         <p>
             Load Complete : {{segmentIndexStatus.initialLoadComplete}}<br />
