@@ -1,3 +1,4 @@
+import { filter, first, takeUntil } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import {
     NgLifeCycleEvents,
@@ -37,8 +38,8 @@ export class PrivateTracerService extends NgLifeCycleEvents {
         super();
 
         this.deviceCacheControllerService.triggerCachingObservable
-            .takeUntil(this.onDestroyEvent)
-            .filter((v) => v)
+            .pipe(takeUntil(this.onDestroyEvent))
+            .pipe(filter((v) => v))
             .subscribe(() => {
                 // ???
             });
@@ -156,8 +157,8 @@ export class PrivateTracerService extends NgLifeCycleEvents {
 
         if (!this.vortexStatusService.snapshot.isOnline) {
             await this.vortexStatusService.isOnline
-                .filter((online) => online)
-                .first()
+                .pipe(filter((online) => online))
+                .pipe(first())
                 .toPromise();
         }
 
@@ -194,8 +195,8 @@ export class PrivateTracerService extends NgLifeCycleEvents {
         let isOnlinePromise: any = this.vortexStatusService.snapshot.isOnline
             ? Promise.resolve()
             : this.vortexStatusService.isOnline
-                  .filter((online) => online)
-                  .first()
+                  .pipe(filter((online) => online))
+                  .pipe(first())
                   .toPromise();
 
         return isOnlinePromise

@@ -1,3 +1,4 @@
+import { takeUntil } from "rxjs/operators";
 import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Params } from "@angular/router";
 import { BalloonMsgService, HeaderService } from "@synerty/peek-plugin-base-js";
@@ -32,7 +33,7 @@ export class ViewTraceComponent extends NgLifeCycleEvents implements OnInit {
 
     ngOnInit() {
         this.route.params
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((params: Params) => {
                 let vars = {};
 

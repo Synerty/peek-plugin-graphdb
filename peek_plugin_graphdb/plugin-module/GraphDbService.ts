@@ -5,6 +5,7 @@ import { GraphDbTraceResultTuple } from "./GraphDbTraceResultTuple";
 import { GraphDbLinkedModel } from "./GraphDbLinkedModel";
 import { GraphDbTupleService } from "./_private";
 import { GraphDbTraceConfigTuple } from "./_private/tuples/GraphDbTraceConfigTuple";
+import { map } from "rxjs/operators";
 import { Observable } from "rxjs";
 
 export interface TraceConfigListItemI {
@@ -95,20 +96,22 @@ export class GraphDbService extends NgLifeCycleEvents {
 
         return this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
-            .map((tuples: GraphDbTraceConfigTuple[]) => {
-                const out = [];
-                tuples.sort((a, b) =>
-                    a.title == b.title ? 0 : a.title < b.title ? -1 : 1
-                );
-                for (let tuple of tuples) {
-                    if (!tuple.isEnabled) continue;
-                    out.push({
-                        name: tuple.name,
-                        title: tuple.title,
-                        key: tuple.key,
-                    });
-                }
-                return out;
-            });
+            .pipe(
+                map((tuples: GraphDbTraceConfigTuple[]) => {
+                    const out = [];
+                    tuples.sort((a, b) =>
+                        a.title == b.title ? 0 : a.title < b.title ? -1 : 1
+                    );
+                    for (let tuple of tuples) {
+                        if (!tuple.isEnabled) continue;
+                        out.push({
+                            name: tuple.name,
+                            title: tuple.title,
+                            key: tuple.key,
+                        });
+                    }
+                    return out;
+                })
+            );
     }
 }

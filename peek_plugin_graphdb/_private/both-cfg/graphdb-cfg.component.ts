@@ -1,3 +1,4 @@
+import { takeUntil } from "rxjs/operators";
 import { Component } from "@angular/core";
 import { NgLifeCycleEvents } from "@synerty/vortexjs";
 import { GraphDbTupleService } from "@peek/peek_plugin_graphdb/_private";
@@ -30,13 +31,13 @@ export class GraphDbCfgComponent extends NgLifeCycleEvents {
         this.segmentIndexStatus = this.segmentLoader.status();
         this.segmentLoader
             .statusObservable()
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((value) => (this.segmentIndexStatus = value));
 
         this.itemKeyIndexStatus = this.itemKeyIndexLoader.status();
         this.itemKeyIndexLoader
             .statusObservable()
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((value) => (this.itemKeyIndexStatus = value));
     }
 }

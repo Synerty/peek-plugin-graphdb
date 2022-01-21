@@ -1,3 +1,4 @@
+import { filter, first, takeUntil } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import {
     NgLifeCycleEvents,
@@ -36,9 +37,9 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
                 );
         } else {
             vortexStatusService.isOnline
-                .takeUntil(this.onDestroyEvent)
-                .filter((val) => val === true)
-                .first()
+                .pipe(takeUntil(this.onDestroyEvent))
+                .pipe(filter((val) => val === true))
+                .pipe(first())
                 .subscribe(() => {
                     this.tupleService.offlineStorage
                         .deleteOldTuples(date7DaysAgo)
@@ -66,7 +67,7 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
 
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
     }
 
@@ -81,7 +82,7 @@ export class GraphDbOfflineTupleCacherService extends NgLifeCycleEvents {
 
         this.tupleService.offlineObserver
             .subscribeToTupleSelector(ts)
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe(() => this.tupleService.offlineObserver.flushCache(ts));
     }
 }
