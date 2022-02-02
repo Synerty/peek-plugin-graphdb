@@ -15,18 +15,24 @@ from typing import List, Dict, Optional
 
 import pytz
 
-from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDbModel
+from peek_plugin_graphdb._private.client.controller.FastGraphDb import (
+    FastGraphDbModel,
+)
 from peek_plugin_graphdb.tuples.GraphDbLinkedEdge import GraphDbLinkedEdge
 from peek_plugin_graphdb.tuples.GraphDbLinkedSegment import GraphDbLinkedSegment
 from peek_plugin_graphdb.tuples.GraphDbLinkedVertex import GraphDbLinkedVertex
 from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import (
     GraphDbTraceConfigRuleTuple,
 )
-from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfigTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import (
+    GraphDbTraceConfigTuple,
+)
 from peek_plugin_graphdb.tuples.GraphDbTraceResultEdgeTuple import (
     GraphDbTraceResultEdgeTuple,
 )
-from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import GraphDbTraceResultTuple
+from peek_plugin_graphdb.tuples.GraphDbTraceResultTuple import (
+    GraphDbTraceResultTuple,
+)
 from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import (
     GraphDbTraceResultVertexTuple,
 )
@@ -52,7 +58,9 @@ class PrivateRunTrace:
     ) -> None:
 
         self._traceConfigKey = traceConfig.key
-        self._traceRules = list(filter(lambda r: r.isEnabled, traceConfig.rules))
+        self._traceRules = list(
+            filter(lambda r: r.isEnabled, traceConfig.rules)
+        )
         self._traceRules.sort(key=cmp_to_key(self._ruleSortCmp))
 
         self._fastDb = fastDb
@@ -79,12 +87,14 @@ class PrivateRunTrace:
 
                 vertex = segment.vertexByKey.get(self._startVertexOrEdgeKey)
                 if vertex:
-                    self._traceVertex(segment, vertex)
+                    self._traceVertex(segment, vertex, isStartVertex=True)
                     continue
 
                 edge = segment.edgeByKey.get(self._startVertexOrEdgeKey)
                 if edge:
-                    self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, None))
+                    self._traceEdgeQueue.append(
+                        _TraceEdgeParams(segment, edge, None)
+                    )
                     continue
 
                 raise Exception(
@@ -102,7 +112,9 @@ class PrivateRunTrace:
             pass
 
         if len(self._result.vertexes) and not self._result.edges:
-            self._result.traceAbortedMessage = "The trace stopped on the start device."
+            self._result.traceAbortedMessage = (
+                "The trace stopped on the start device."
+            )
 
         # Log the complete
         logger.debug(
@@ -168,7 +180,10 @@ class PrivateRunTrace:
             self._traceVertex(segment, edge.dstVertex)
 
     def _traceVertex(
-        self, segment: GraphDbLinkedSegment, vertex: GraphDbLinkedVertex
+        self,
+        segment: GraphDbLinkedSegment,
+        vertex: GraphDbLinkedVertex,
+        isStartVertex=False,
     ) -> None:
 
         if self._checkAlreadyTraced(vertex.key, None):
@@ -176,7 +191,7 @@ class PrivateRunTrace:
 
         self._addVertex(vertex)
 
-        if not self._matchTraceRules(vertex=vertex):
+        if not isStartVertex and not self._matchTraceRules(vertex=vertex):
             return
 
         for edge in vertex.edges:
@@ -217,7 +232,10 @@ class PrivateRunTrace:
         )
 
     def _addVertex(self, vertex: GraphDbLinkedVertex):
-        if self._maxVertexes and len(self._result.vertexes) >= self._maxVertexes:
+        if (
+            self._maxVertexes
+            and len(self._result.vertexes) >= self._maxVertexes
+        ):
             self._setTraceAborted(
                 "Trace exceeded maximum vertexes of %s" % self._maxVertexes
             )
