@@ -267,6 +267,8 @@ class PrivateRunTrace:
         isVertex = vertex is not None
         isEdge = edge is not None
         isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
+        key = vertex.key if isVertex else edge.key
+        desc = "vertex" if isVertex else "edge"
 
         props = vertex.props if vertex else edge.props
 
@@ -293,15 +295,24 @@ class PrivateRunTrace:
 
             # Apply the action - Continue
             if rule.action == rule.ACTION_CONTINUE_TRACE:
+                logger.debug(f"Applying rule Order {rule.order} Action "
+                             f"Continue to {desc} {key}")
                 return True
 
             # Apply the action - Abort
             if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
+                logger.debug(f"Applying rule Order {rule.order}"
+                             f" Action ABORT WITH MESSAGE"
+                             f" to {desc} {key}"
+                             f" message {rule.actionData}")
                 self._setTraceAborted(rule.actionData)
                 return False
 
             # Apply the action - Stop
             if rule.action == rule.ACTION_STOP_TRACE:
+                logger.debug(f"Applying rule Order {rule.order}"
+                             f" Action STOP"
+                             f" to {desc} {key}")
                 return False
 
         # No rules have decided either way, continue tracing
