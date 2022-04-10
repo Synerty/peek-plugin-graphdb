@@ -83,7 +83,7 @@ class PrivateRunTrace:
             for segmentKey in self._startSegmentKeys:
                 segment = self._fastDb.getSegment(segmentKey)
                 if not segment:
-                    raise Exception("Could not find segment %s", segmentKey)
+                    raise Exception("Segment %s is missing", segmentKey)
 
                 vertex = segment.vertexByKey.get(self._startVertexOrEdgeKey)
                 if vertex:
@@ -98,9 +98,9 @@ class PrivateRunTrace:
                     continue
 
                 raise Exception(
-                    "Could not find vertex/edge with key %s in segment %s",
-                    self._startVertexOrEdgeKey,
+                    "Segment % could not find vertex/edge with key %s",
                     segment.key,
+                    self._startVertexOrEdgeKey,
                 )
 
             # Drain the trace queue
@@ -161,54 +161,105 @@ class PrivateRunTrace:
         edge: GraphDbLinkedEdge,
         fromVertex: Optional[GraphDbLinkedVertex] = None,
     ):
-
         if self._checkAlreadyTraced(None, edge.key):
+            logger.debug(
+                "Segment %s skipping already traced edge %s",
+                segment.key,
+                edge.key,
+            )
             return
 
         fromSrcVertex = fromVertex and edge.srcVertex.key == fromVertex.key
-        if not self._matchTraceRules(edge=edge, fromSrcVertex=fromSrcVertex):
+        if not self._matchTraceRules(
+            segment, edge=edge, fromSrcVertex=fromSrcVertex
+        ):
             return
 
         self._addEdge(edge)
 
         if fromVertex:
             toVertex = edge.getOtherVertex(fromVertex.key)
-            self._traceVertex(segment, toVertex)
+            self._traceVertex(segment, toVertex, fromEdgeKey=edge.key)
 
         else:
-            self._traceVertex(segment, edge.srcVertex)
-            self._traceVertex(segment, edge.dstVertex)
+            self._traceVertex(segment, edge.srcVertex, fromEdgeKey=edge.key)
+            self._traceVertex(segment, edge.dstVertex, fromEdgeKey=edge.key)
 
     def _traceVertex(
         self,
         segment: GraphDbLinkedSegment,
         vertex: GraphDbLinkedVertex,
         isStartVertex=False,
+        fromEdgeKey=None,
     ) -> None:
-
         if self._checkAlreadyTraced(vertex.key, None):
+            logger.debug(
+                "Segment %s skipping already traced of vortex %s from edge %s",
+                segment.key,
+                vertex.key,
+                fromEdgeKey,
+            )
             return
 
         self._addVertex(vertex)
 
-        if not isStartVertex and not self._matchTraceRules(vertex=vertex):
+        if not isStartVertex and not self._matchTraceRules(
+            segment,
+            vertex=vertex,
+            fromEdgeKey=fromEdgeKey,
+        ):
             return
 
         for edge in vertex.edges:
-            self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, vertex))
+            if edge.key == fromEdgeKey:
+                continue
+            self._queueEdge(
+                _TraceEdgeParams(segment, edge, vertex), fromEdgeKey
+            )
 
         for segmentKey in vertex.linksToSegmentKeys:
+            logger.debug(
+                "Segment %s tracing to new segment %s"
+                " via vertex %s from edge %s",
+                segment.key,
+                segmentKey,
+                vertex.key,
+                fromEdgeKey,
+            )
             self._traceEdgesInNextSegment(vertex.key, segmentKey)
 
+    def _queueEdge(self, param: _TraceEdgeParams, fromEdgeKey):
+        if self._checkAlreadyTraced(None, param.edge.key, checkOnly=True):
+            logger.debug(
+                "Segment %s skipping already traced edge %s"
+                " from vortex %s from edge %s",
+                param.segment.key,
+                param.edge.key,
+                param.vertex.key,
+                fromEdgeKey,
+            )
+            return
+
+        logger.debug(
+            "Segment %s queuing traced to edge %s from vortex %s from edge %s",
+            param.segment.key,
+            param.edge.key,
+            param.vertex.key,
+            fromEdgeKey,
+        )
+        self._traceEdgeQueue.append(param)
+
     def _traceEdgesInNextSegment(self, vertexKey: str, segmentKey: str):
+        logger.debug("Segment %s entered from vortex %s", segmentKey, vertexKey)
+
         segment = self._fastDb.getSegment(segmentKey)
         if not segment:
-            raise Exception("Could not find segment %s", segmentKey)
+            raise Exception("Segment %s is missing", segmentKey)
 
         vertex = segment.vertexByKey.get(vertexKey)
         if not vertex:
             raise Exception(
-                "Vertex '%s' is not in segment '%s'" % (vertexKey, segmentKey)
+                "Segment %s is missing vertex %s" % (segmentKey, vertexKey)
             )
 
         for edge in vertex.edges:
@@ -248,78 +299,16 @@ class PrivateRunTrace:
     # Already Traced State
 
     def _checkAlreadyTraced(
-        self, vertexKey: Optional[str], edgeKey: Optional[str]
+        self, vertexKey: Optional[str], edgeKey: Optional[str], checkOnly=False
     ) -> bool:
         traced = (vertexKey, edgeKey) in self._alreadyTracedSet
-        if not traced:
+        if not traced and not checkOnly:
             self._alreadyTracedSet.add((vertexKey, edgeKey))
 
         return traced
 
     # ---------------
     # Match Vertex Rules
-    def _matchTraceRules(
-        self,
-        vertex: Optional[GraphDbLinkedVertex] = None,
-        edge: Optional[GraphDbLinkedEdge] = None,
-        fromSrcVertex: Optional[bool] = None,
-    ) -> bool:
-        isVertex = vertex is not None
-        isEdge = edge is not None
-        isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
-        key = vertex.key if isVertex else edge.key
-        desc = "vertex" if isVertex else "edge"
-
-        props = vertex.props if vertex else edge.props
-
-        for rule in self._traceRules:
-            # Accept the conditions in which we'll run this rule
-            if rule.applyTo == rule.APPLY_TO_VERTEX and isVertex:
-                pass
-
-            elif rule.applyTo == rule.APPLY_TO_EDGE and isEdge:
-                pass
-
-            elif rule.applyTo == rule.APPLY_TO_START_VERTEX and isStartVertex:
-                pass
-
-            else:
-                # Else, this isn't the right rule for this thing, move onto the next
-                continue
-
-            # If the rule doesn't match, then continue
-            if not self._matchProps(props, rule, fromSrcVertex, edge):
-                continue
-
-            # The rule has matched.
-
-            # Apply the action - Continue
-            if rule.action == rule.ACTION_CONTINUE_TRACE:
-                logger.debug(f"Applying rule Order {rule.order} Action "
-                             f"Continue to {desc} {key}")
-                return True
-
-            # Apply the action - Abort
-            if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
-                logger.debug(f"Applying rule Order {rule.order}"
-                             f" Action ABORT WITH MESSAGE"
-                             f" to {desc} {key}"
-                             f" message {rule.actionData}")
-                self._setTraceAborted(rule.actionData)
-                return False
-
-            # Apply the action - Stop
-            if rule.action == rule.ACTION_STOP_TRACE:
-                logger.debug(f"Applying rule Order {rule.order}"
-                             f" Action STOP"
-                             f" to {desc} {key}")
-                return False
-
-        # No rules have decided either way, continue tracing
-        return True
-
-    # ---------------
-    # Match The Properties
     def _matchProps(
         self,
         props: Dict,
@@ -383,3 +372,80 @@ class PrivateRunTrace:
         raise NotImplementedError(
             "rule.propertyValueType  = %s" % rule.propertyValueType
         )
+
+    # ---------------
+    # Match The Properties
+    def _matchTraceRules(
+        self,
+        segment: GraphDbLinkedSegment,
+        vertex: Optional[GraphDbLinkedVertex] = None,
+        edge: Optional[GraphDbLinkedEdge] = None,
+        fromSrcVertex: Optional[bool] = None,
+        fromEdgeKey: Optional[str] = None,
+    ) -> bool:
+        isVertex = vertex is not None
+        isEdge = edge is not None
+        isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
+        key = vertex.key if isVertex else edge.key
+        desc = "vertex %s" % key if isVertex else "edge %s" % key
+        if fromEdgeKey:
+            desc += " from edge %s" % fromEdgeKey
+
+        props = vertex.props if vertex else edge.props
+
+        for rule in self._traceRules:
+            # Accept the conditions in which we'll run this rule
+            if rule.applyTo == rule.APPLY_TO_VERTEX and isVertex:
+                pass
+
+            elif rule.applyTo == rule.APPLY_TO_EDGE and isEdge:
+                pass
+
+            elif rule.applyTo == rule.APPLY_TO_START_VERTEX and isStartVertex:
+                pass
+
+            else:
+                # Else, this isn't the right rule for this thing
+                # move onto the next
+                continue
+
+            # If the rule doesn't match, then continue
+            if not self._matchProps(props, rule, fromSrcVertex, edge):
+                continue
+
+            # The rule has matched.
+
+            # Apply the action - Continue
+            if rule.action == rule.ACTION_CONTINUE_TRACE:
+                logger.debug(
+                    f"Segment {segment.key}"
+                    f" Applying rule Order {rule.order} Action"
+                    f" Continue to {desc}"
+                )
+                return True
+
+            # Apply the action - Abort
+            if rule.action == rule.ACTION_ABORT_TRACE_WITH_MESSAGE:
+                logger.debug(
+                    f"Segment {segment.key}"
+                    f" Applying rule Order {rule.order}"
+                    f" Action ABORT WITH MESSAGE"
+                    f" to {desc}"
+                    f" message {rule.actionData}"
+                )
+                self._setTraceAborted(rule.actionData)
+                return False
+
+            # Apply the action - Stop
+            if rule.action == rule.ACTION_STOP_TRACE:
+                logger.debug(
+                    f"Segment {segment.key}"
+                    f" Applying rule Order {rule.order}"
+                    f" Action STOP"
+                    f" to {desc}"
+                )
+                return False
+
+        # No rules have decided either way, continue tracing
+        logger.debug(f"Segment {segment.key} No rules applied to {desc}")
+        return True
