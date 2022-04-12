@@ -39,7 +39,9 @@ from peek_plugin_graphdb.tuples.GraphDbTraceResultVertexTuple import (
 
 logger = logging.getLogger(__name__)
 
-_TraceEdgeParams = namedtuple("_TraceEdgeParams", ["segment", "edge", "vertex"])
+_TraceEdgeParams = namedtuple(
+    "_TraceEdgeParams", ["segment", "edge", "vertex", "isStartEdge"]
+)
 
 
 class _TraceAbortedWithMessageException(Exception):
@@ -93,7 +95,7 @@ class PrivateRunTrace:
                 edge = segment.edgeByKey.get(self._startVertexOrEdgeKey)
                 if edge:
                     self._traceEdgeQueue.append(
-                        _TraceEdgeParams(segment, edge, None)
+                        _TraceEdgeParams(segment, edge, None, isStartEdge=True)
                     )
                     continue
 
@@ -106,7 +108,12 @@ class PrivateRunTrace:
             # Drain the trace queue
             while self._traceEdgeQueue:
                 params = self._traceEdgeQueue.pop()
-                self._traceEdge(params.segment, params.edge, params.vertex)
+                self._traceEdge(
+                    params.segment,
+                    params.edge,
+                    params.vertex,
+                    isStartEdge=params.isStartEdge,
+                )
 
         except _TraceAbortedWithMessageException:
             pass
@@ -114,6 +121,11 @@ class PrivateRunTrace:
         if len(self._result.vertexes) and not self._result.edges:
             self._result.traceAbortedMessage = (
                 "The trace stopped on the start device."
+            )
+
+        if len(self._result.edges) and not self._result.vertexes:
+            self._result.traceAbortedMessage = (
+                "The trace stopped on the start conductor."
             )
 
         # Log the complete
@@ -160,7 +172,9 @@ class PrivateRunTrace:
         segment: GraphDbLinkedSegment,
         edge: GraphDbLinkedEdge,
         fromVertex: Optional[GraphDbLinkedVertex] = None,
+        isStartEdge: bool = False,
     ):
+        # Check and Mark if this edge has been traced
         if self._checkAlreadyTraced(None, edge.key):
             logger.debug(
                 "Segment %s skipping already traced edge %s",
@@ -169,21 +183,35 @@ class PrivateRunTrace:
             )
             return
 
+        if isStartEdge:
+            self._addEdge(edge)
+
+            # If the trace is starting on this edge, then we need to try
+            # both directions.
+            if self._matchTraceRules(segment, edge=edge, fromSrcVertex=True):
+                self._traceVertex(segment, edge.dstVertex, fromEdgeKey=edge.key)
+
+            if self._matchTraceRules(segment, edge=edge, fromSrcVertex=False):
+                self._traceVertex(segment, edge.srcVertex, fromEdgeKey=edge.key)
+
+            return
+
+        # Apply the rules
         fromSrcVertex = fromVertex and edge.srcVertex.key == fromVertex.key
         if not self._matchTraceRules(
             segment, edge=edge, fromSrcVertex=fromSrcVertex
         ):
             return
 
+        # Add the edge to the results
         self._addEdge(edge)
 
-        if fromVertex:
-            toVertex = edge.getOtherVertex(fromVertex.key)
-            self._traceVertex(segment, toVertex, fromEdgeKey=edge.key)
+        # Trace
+        assert fromVertex, "Trace has no fromVertex and is not startEdge"
 
-        else:
-            self._traceVertex(segment, edge.srcVertex, fromEdgeKey=edge.key)
-            self._traceVertex(segment, edge.dstVertex, fromEdgeKey=edge.key)
+        # Trace to the next vertex
+        toVertex = edge.getOtherVertex(fromVertex.key)
+        self._traceVertex(segment, toVertex, fromEdgeKey=edge.key)
 
     def _traceVertex(
         self,
@@ -214,7 +242,7 @@ class PrivateRunTrace:
             if edge.key == fromEdgeKey:
                 continue
             self._queueEdge(
-                _TraceEdgeParams(segment, edge, vertex), fromEdgeKey
+                _TraceEdgeParams(segment, edge, vertex, False), fromEdgeKey
             )
 
         for segmentKey in vertex.linksToSegmentKeys:
@@ -263,7 +291,9 @@ class PrivateRunTrace:
             )
 
         for edge in vertex.edges:
-            self._traceEdgeQueue.append(_TraceEdgeParams(segment, edge, vertex))
+            self._traceEdgeQueue.append(
+                _TraceEdgeParams(segment, edge, vertex, False)
+            )
 
     # ---------------
     # Add to result
