@@ -367,6 +367,13 @@ class PrivateRunTrace:
             return False
 
         if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
+            if not edge:
+                self._setTraceAborted(
+                    "Trace rule DIRECTION"
+                    " should not have applyTo=Vertex,"
+                    " it only applies to edges"
+                )
+
             E = GraphDbLinkedEdge
             if fromSrcVertex:
                 goingUpstream = edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
