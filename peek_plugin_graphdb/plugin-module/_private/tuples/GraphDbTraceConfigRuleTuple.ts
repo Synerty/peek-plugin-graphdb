@@ -36,7 +36,7 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
     readonly PROP_VAL_TYPE_COMMA_LIST = 2;
     readonly PROP_VAL_TYPE_REGEX = 3;
     readonly PROP_VAL_TYPE_BITMASK_AND = 4;
-    readonly PROP_VAL_TYPE_DIRECTION = 4;
+    readonly PROP_VAL_TYPE_DIRECTION = 5;
 
     //  Trace edge src/dst direction
     readonly PROP_VAL_TRACE_UPSTREAM = 2 ** 0;
