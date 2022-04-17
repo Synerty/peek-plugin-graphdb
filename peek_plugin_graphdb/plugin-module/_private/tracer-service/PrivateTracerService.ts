@@ -59,20 +59,20 @@ export class PrivateTracerService extends NgLifeCycleEvents {
             );
         }
 
-        if (
-            !this.deviceCacheControllerService.cachingEnabled ||
-            this.vortexStatusService.snapshot.isOnline
-        ) {
+        if (this.vortexStatusService.snapshot.isOnline) {
             return this.doesKeyExistServer(modelSetKey, vertexOrEdgeKey);
         }
 
-        throw new Error(
-            "Peek must be online for tracing." +
-                " Offline tracing is disabled in this release of Peek." +
-                " Please contact Synerty for the latest release with offline tracing enabled."
-        );
-        // JJC TODO: Debug offline support
-        // return this.doesKeyExistLocal(modelSetKey, vertexOrEdgeKey);
+        if (!this.deviceCacheControllerService.offlineModeEnabled) {
+            throw new Error(
+                "Peek is not online," +
+                    " and offline caching is not enabled" +
+                    " or has not completed loading." +
+                    " The trace can't be run."
+            );
+        }
+
+        return this.doesKeyExistLocal(modelSetKey, vertexOrEdgeKey);
     }
 
     /** Get Segments
@@ -102,10 +102,7 @@ export class PrivateTracerService extends NgLifeCycleEvents {
             );
         }
 
-        if (
-            !this.deviceCacheControllerService.cachingEnabled ||
-            this.vortexStatusService.snapshot.isOnline
-        ) {
+        if (this.vortexStatusService.snapshot.isOnline) {
             return this.runServerTrace(
                 modelSetKey,
                 traceConfigKey,
@@ -114,13 +111,21 @@ export class PrivateTracerService extends NgLifeCycleEvents {
             );
         }
 
-        throw new Error(
-            "Peek must be online for tracing." +
-                " Offline tracing is disabled in this release of Peek." +
-                " Please contact Synerty for the latest release with offline tracing enabled."
+        if (!this.deviceCacheControllerService.offlineModeEnabled) {
+            throw new Error(
+                "Peek is not online," +
+                    " and offline caching is not enabled" +
+                    " or has not completed loading." +
+                    " The trace can't be run."
+            );
+        }
+
+        return this.runLocalTrace(
+            modelSetKey,
+            traceConfigKey,
+            startVertexKey,
+            maxVertexes
         );
-        // JJC TODO: Debug offline support
-        // return this.runLocalTrace(modelSetKey, traceConfigKey, startVertexKey, maxVertexes);
     }
 
     private loadTraceConfig(

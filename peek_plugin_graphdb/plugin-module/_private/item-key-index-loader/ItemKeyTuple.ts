@@ -24,15 +24,14 @@ export class ItemKeyTuple extends Tuple {
         packedJson: string,
         modelSetKey: string
     ): ItemKeyTuple {
-        // Reconstruct the data
-        let objectProps: {} = JSON.parse(packedJson);
+        // Make this a dict to include item type
+        const objectProps: string[] = JSON.parse(packedJson);
 
         this.modelSetKey = modelSetKey;
 
         // Unpack the custom data here
         this.itemKey = key;
-        this.itemType = objectProps["itemType"];
-        this.segmentKeys = objectProps["segmentKeys"];
+        this.segmentKeys = objectProps;
 
         return this;
     }

@@ -130,8 +130,12 @@ class PrivateRunTrace:
 
         # Log the complete
         logger.debug(
-            "Trace completed. Trace Config '%s', Start Vertex or Edge '%s'"
-            " %s vertexes, %s edges, error:'%s', in %s",
+            "Trace completed. Trace Config '%s',"
+            " Start Vertex or Edge '%s'"
+            " %s vertexes,"
+            " %s edges,"
+            " error:'%s',"
+            " in %s",
             self._traceConfigKey,
             self._startVertexOrEdgeKey,
             len(self._result.vertexes),
@@ -188,9 +192,11 @@ class PrivateRunTrace:
 
             # If the trace is starting on this edge, then we need to try
             # both directions.
+            # SRC -> DST
             if self._matchTraceRules(segment, edge=edge, fromSrcVertex=True):
                 self._traceVertex(segment, edge.dstVertex, fromEdgeKey=edge.key)
 
+            # DST -> SRC
             if self._matchTraceRules(segment, edge=edge, fromSrcVertex=False):
                 self._traceVertex(segment, edge.srcVertex, fromEdgeKey=edge.key)
 
@@ -206,7 +212,7 @@ class PrivateRunTrace:
         # Add the edge to the results
         self._addEdge(edge)
 
-        # Trace
+        # Assert that we have fromVertex
         assert fromVertex, "Trace has no fromVertex and is not startEdge"
 
         # Trace to the next vertex
@@ -222,10 +228,9 @@ class PrivateRunTrace:
     ) -> None:
         if self._checkAlreadyTraced(vertex.key, None):
             logger.debug(
-                "Segment %s skipping already traced of vortex %s from edge %s",
-                segment.key,
-                vertex.key,
-                fromEdgeKey,
+                f"Segment {segment.key}"
+                f" skipping already traced of vortex {vertex.key}"
+                f" from edge {fromEdgeKey}"
             )
             return
 
@@ -247,33 +252,24 @@ class PrivateRunTrace:
 
         for segmentKey in vertex.linksToSegmentKeys:
             logger.debug(
-                "Segment %s tracing to new segment %s"
-                " via vertex %s from edge %s",
-                segment.key,
-                segmentKey,
-                vertex.key,
-                fromEdgeKey,
+                f"Segment {segment.key} tracing to new segment {segmentKey}"
+                f" via vertex {vertex.key} from edge {fromEdgeKey}"
             )
             self._traceEdgesInNextSegment(vertex.key, segmentKey)
 
     def _queueEdge(self, param: _TraceEdgeParams, fromEdgeKey):
         if self._checkAlreadyTraced(None, param.edge.key, checkOnly=True):
             logger.debug(
-                "Segment %s skipping already traced edge %s"
-                " from vortex %s from edge %s",
-                param.segment.key,
-                param.edge.key,
-                param.vertex.key,
-                fromEdgeKey,
+                f"Segment {param.segment.key}"
+                f" skipping already traced edge {param.edge.key}"
+                f" from vortex {param.vertex.key} from edge {fromEdgeKey}"
             )
             return
 
         logger.debug(
-            "Segment %s queuing traced to edge %s from vortex %s from edge %s",
-            param.segment.key,
-            param.edge.key,
-            param.vertex.key,
-            fromEdgeKey,
+            f"Segment {param.segment.key}"
+            f" queuing traced to edge {param.edge.key}"
+            f" from vortex {param.vertex.key} from edge {fromEdgeKey}"
         )
         self._traceEdgeQueue.append(param)
 
@@ -287,7 +283,7 @@ class PrivateRunTrace:
         vertex = segment.vertexByKey.get(vertexKey)
         if not vertex:
             raise Exception(
-                "Segment %s is missing vertex %s" % (segmentKey, vertexKey)
+                f"Segment {segmentKey} is missing vertex {vertexKey}"
             )
 
         for edge in vertex.edges:
@@ -318,7 +314,7 @@ class PrivateRunTrace:
             and len(self._result.vertexes) >= self._maxVertexes
         ):
             self._setTraceAborted(
-                "Trace exceeded maximum vertexes of %s" % self._maxVertexes
+                f"Trace exceeded maximum vertexes of {self._maxVertexes}"
             )
 
         self._result.vertexes.append(
@@ -338,79 +334,6 @@ class PrivateRunTrace:
         return traced
 
     # ---------------
-    # Match Vertex Rules
-    def _matchProps(
-        self,
-        props: Dict,
-        rule: GraphDbTraceConfigRuleTuple,
-        fromSrcVertex: Optional[bool],
-        edge: Optional[GraphDbLinkedEdge],
-    ):
-        propVal = str(props.get(rule.propertyName))
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE:
-            return propVal == rule.propertyValue
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST:
-            return propVal in rule.preparedValueSet
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_REGEX:
-            return rule.preparedRegex.match(propVal)
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_BITMASK_AND:
-            try:
-                return bool(int(propVal) & int(rule.propertyValue))
-
-            except ValueError:
-                pass
-
-            return False
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
-            if not edge:
-                self._setTraceAborted(
-                    "Trace rule DIRECTION"
-                    " should not have applyTo=Vertex,"
-                    " it only applies to edges"
-                )
-
-            E = GraphDbLinkedEdge
-            if fromSrcVertex:
-                goingUpstream = edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
-            else:
-                goingUpstream = edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
-
-            if fromSrcVertex:
-                goingDownstream = edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
-            else:
-                goingDownstream = edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
-
-            goingBoth = edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_BOTH
-
-            bitVal = 0
-            if goingDownstream:
-                bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM
-            if goingUpstream:
-                bitVal += rule.PROP_VAL_TRACE_UPSTREAM
-            if goingBoth:
-                bitVal += rule.PROP_VAL_TRACE_BOTH
-
-            try:
-                return bool(bitVal & int(rule.propertyValue))
-
-            except ValueError:
-                pass
-
-            return False
-
-        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
-            return rule.preparedRegex.match(propVal)
-
-        raise NotImplementedError(
-            "rule.propertyValueType  = %s" % rule.propertyValueType
-        )
-
-    # ---------------
     # Match The Properties
     def _matchTraceRules(
         self,
@@ -423,6 +346,7 @@ class PrivateRunTrace:
         isVertex = vertex is not None
         isEdge = edge is not None
         isStartVertex = isVertex and vertex.key == self._startVertexOrEdgeKey
+
         key = vertex.key if isVertex else edge.key
         desc = "vertex %s" % key if isVertex else "edge %s" % key
         if fromEdgeKey:
@@ -486,3 +410,78 @@ class PrivateRunTrace:
         # No rules have decided either way, continue tracing
         logger.debug(f"Segment {segment.key} No rules applied to {desc}")
         return True
+
+    # ---------------
+    # Match Vertex Rules
+    def _matchProps(
+        self,
+        props: Dict,
+        rule: GraphDbTraceConfigRuleTuple,
+        fromSrcVertex: Optional[bool],
+        edge: Optional[GraphDbLinkedEdge],
+    ):
+        propVal = str(props.get(rule.propertyName))
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_SIMPLE:
+            return propVal == rule.propertyValue
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_COMMA_LIST:
+            return propVal in rule.preparedValueSet
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_REGEX:
+            return rule.preparedRegex.match(propVal)
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_BITMASK_AND:
+            try:
+                return bool(int(propVal) & int(rule.propertyValue))
+
+            except ValueError:
+                pass
+
+            return False
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
+            if not edge:
+                self._setTraceAborted(
+                    "Trace rule DIRECTION"
+                    " should not have applyTo=Vertex,"
+                    " it only applies to edges"
+                )
+
+            E = GraphDbLinkedEdge
+            goingUpstream = (
+                edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
+                if fromSrcVertex
+                else edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
+            )
+
+            goingDownstream = (
+                edge.srcDirection == E.DIR_SRC_IS_UPSTREAM
+                if fromSrcVertex
+                else edge.srcDirection == E.DIR_SRC_IS_DOWNSTREAM
+            )
+
+            goingBoth = edge.srcDirection == GraphDbLinkedEdge.DIR_SRC_IS_BOTH
+
+            bitVal = 0
+            if goingDownstream:
+                bitVal += rule.PROP_VAL_TRACE_DOWNSTREAM
+            if goingUpstream:
+                bitVal += rule.PROP_VAL_TRACE_UPSTREAM
+            if goingBoth:
+                bitVal += rule.PROP_VAL_TRACE_BOTH
+
+            try:
+                return bool(bitVal & int(rule.propertyValue))
+
+            except ValueError:
+                pass
+
+            return False
+
+        if rule.propertyValueType == rule.PROP_VAL_TYPE_DIRECTION:
+            return rule.preparedRegex.match(propVal)
+
+        raise NotImplementedError(
+            f"rule.propertyValueType  = {rule.propertyValueType}"
+        )

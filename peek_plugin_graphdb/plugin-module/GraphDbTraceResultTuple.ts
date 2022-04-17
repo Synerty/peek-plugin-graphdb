@@ -18,10 +18,10 @@ export class GraphDbTraceResultTuple extends Tuple {
     startVertexKey: string;
 
     //  The edges
-    edges: GraphDbTraceResultEdgeTuple[];
+    edges: GraphDbTraceResultEdgeTuple[] = [];
 
     //  The vertexes
-    vertexes: GraphDbTraceResultVertexTuple[];
+    vertexes: GraphDbTraceResultVertexTuple[] = [];
 
     //  Trace Aborted Message
     traceAbortedMessage: string | null;

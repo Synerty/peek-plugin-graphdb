@@ -30,16 +30,17 @@ class ItemKeyTuple(Tuple):
     itemKey: str = TupleField()
 
     #:  The key of the segment where it's stored
-    segmentKeys: str = TupleField()
+    segmentKeys: list[str] = TupleField()
 
-    def unpackJson(self, key: str, packedJson: str, modelSetKey: str) -> "ItemKeyTuple":
-        # Reconstruct the data
-        objectProps: {} = json.loads(packedJson)
+    def unpackJson(
+        self, key: str, packedJson: str, modelSetKey: str
+    ) -> "ItemKeyTuple":
+        # Make this a dict to include item type
+        objectProps: list[str] = json.loads(packedJson)
 
         # Unpack the custom data here
         self.itemKey = key
         self.modelSetKey = modelSetKey
-        self.itemType = objectProps.get("itemType")
-        self.segmentKeys = objectProps.get("encodedChunkKeys")
+        self.segmentKeys = objectProps
 
         return self

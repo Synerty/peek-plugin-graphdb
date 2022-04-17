@@ -41,7 +41,7 @@ export class GraphDbLinkedSegment {
                 linksToSegmentKeysByVertexKey[vertexKey] = list;
             }
 
-            list.append(segmentKey);
+            list.push(segmentKey);
         }
 
         for (let jsonVertex of jsonDict["vertexes"]) {

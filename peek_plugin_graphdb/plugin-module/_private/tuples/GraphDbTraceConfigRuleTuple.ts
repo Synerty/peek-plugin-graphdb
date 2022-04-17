@@ -51,7 +51,7 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
 
     // Prepeared property values, these are used for matching the this.
     preparedRegex: RegExp | null = null;
-    preparedValueSet: { [value: string]: any } | null = null;
+    preparedValueSet: Set<string> | null = null;
 
     constructor() {
         super(GraphDbTraceConfigRuleTuple.tupleName);
@@ -60,9 +60,9 @@ export class GraphDbTraceConfigRuleTuple extends Tuple {
     prepare() {
         if (this.propertyValueType == this.PROP_VAL_TYPE_COMMA_LIST) {
             let splitVals = this.propertyValue.split(",");
-            this.preparedValueSet = {};
+            this.preparedValueSet = new Set<string>();
             for (let val of splitVals) {
-                this.preparedValueSet[val] = true;
+                this.preparedValueSet.add(val);
             }
         } else if (this.propertyValueType == this.PROP_VAL_TYPE_REGEX) {
             this.preparedRegex = new RegExp(this.propertyValue);

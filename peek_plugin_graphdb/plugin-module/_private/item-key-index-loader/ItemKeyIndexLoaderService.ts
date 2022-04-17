@@ -141,7 +141,9 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
         this.storage = new TupleOfflineStorageService(
             storageFactory,
-            new TupleOfflineStorageNameService(graphDbCacheStorageName)
+            new TupleOfflineStorageNameService(
+                graphDbCacheStorageName + ".item_key"
+            )
         );
 
         this.setupVortexSubscriptions();
@@ -186,11 +188,11 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
             (tuples: ItemKeyTuple[]) => {
                 let keys = [];
                 for (let tuple of tuples) {
-                    if (tuple.itemType == itemType) {
-                        for (let segmentKey of tuple.segmentKeys) {
-                            keys.push(segmentKey);
-                        }
+                    // if (tuple.itemType == itemType) {
+                    for (let segmentKey of tuple.segmentKeys) {
+                        keys.push(segmentKey);
                     }
+                    // }
                 }
                 return keys;
             }
@@ -273,7 +275,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
     private areWeTalkingToTheServer(): boolean {
         return (
-            this.deviceCacheControllerService.cachingEnabled &&
+            this.deviceCacheControllerService.offlineModeEnabled &&
             this.vortexStatusService.snapshot.isOnline
         );
     }
@@ -466,10 +468,8 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         }
 
         // If there is no offline support, or we're online
-        if (
-            !this.deviceCacheControllerService.cachingEnabled ||
-            this.vortexStatusService.snapshot.isOnline
-        ) {
+        // This is never used at present.
+        if (this.vortexStatusService.snapshot.isOnline) {
             let ts = new TupleSelector(GraphDbPackedItemKeyTuple.tupleName, {
                 modelSetKey: modelSetKey,
                 keys: keys,
@@ -501,6 +501,15 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
                     }
                     return itemKeys;
                 });
+        }
+
+        if (!this.deviceCacheControllerService.offlineModeEnabled) {
+            throw new Error(
+                "Peek is not online," +
+                    " and offline caching is not enabled" +
+                    " or has not completed loading." +
+                    " The ItemKeyIndex won't work."
+            );
         }
 
         // If we do have offline support
@@ -557,7 +566,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
      * Get the objects with matching keywords from the index..
      *
      */
-    private getItemKeysForKeys(
+    private async getItemKeysForKeys(
         keys: string[],
         modelSetKey: string,
         chunkKey: string
@@ -567,43 +576,35 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
             return Promise.resolve([]);
         }
 
-        let retPromise: any;
-        retPromise = this.storage
-            .loadTuplesEncoded(new ItemKeyIndexChunkTupleSelector(chunkKey))
-            .then((vortexMsg: string) => {
-                if (vortexMsg == null) {
-                    return [];
-                }
+        const vortexMsg: string = await this.storage.loadTuplesEncoded(
+            new ItemKeyIndexChunkTupleSelector(chunkKey)
+        );
+        if (vortexMsg == null) {
+            return [];
+        }
 
-                return Payload.fromEncodedPayload(vortexMsg)
-                    .then((payload: Payload) => JSON.parse(<any>payload.tuples))
-                    .then((chunkData: { [key: number]: string }) => {
-                        let foundItemKeyIndexs: ItemKeyTuple[] = [];
+        const payload: Payload = await Payload.fromEncodedPayload(vortexMsg);
+        const chunkData: { [key: number]: string } = JSON.parse(
+            <any>payload.tuples[0]
+        );
+        let foundItemKeyIndexs: ItemKeyTuple[] = [];
 
-                        for (let key of keys) {
-                            // Find the keyword, we're just iterating
-                            if (!chunkData.hasOwnProperty(key)) {
-                                console.log(
-                                    `WARNING: ItemKeyIndex ${key} is missing from index,` +
-                                        ` chunkKey ${chunkKey}`
-                                );
-                                continue;
-                            }
+        for (let key of keys) {
+            // Find the keyword, we're just iterating
+            if (!chunkData.hasOwnProperty(key)) {
+                console.log(
+                    `WARNING: ItemKeyIndex ${key} is missing from index,` +
+                        ` chunkKey ${chunkKey}`
+                );
+                continue;
+            }
 
-                            let packedJson = chunkData[key];
-                            foundItemKeyIndexs.push(
-                                new ItemKeyTuple().unpackJson(
-                                    key,
-                                    packedJson,
-                                    modelSetKey
-                                )
-                            );
-                        }
+            let packedJson = chunkData[key];
+            foundItemKeyIndexs.push(
+                new ItemKeyTuple().unpackJson(key, packedJson, modelSetKey)
+            );
+        }
 
-                        return foundItemKeyIndexs;
-                    });
-            });
-
-        return retPromise;
+        return foundItemKeyIndexs;
     }
 }

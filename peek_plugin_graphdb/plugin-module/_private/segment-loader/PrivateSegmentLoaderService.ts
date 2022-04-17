@@ -144,7 +144,9 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
 
         this.storage = new TupleOfflineStorageService(
             storageFactory,
-            new TupleOfflineStorageNameService(graphDbCacheStorageName)
+            new TupleOfflineStorageNameService(
+                graphDbCacheStorageName + ".segment"
+            )
         );
 
         this.setupVortexSubscriptions();
@@ -175,6 +177,16 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
         return this._status;
     }
 
+    getSegment(
+        modelSetKey: string,
+        segmentKey: string
+    ): Promise<GraphDbLinkedSegment | null> {
+        return this.getSegments(modelSetKey, [segmentKey]) //
+            .then((segmentsByKey: SegmentResultI) => {
+                return segmentsByKey[segmentKey];
+            });
+    }
+
     /** Get Segments
      *
      * Get the objects with matching keywords from the index..
@@ -185,7 +197,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
             throw new Error("We've been passed a null/empty keys");
         }
 
-        if (!this.deviceCacheControllerService.cachingEnabled) {
+        if (this.vortexStatusService.snapshot.isOnline) {
             let ts = new TupleSelector(GraphDbPackedSegmentTuple.tupleName, {
                 modelSetKey: modelSetKey,
                 keys: keys,
@@ -220,6 +232,15 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
                 .then((segments: GraphDbLinkedSegment[]) =>
                     this._makeDictFromSegments(segments)
                 );
+        }
+
+        if (!this.deviceCacheControllerService.offlineModeEnabled) {
+            throw new Error(
+                "Peek is not online," +
+                    " and offline caching is not enabled" +
+                    " or has not completed loading." +
+                    " The ItemKeyIndex won't work."
+            );
         }
 
         if (this.isReady())
@@ -309,7 +330,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
 
     private areWeTalkingToTheServer(): boolean {
         return (
-            this.deviceCacheControllerService.cachingEnabled &&
+            this.deviceCacheControllerService.offlineModeEnabled &&
             this.vortexStatusService.snapshot.isOnline
         );
     }
@@ -528,7 +549,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
      * Get the objects with matching keywords from the index..
      *
      */
-    private getSegmentsForKeys(
+    private async getSegmentsForKeys(
         modelSetKey: string,
         keys: string[],
         chunkKey: string
@@ -538,44 +559,36 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
             return Promise.resolve([]);
         }
 
-        let retPromise: any;
-        retPromise = this.storage
-            .loadTuplesEncoded(new SegmentChunkTupleSelector(chunkKey))
-            .then((vortexMsg: string) => {
-                if (vortexMsg == null) {
-                    return [];
-                }
+        const vortexMsg: string = await this.storage.loadTuplesEncoded(
+            new SegmentChunkTupleSelector(chunkKey)
+        );
+        if (vortexMsg == null) {
+            return [];
+        }
 
-                return Payload.fromEncodedPayload(vortexMsg)
-                    .then((payload: Payload) => JSON.parse(<any>payload.tuples))
-                    .then((chunkData: { [key: number]: string }) => {
-                        let foundSegments: GraphDbLinkedSegment[] = [];
+        const payload: Payload = await Payload.fromEncodedPayload(vortexMsg);
+        const chunkData: { [key: number]: string } = JSON.parse(
+            <any>payload.tuples[0]
+        );
+        let foundSegments: GraphDbLinkedSegment[] = [];
 
-                        for (let key of keys) {
-                            // Find the keyword, we're just iterating
-                            if (!chunkData.hasOwnProperty(key)) {
-                                console.log(
-                                    `WARNING: Segment ${key} is missing from index,` +
-                                        ` chunkKey ${chunkKey}`
-                                );
-                                continue;
-                            }
+        for (let key of keys) {
+            // Find the keyword, we're just iterating
+            if (!chunkData.hasOwnProperty(key)) {
+                console.log(
+                    `WARNING: Segment ${key} is missing from index,` +
+                        ` chunkKey ${chunkKey}`
+                );
+                continue;
+            }
 
-                            // Create the new object
-                            let newObject = new GraphDbLinkedSegment();
-                            newObject.unpackJson(
-                                chunkData[key],
-                                key,
-                                modelSetKey
-                            );
-                            foundSegments.push(newObject);
-                        }
+            // Create the new object
+            let newObject = new GraphDbLinkedSegment();
+            newObject.unpackJson(chunkData[key], key, modelSetKey);
+            foundSegments.push(newObject);
+        }
 
-                        return foundSegments;
-                    });
-            });
-
-        return retPromise;
+        return foundSegments;
     }
 
     private _makeDictFromSegments(
