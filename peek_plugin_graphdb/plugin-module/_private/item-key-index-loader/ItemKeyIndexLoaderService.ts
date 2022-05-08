@@ -27,7 +27,7 @@ import { GraphDbModelSetTuple } from "../../GraphDbModelSetTuple";
 import { GraphDbTupleService } from "../GraphDbTupleService";
 import { GraphDbPackedItemKeyTuple } from "./GraphDbPackedItemKeyTuple";
 import {
-    DeviceOfflineCacheControllerService,
+    DeviceOfflineCacheService,
     OfflineCacheStatusTuple,
 } from "@peek/peek_core_device";
 
@@ -114,7 +114,6 @@ function keyChunk(modelSetKey: string, key: string): string {
 @Injectable()
 export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
     private UPDATE_CHUNK_FETCH_SIZE = 32;
-    private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000; // 15 minutes
 
     private index = new ItemKeyIndexUpdateDateTuple();
     private askServerChunks: ItemKeyIndexUpdateDateTuple[] = [];
@@ -135,7 +134,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         private vortexStatusService: VortexStatusService,
         storageFactory: TupleStorageFactoryService,
         private tupleService: GraphDbTupleService,
-        private deviceCacheControllerService: DeviceOfflineCacheControllerService
+        private deviceCacheControllerService: DeviceOfflineCacheService
     ) {
         super();
 
@@ -359,15 +358,22 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
         if (this.askServerChunks.length == 0) return;
 
-        let indexChunk: ItemKeyIndexUpdateDateTuple =
-            this.askServerChunks.pop();
-        let filt = extend({}, clientItemKeyIndexWatchUpdateFromDeviceFilt);
-        filt[cacheAll] = true;
-        let pl = new Payload(filt, [indexChunk]);
-        this.vortexService.sendPayload(pl);
+        this.deviceCacheControllerService //
+            .waitForGarbageCollector()
+            .then(() => {
+                let indexChunk: ItemKeyIndexUpdateDateTuple =
+                    this.askServerChunks.pop();
+                let filt = extend(
+                    {},
+                    clientItemKeyIndexWatchUpdateFromDeviceFilt
+                );
+                filt[cacheAll] = true;
+                let pl = new Payload(filt, [indexChunk]);
+                this.vortexService.sendPayload(pl);
 
-        this._status.lastCheck = new Date();
-        this._notifyStatus();
+                this._status.lastCheck = new Date();
+                this._notifyStatus();
+            });
     }
 
     /** Process ItemKeyIndexes From Server

@@ -27,7 +27,7 @@ import { PrivateSegmentLoaderStatusTuple } from "./PrivateSegmentLoaderStatusTup
 
 import { GraphDbPackedSegmentTuple } from "./GraphDbPackedSegmentTuple";
 import {
-    DeviceOfflineCacheControllerService,
+    DeviceOfflineCacheService,
     OfflineCacheStatusTuple,
 } from "@peek/peek_core_device";
 
@@ -120,7 +120,6 @@ function keyChunk(modelSetKey: string, key: string): string {
 @Injectable()
 export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
     private UPDATE_CHUNK_FETCH_SIZE = 10;
-    private OFFLINE_CHECK_PERIOD_MS = 15 * 60 * 1000; // 15 minutes
 
     private index = new SegmentIndexUpdateDateTuple();
     private askServerChunks: SegmentIndexUpdateDateTuple[] = [];
@@ -138,7 +137,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
         private vortexStatusService: VortexStatusService,
         storageFactory: TupleStorageFactoryService,
         private tupleService: GraphDbTupleService,
-        private deviceCacheControllerService: DeviceOfflineCacheControllerService
+        private deviceCacheControllerService: DeviceOfflineCacheService
     ) {
         super();
 
@@ -414,15 +413,19 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
 
         if (this.askServerChunks.length == 0) return;
 
-        let indexChunk: SegmentIndexUpdateDateTuple =
-            this.askServerChunks.pop();
-        let filt = extend({}, clientSegmentWatchUpdateFromDeviceFilt);
-        filt[cacheAll] = true;
-        let pl = new Payload(filt, [indexChunk]);
-        this.vortexService.sendPayload(pl);
+        this.deviceCacheControllerService //
+            .waitForGarbageCollector()
+            .then(() => {
+                let indexChunk: SegmentIndexUpdateDateTuple =
+                    this.askServerChunks.pop();
+                let filt = extend({}, clientSegmentWatchUpdateFromDeviceFilt);
+                filt[cacheAll] = true;
+                let pl = new Payload(filt, [indexChunk]);
+                this.vortexService.sendPayload(pl);
 
-        this._status.lastCheck = new Date();
-        this._notifyStatus();
+                this._status.lastCheck = new Date();
+                this._notifyStatus();
+            });
     }
 
     /** Process Segmentes From Server

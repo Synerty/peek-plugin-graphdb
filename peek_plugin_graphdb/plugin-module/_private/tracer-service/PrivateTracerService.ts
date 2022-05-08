@@ -13,7 +13,7 @@ import { ItemKeyIndexLoaderService } from "../item-key-index-loader";
 import { GraphDbTraceResultTuple } from "../../GraphDbTraceResultTuple";
 import { PrivateRunTrace } from "./PrivateRunTrace";
 import { GraphDbDoesKeyExistTuple } from "../../GraphDbDoesKeyExistTuple";
-import { DeviceOfflineCacheControllerService } from "@peek/peek_core_device";
+import { DeviceOfflineCacheService } from "@peek/peek_core_device";
 
 // ----------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ export class PrivateTracerService extends NgLifeCycleEvents {
         private segmentLoader: PrivateSegmentLoaderService,
         private itemKeyLoader: ItemKeyIndexLoaderService,
         private tupleService: GraphDbTupleService,
-        private deviceCacheControllerService: DeviceOfflineCacheControllerService
+        private deviceCacheControllerService: DeviceOfflineCacheService
     ) {
         super();
 
