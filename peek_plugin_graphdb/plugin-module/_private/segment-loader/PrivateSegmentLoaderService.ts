@@ -12,6 +12,7 @@ import {
     TupleStorageFactoryService,
     VortexService,
     VortexStatusService,
+    TupleStorageBatchSaveArguments,
 } from "@synerty/vortexjs";
 
 import {
@@ -120,6 +121,12 @@ function keyChunk(modelSetKey: string, key: string): string {
 @Injectable()
 export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
     private UPDATE_CHUNK_FETCH_SIZE = 10;
+
+    // Every 100 chunks from the server
+    private SAVE_POINT_ITERATIONS = 100;
+
+    // Saving the cache after each chunk is so expensive, we only do it every 20 or so
+    private chunksSavedSinceLastIndexSave = 0;
 
     private index = new SegmentIndexUpdateDateTuple();
     private askServerChunks: SegmentIndexUpdateDateTuple[] = [];
@@ -317,7 +324,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
             )
             .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((payloadEnvelope: PayloadEnvelope) => {
-                this.processSegmentsFromServer(payloadEnvelope);
+                this.processChunksFromServer(payloadEnvelope);
             });
 
         // If the vortex service comes back online, update the watch grids.
@@ -432,79 +439,81 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
      *
      * Process the grids the server has sent us.
      */
-    private processSegmentsFromServer(payloadEnvelope: PayloadEnvelope) {
+    private async processChunksFromServer(
+        payloadEnvelope: PayloadEnvelope
+    ): Promise<void> {
         if (payloadEnvelope.result != null && payloadEnvelope.result != true) {
             console.log(`ERROR: ${payloadEnvelope.result}`);
             return;
         }
 
-        payloadEnvelope
-            .decodePayload()
-            .then((payload: Payload) => this.storeSegmentPayload(payload))
-            .then(() => {
-                if (this.askServerChunks.length == 0) {
-                    this.index.initialLoadComplete = true;
-                    this._hasLoaded = true;
-                    this._hasLoadedSubject.next();
-                } else if (payloadEnvelope.filt[cacheAll] == true) {
-                    this.askServerForNextUpdateChunk();
-                }
-            })
-            .then(() => this._notifyStatus())
-            .catch(
-                (e) => `SegmentCache.processSegmentsFromServer failed: ${e}`
-            );
-    }
-
-    private storeSegmentPayload(payload: Payload) {
-        let tuplesToSave: EncodedSegmentChunkTuple[] = <
+        const tuplesToSave: EncodedSegmentChunkTuple[] = <
             EncodedSegmentChunkTuple[]
-        >payload.tuples;
-        if (tuplesToSave.length == 0) return;
+        >payloadEnvelope.data;
 
-        // 2) Store the index
-        this.storeSegmentChunkTuples(tuplesToSave)
-            .then(() => {
-                // 3) Store the update date
+        try {
+            await this.storeChunkTuples(tuplesToSave);
+        } catch (e) {
+            console.log(`PrivateSegmentLoaderService.storeChunkTuples: ${e}`);
+        }
 
-                for (let graphDbIndex of tuplesToSave) {
-                    this.index.updateDateByChunkKey[graphDbIndex.chunkKey] =
-                        graphDbIndex.lastUpdate;
-                }
+        if (this.askServerChunks.length == 0) {
+            this.index.initialLoadComplete = true;
+            await this.saveChunkCacheIndex(true);
+            this._hasLoaded = true;
+            this._hasLoadedSubject.next();
+        } else if (payloadEnvelope.filt[cacheAll] == true) {
+            this.askServerForNextUpdateChunk();
+        }
 
-                return this.storage.saveTuples(new UpdateDateTupleSelector(), [
-                    this.index,
-                ]);
-            })
-            .catch((e) =>
-                console.log(`SegmentCache.storeSegmentPayload: ${e}`)
-            );
+        this._notifyStatus();
     }
 
     /** Store Index Bucket
      * Stores the index bucket in the local db.
      */
-    private storeSegmentChunkTuples(
-        encodedSegmentChunkTuples: EncodedSegmentChunkTuple[]
+    private async storeChunkTuples(
+        tuplesToSave: EncodedSegmentChunkTuple[]
     ): Promise<void> {
-        let retPromise: any;
-        retPromise = this.storage.transaction(true).then((tx) => {
-            let promises = [];
+        // noinspection BadExpressionStatementJS
+        const Selector = SegmentChunkTupleSelector;
 
-            for (let encodedSegmentChunkTuple of encodedSegmentChunkTuples) {
-                promises.push(
-                    tx.saveTuplesEncoded(
-                        new SegmentChunkTupleSelector(
-                            encodedSegmentChunkTuple.chunkKey
-                        ),
-                        encodedSegmentChunkTuple.encodedData
-                    )
-                );
-            }
+        if (tuplesToSave.length == 0) return;
 
-            return Promise.all(promises).then(() => tx.close());
-        });
-        return retPromise;
+        const batchStore: TupleStorageBatchSaveArguments[] = [];
+        for (const tuple of tuplesToSave) {
+            batchStore.push({
+                tupleSelector: new Selector(tuple.chunkKey),
+                vortexMsg: tuple.encodedData,
+            });
+        }
+
+        await this.storage.batchSaveTuplesEncoded(batchStore);
+
+        for (const tuple of tuplesToSave) {
+            this.index.updateDateByChunkKey[tuple.chunkKey] = tuple.lastUpdate;
+        }
+        await this.saveChunkCacheIndex(true);
+    }
+
+    /** Store Chunk Cache Index
+     *
+     * Updates our running tab of the update dates of the cached chunks
+     *
+     */
+    private async saveChunkCacheIndex(force = false): Promise<void> {
+        if (
+            this.chunksSavedSinceLastIndexSave <= this.SAVE_POINT_ITERATIONS &&
+            !force
+        ) {
+            return;
+        }
+
+        this.chunksSavedSinceLastIndexSave = 0;
+
+        await this.storage.saveTuples(new UpdateDateTupleSelector(), [
+            this.index,
+        ]);
     }
 
     /** Get Segments When Ready
