@@ -1,6 +1,8 @@
 import logging
 from typing import Optional
 
+from vortex.Tuple import Tuple
+
 from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkLoadRpcABC import (
     ACIChunkLoadRpcABC,
 )
@@ -35,7 +37,7 @@ class ItemKeyIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
-    def loadItemKeyIndexChunks(self, offset: int, count: int) -> Optional[bytes]:
+    def loadItemKeyIndexChunks(self, offset: int, count: int) -> str:
         """Update Page Loader Status
 
         Tell the server of the latest status of the loader

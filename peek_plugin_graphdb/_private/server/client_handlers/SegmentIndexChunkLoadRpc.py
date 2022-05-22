@@ -1,13 +1,17 @@
 import logging
 from typing import Optional
 
+from vortex.Tuple import Tuple
+
 from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkLoadRpcABC import (
     ACIChunkLoadRpcABC,
 )
 from peek_plugin_base.PeekVortexUtil import peekServerName, peekBackendNames
 from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
+    GraphDbEncodedChunk,
+)
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from sqlalchemy import select
 from vortex.rpc.RPC import vortexRPC
@@ -39,7 +43,7 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
-    def loadSegmentChunks(self, offset: int, count: int) -> Optional[bytes]:
+    def loadSegmentChunks(self, offset: int, count: int) -> str:
         """Load Segment Chunks
 
         Allow the client to incrementally load the chunks.
