@@ -9,6 +9,7 @@ import {
     TupleOfflineStorageNameService,
     TupleOfflineStorageService,
     TupleSelector,
+    TupleStorageBatchSaveArguments,
     TupleStorageFactoryService,
     VortexService,
     VortexStatusService,
@@ -114,6 +115,12 @@ function keyChunk(modelSetKey: string, key: string): string {
 @Injectable()
 export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
     private UPDATE_CHUNK_FETCH_SIZE = 32;
+
+    // Every 100 chunks from the server
+    private SAVE_POINT_ITERATIONS = 100;
+
+    // Saving the cache after each chunk is so expensive, we only do it every 20 or so
+    private chunksSavedSinceLastIndexSave = 0;
 
     private index = new ItemKeyIndexUpdateDateTuple();
     private askServerChunks: ItemKeyIndexUpdateDateTuple[] = [];
@@ -262,7 +269,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
             )
             .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((payloadEnvelope: PayloadEnvelope) => {
-                this.processItemKeyIndexsFromServer(payloadEnvelope);
+                this.processChunksFromServer(payloadEnvelope);
             });
 
         // If the vortex service comes back online, update the watch grids.
@@ -380,80 +387,81 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
      *
      * Process the grids the server has sent us.
      */
-    private processItemKeyIndexsFromServer(payloadEnvelope: PayloadEnvelope) {
+    private async processChunksFromServer(
+        payloadEnvelope: PayloadEnvelope
+    ): Promise<void> {
         if (payloadEnvelope.result != null && payloadEnvelope.result != true) {
             console.log(`ERROR: ${payloadEnvelope.result}`);
             return;
         }
 
-        payloadEnvelope
-            .decodePayload()
-            .then((payload: Payload) => this.storeItemKeyIndexPayload(payload))
-            .then(() => {
-                if (this.askServerChunks.length == 0) {
-                    this.index.initialLoadComplete = true;
-                    this._hasLoaded = true;
-                    this._hasLoadedSubject.next();
-                } else if (payloadEnvelope.filt[cacheAll] == true) {
-                    this.askServerForNextUpdateChunk();
-                }
-            })
-            .then(() => this._notifyStatus())
-            .catch(
-                (e) =>
-                    `ItemKeyIndexCache.processItemKeyIndexsFromServer failed: ${e}`
-            );
-    }
-
-    private storeItemKeyIndexPayload(payload: Payload) {
-        let tuplesToSave: ItemKeyIndexEncodedChunkTuple[] = <
+        const tuplesToSave: ItemKeyIndexEncodedChunkTuple[] = <
             ItemKeyIndexEncodedChunkTuple[]
-        >payload.tuples;
-        if (tuplesToSave.length == 0) return;
+        >payloadEnvelope.data;
 
-        // 2) Store the index
-        this.storeItemKeyIndexChunkTuples(tuplesToSave)
-            .then(() => {
-                // 3) Store the update date
+        try {
+            await this.storeChunkTuples(tuplesToSave);
+        } catch (e) {
+            console.log(`ItemKeyIndexCache.storeChunkTuples: ${e}`);
+        }
 
-                for (let graphDbIndex of tuplesToSave) {
-                    this.index.updateDateByChunkKey[graphDbIndex.chunkKey] =
-                        graphDbIndex.lastUpdate;
-                }
+        if (this.askServerChunks.length == 0) {
+            this.index.initialLoadComplete = true;
+            await this.saveChunkCacheIndex(true);
+            this._hasLoaded = true;
+            this._hasLoadedSubject.next();
+        } else if (payloadEnvelope.filt[cacheAll] == true) {
+            this.askServerForNextUpdateChunk();
+        }
 
-                return this.storage.saveTuples(new UpdateDateTupleSelector(), [
-                    this.index,
-                ]);
-            })
-            .catch((e) =>
-                console.log(`ItemKeyIndexCache.storeItemKeyIndexPayload: ${e}`)
-            );
+        this._notifyStatus();
     }
 
     /** Store Index Bucket
      * Stores the index bucket in the local db.
      */
-    private storeItemKeyIndexChunkTuples(
-        encodedItemKeyIndexChunkTuples: ItemKeyIndexEncodedChunkTuple[]
+    private async storeChunkTuples(
+        tuplesToSave: ItemKeyIndexEncodedChunkTuple[]
     ): Promise<void> {
-        let retPromise: any;
-        retPromise = this.storage.transaction(true).then((tx) => {
-            let promises = [];
+        // noinspection BadExpressionStatementJS
+        const Selector = ItemKeyIndexChunkTupleSelector;
 
-            for (let encodedItemKeyIndexChunkTuple of encodedItemKeyIndexChunkTuples) {
-                promises.push(
-                    tx.saveTuplesEncoded(
-                        new ItemKeyIndexChunkTupleSelector(
-                            encodedItemKeyIndexChunkTuple.chunkKey
-                        ),
-                        encodedItemKeyIndexChunkTuple.encodedData
-                    )
-                );
-            }
+        if (tuplesToSave.length == 0) return;
 
-            return Promise.all(promises).then(() => tx.close());
-        });
-        return retPromise;
+        const batchStore: TupleStorageBatchSaveArguments[] = [];
+        for (const tuple of tuplesToSave) {
+            batchStore.push({
+                tupleSelector: new Selector(tuple.chunkKey),
+                vortexMsg: tuple.encodedData,
+            });
+        }
+
+        await this.storage.batchSaveTuplesEncoded(batchStore);
+
+        for (const tuple of tuplesToSave) {
+            this.index.updateDateByChunkKey[tuple.chunkKey] = tuple.lastUpdate;
+        }
+        await this.saveChunkCacheIndex(true);
+    }
+
+    /** Store Chunk Cache Index
+     *
+     * Updates our running tab of the update dates of the cached chunks
+     *
+     */
+    private async saveChunkCacheIndex(force = false): Promise<void> {
+        if (
+            this.chunksSavedSinceLastIndexSave <= this.SAVE_POINT_ITERATIONS &&
+            !force
+        ) {
+            return;
+        }
+
+        this.chunksSavedSinceLastIndexSave = 0;
+
+        await this.storage.saveTuples(new UpdateDateTupleSelector(), [
+            this.index,
+        ]);
     }
 
     /** Get Segment Keys
