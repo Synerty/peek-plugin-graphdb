@@ -14,7 +14,9 @@ from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController i
     clientTraceConfigUpdateFromServerFilt,
 )
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import GraphDbTraceConfig
+from peek_plugin_graphdb._private.storage.GraphDbTraceConfig import (
+    GraphDbTraceConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ logger = logging.getLogger(__name__)
 class TraceConfigUpdateHandler:
     """Client Segment Update Controller
 
-    This controller handles sending updates the the client.
+    This controller handles sending updates the client.
 
     It uses lower level Vortex API
 
@@ -59,21 +61,26 @@ class TraceConfigUpdateHandler:
         )
 
         if not vortexNamesToSendTo:
-            self._logger.debug(
-                "No clients are online to send the doc chunk to, %s", traceConfigKeys
+            logger.debug(
+                "No clients are online to send the doc chunk to, %s",
+                traceConfigKeys,
             )
             return
 
         payload = Payload(filt=copy(clientTraceConfigUpdateFromServerFilt))
         payload.filt[plDeleteKey] = True
-        payload.tuples = dict(modelSetKey=modelSetKey, traceConfigKeys=traceConfigKeys)
+        payload.tuples = dict(
+            modelSetKey=modelSetKey, traceConfigKeys=traceConfigKeys
+        )
 
         payloadEnvelope = yield payload.makePayloadEnvelopeDefer()
         vortexMsg = yield payloadEnvelope.toVortexMsgDefer()
 
         try:
             for vortexName in vortexNamesToSendTo:
-                VortexFactory.sendVortexMsg(vortexMsg, destVortexName=vortexName)
+                VortexFactory.sendVortexMsg(
+                    vortexMsg, destVortexName=vortexName
+                )
 
         except Exception as e:
             logger.exception(e)
@@ -98,7 +105,7 @@ class TraceConfigUpdateHandler:
         )
 
         if not vortexNamesToSendTo:
-            self._logger.debug(
+            logger.debug(
                 "No clients are online to send the trace configs to, %s",
                 traceConfigKeys,
             )
@@ -107,7 +114,9 @@ class TraceConfigUpdateHandler:
         def send(vortexMsg: bytes):
             if vortexMsg:
                 for vortexName in vortexNamesToSendTo:
-                    VortexFactory.sendVortexMsg(vortexMsg, destVortexName=vortexName)
+                    VortexFactory.sendVortexMsg(
+                        vortexMsg, destVortexName=vortexName
+                    )
 
         d: Deferred = self._loadTraceConfigs(modelSetKey, traceConfigKeys)
         d.addCallback(send)
@@ -117,7 +126,8 @@ class TraceConfigUpdateHandler:
 
         if failure.check(NoVortexException):
             logger.debug(
-                "No clients are online to send the doc chunk to, %s", traceConfigKeys
+                "No clients are online to send the doc chunk to, %s",
+                traceConfigKeys,
             )
             return
 
@@ -136,7 +146,8 @@ class TraceConfigUpdateHandler:
                 .options(joinedload(GraphDbTraceConfig.rules))
                 .filter(GraphDbTraceConfig.key.in_(traceConfigKeys))
                 .join(
-                    GraphDbModelSet, GraphDbTraceConfig.modelSetId == GraphDbModelSet.id
+                    GraphDbModelSet,
+                    GraphDbTraceConfig.modelSetId == GraphDbModelSet.id,
                 )
                 .filter(GraphDbModelSet.key == modelSetKey)
             )
@@ -145,7 +156,8 @@ class TraceConfigUpdateHandler:
                 return None
 
             data = dict(
-                tuples=[ormObj.toTuple() for ormObj in results], modelSetKey=modelSetKey
+                tuples=[ormObj.toTuple() for ormObj in results],
+                modelSetKey=modelSetKey,
             )
             return (
                 Payload(filt=clientTraceConfigUpdateFromServerFilt, tuples=data)
