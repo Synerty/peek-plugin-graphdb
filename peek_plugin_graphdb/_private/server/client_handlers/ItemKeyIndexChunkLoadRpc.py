@@ -1,17 +1,17 @@
 import logging
-from typing import Optional
 
 from vortex.Tuple import Tuple
+from vortex.rpc.RPC import vortexRPC
 
 from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkLoadRpcABC import (
     ACIChunkLoadRpcABC,
 )
-from peek_plugin_base.PeekVortexUtil import peekServerName, peekBackendNames
+from peek_plugin_base.PeekVortexUtil import peekBackendNames
+from peek_plugin_base.PeekVortexUtil import peekServerName
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
     ItemKeyIndexEncodedChunk,
 )
-from vortex.rpc.RPC import vortexRPC
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ class ItemKeyIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         """
 
         yield self.loadItemKeyIndexChunks.start(funcSelf=self)
+        yield self.loadItemKeyIndexDelta.start(funcSelf=self)
         logger.debug("RPCs started")
 
     # -------------
@@ -37,12 +38,20 @@ class ItemKeyIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
-    def loadItemKeyIndexChunks(self, offset: int, count: int) -> str:
-        """Update Page Loader Status
+    def loadItemKeyIndexDelta(self, indexEncodedPayload: bytes) -> bytes:
+        return self.ckiChunkIndexDeltaBlocking(
+            indexEncodedPayload, ItemKeyIndexEncodedChunk
+        )
 
-        Tell the server of the latest status of the loader
-
-        """
+    # -------------
+    @vortexRPC(
+        peekServerName,
+        acceptOnlyFromVortex=peekBackendNames,
+        timeoutSeconds=60,
+        additionalFilt=graphDbFilt,
+        deferToThread=True,
+    )
+    def loadItemKeyIndexChunks(self, chunkKeys: list[str]) -> list[Tuple]:
         return self.ckiInitialLoadChunksPayloadBlocking(
-            offset, count, ItemKeyIndexEncodedChunk
+            chunkKeys, ItemKeyIndexEncodedChunk
         )

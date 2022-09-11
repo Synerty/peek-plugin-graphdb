@@ -24,7 +24,9 @@ class GraphDbEncodedChunk(DeclarativeBase, ACIEncodedChunkTupleABC):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     modelSetId = Column(
-        Integer, ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"),
+        nullable=False,
     )
     modelSet = relationship(GraphDbModelSet, lazy=False)
 
@@ -34,12 +36,18 @@ class GraphDbEncodedChunk(DeclarativeBase, ACIEncodedChunkTupleABC):
     lastUpdate = Column(String, nullable=False)
 
     __table_args__ = (
-        Index("idx_Chunk_modelSetId_chunkKey", modelSetId, chunkKey, unique=False),
+        Index(
+            "idx_Chunk_modelSetId_chunkKey", modelSetId, chunkKey, unique=False
+        ),
     )
 
     @property
     def ckiChunkKey(self):
         return self.chunkKey
+
+    @property
+    def ckiEncodedData(self):
+        return self.encodedData
 
     @property
     def ckiHasEncodedData(self) -> bool:
@@ -56,6 +64,10 @@ class GraphDbEncodedChunk(DeclarativeBase, ACIEncodedChunkTupleABC):
     @classmethod
     def sqlCoreChunkKeyColumn(cls):
         return cls.__table__.c.chunkKey
+
+    @classmethod
+    def sqlCoreLastUpdateColumn(cls):
+        return cls.__table__.c.lastUpdate
 
     @classmethod
     def sqlCoreLoad(cls, row):

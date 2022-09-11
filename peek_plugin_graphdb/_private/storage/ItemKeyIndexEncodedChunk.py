@@ -25,7 +25,9 @@ class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase, ACIEncodedChunkTupleABC):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     modelSetId = Column(
-        Integer, ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("GraphDbModelSet.id", ondelete="CASCADE"),
+        nullable=False,
     )
     modelSet = relationship(GraphDbModelSet)
 
@@ -48,6 +50,10 @@ class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase, ACIEncodedChunkTupleABC):
         return self.chunkKey
 
     @property
+    def ckiEncodedData(self):
+        return self.encodedData
+
+    @property
     def ckiLastUpdate(self):
         return self.lastUpdate
 
@@ -62,6 +68,10 @@ class ItemKeyIndexEncodedChunk(Tuple, DeclarativeBase, ACIEncodedChunkTupleABC):
     @classmethod
     def sqlCoreChunkKeyColumn(cls):
         return cls.__table__.c.chunkKey
+
+    @classmethod
+    def sqlCoreLastUpdateColumn(cls):
+        return cls.__table__.c.lastUpdate
 
     @classmethod
     def sqlCoreLoad(cls, row):

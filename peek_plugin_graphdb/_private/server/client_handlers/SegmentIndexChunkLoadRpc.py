@@ -1,20 +1,20 @@
 import logging
-from typing import Optional
 
+from sqlalchemy import select
 from vortex.Tuple import Tuple
+from vortex.rpc.RPC import vortexRPC
 
 from peek_abstract_chunked_index.private.server.client_handlers.ACIChunkLoadRpcABC import (
     ACIChunkLoadRpcABC,
 )
-from peek_plugin_base.PeekVortexUtil import peekServerName, peekBackendNames
+from peek_plugin_base.PeekVortexUtil import peekBackendNames
+from peek_plugin_base.PeekVortexUtil import peekServerName
 from peek_plugin_base.storage.DbConnection import DbSessionCreator
 from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
     GraphDbEncodedChunk,
 )
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
-from sqlalchemy import select
-from vortex.rpc.RPC import vortexRPC
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         """
 
         yield self.loadSegmentChunks.start(funcSelf=self)
+        yield self.loadSegmentIndexDelta.start(funcSelf=self)
         logger.debug("RPCs started")
 
     # -------------
@@ -43,7 +44,20 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
-    def loadSegmentChunks(self, offset: int, count: int) -> str:
+    def loadSegmentIndexDelta(self, indexEncodedPayload: bytes) -> bytes:
+        return self.ckiChunkIndexDeltaBlocking(
+            indexEncodedPayload, GraphDbEncodedChunk
+        )
+
+    # -------------
+    @vortexRPC(
+        peekServerName,
+        acceptOnlyFromVortex=peekBackendNames,
+        timeoutSeconds=60,
+        additionalFilt=graphDbFilt,
+        deferToThread=True,
+    )
+    def loadSegmentChunks(self, chunkKeys: list[str]) -> list[Tuple]:
         """Load Segment Chunks
 
         Allow the client to incrementally load the chunks.
@@ -63,11 +77,9 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
                 ]
             )
             .select_from(chunkTable.join(msTable))
-            .order_by(chunkTable.c.chunkKey)
-            .offset(offset)
-            .limit(count)
+            .where(chunkTable.c.chunkKey.in_(chunkKeys))
         )
 
         return self.ckiInitialLoadChunksPayloadBlocking(
-            offset, count, GraphDbEncodedChunk, sql
+            chunkKeys, GraphDbEncodedChunk, sql
         )

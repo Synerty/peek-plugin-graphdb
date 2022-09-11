@@ -12,6 +12,9 @@ from peek_plugin_graphdb._private.server.client_handlers.SegmentIndexChunkLoadRp
 from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import (
     GraphDbEncodedChunkTuple,
 )
+from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import (
+    SegmentIndexUpdateDateTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +31,9 @@ class SegmentCacheController(ACICacheControllerABC):
     """
 
     _ChunkedTuple = GraphDbEncodedChunkTuple
+    _UpdateDateTupleABC = SegmentIndexUpdateDateTuple
     _chunkLoadRpcMethod = SegmentIndexChunkLoadRpc.loadSegmentChunks
+    _chunkIndexDeltaRpcMethod = SegmentIndexChunkLoadRpc.loadSegmentIndexDelta
     _updateFromServerFilt = clientSegmentUpdateFromServerFilt
     _logger = logger
 

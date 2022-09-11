@@ -12,6 +12,9 @@ from peek_plugin_graphdb._private.server.client_handlers.ItemKeyIndexChunkLoadRp
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
     ItemKeyIndexEncodedChunk,
 )
+from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import (
+    ItemKeyIndexUpdateDateTuple,
+)
 from peek_plugin_graphdb._private.worker.tasks._ItemKeyIndexCalcChunkKey import (
     makeChunkKeyForItemKey,
 )
@@ -20,7 +23,9 @@ from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
-clientItemKeyIndexUpdateFromServerFilt = dict(key="clientItemKeyIndexUpdateFromServer")
+clientItemKeyIndexUpdateFromServerFilt = dict(
+    key="clientItemKeyIndexUpdateFromServer"
+)
 clientItemKeyIndexUpdateFromServerFilt.update(graphDbFilt)
 
 
@@ -33,7 +38,9 @@ class ItemKeyIndexCacheController(ACICacheControllerABC):
     """
 
     _ChunkedTuple = ItemKeyIndexEncodedChunk
+    _UpdateDateTupleABC = ItemKeyIndexUpdateDateTuple
     _chunkLoadRpcMethod = ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks
+    _chunkIndexDeltaRpcMethod = ItemKeyIndexChunkLoadRpc.loadItemKeyIndexDelta
     _updateFromServerFilt = clientItemKeyIndexUpdateFromServerFilt
     _logger = logger
 
@@ -44,15 +51,21 @@ class ItemKeyIndexCacheController(ACICacheControllerABC):
         chunk: ItemKeyIndexEncodedChunk = self.encodedChunk(chunkKey)
 
         if not chunk:
-            logger.warning("ItemKeyIndex chunk %s is missing from cache", chunkKey)
+            logger.warning(
+                "ItemKeyIndex chunk %s is missing from cache", chunkKey
+            )
             return []
 
-        resultsByKeyStr = Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        resultsByKeyStr = (
+            Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        )
         resultsByKey = json.loads(resultsByKeyStr)
 
         if vertexKey not in resultsByKey:
             logger.warning(
-                "ItemKey %s is missing from index, chunkKey %s", vertexKey, chunkKey
+                "ItemKey %s is missing from index, chunkKey %s",
+                vertexKey,
+                chunkKey,
             )
             return []
 
@@ -72,7 +85,9 @@ class ItemKeyIndexCacheController(ACICacheControllerABC):
         if not chunk:
             return False
 
-        resultsByKeyStr = Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        resultsByKeyStr = (
+            Payload().fromEncodedPayload(chunk.encodedData).tuples[0]
+        )
         resultsByKey = json.loads(resultsByKeyStr)
 
         return vertexOrEdgeKey in resultsByKey

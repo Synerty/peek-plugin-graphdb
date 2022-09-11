@@ -1,6 +1,8 @@
 import logging
 
-from peek_plugin_graphdb._private.client.controller.FastGraphDb import FastGraphDb
+from peek_plugin_graphdb._private.client.controller.FastGraphDb import (
+    FastGraphDb,
+)
 from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
     ItemKeyIndexCacheController,
 )
@@ -18,7 +20,9 @@ from vortex.handler.TupleDataObservableProxyHandler import (
 from vortex.handler.TupleDataObserverClient import TupleDataObserverClient
 
 from peek_plugin_base.PeekVortexUtil import peekServerName
-from peek_plugin_base.client.PluginClientEntryHookABC import PluginClientEntryHookABC
+from peek_plugin_base.client.PluginClientEntryHookABC import (
+    PluginClientEntryHookABC,
+)
 from peek_plugin_graphdb._private.PluginNames import (
     graphDbFilt,
     graphDbActionProcessorName,
@@ -36,7 +40,9 @@ from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController i
 from peek_plugin_graphdb._private.client.handlers.SegmentCacheHandler import (
     SegmentCacheHandler,
 )
-from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
+from peek_plugin_graphdb._private.storage.DeclarativeBase import (
+    loadStorageTuples,
+)
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb.tuples import loadPublicTuples
 
@@ -45,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 class ClientEntryHook(PluginClientEntryHookABC):
     def __init__(self, *args, **kwargs):
-        """" Constructor """
+        """ " Constructor"""
         # Call the base classes constructor
         PluginClientEntryHookABC.__init__(self, *args, **kwargs)
 
@@ -118,14 +124,17 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # ----------------
         # Segment Cache Controller
 
-        segmentCacheController = SegmentCacheController(self.platform.serviceId)
+        segmentCacheController = SegmentCacheController(
+            self.platform.serviceId, self.platform.fileStorageDirectory
+        )
         self._loadedObjects.append(segmentCacheController)
 
         # ----------------
         # Segment Cache Handler
 
         segmentHandler = SegmentCacheHandler(
-            cacheController=segmentCacheController, clientId=self.platform.serviceId
+            cacheController=segmentCacheController,
+            clientId=self.platform.serviceId,
         )
         self._loadedObjects.append(segmentHandler)
 
@@ -139,7 +148,7 @@ class ClientEntryHook(PluginClientEntryHookABC):
         # ItemKeyIndex Cache Controller
 
         itemKeyIndexCacheController = ItemKeyIndexCacheController(
-            self.platform.serviceId
+            self.platform.serviceId, self.platform.fileStorageDirectory
         )
         self._loadedObjects.append(itemKeyIndexCacheController)
 

@@ -39,6 +39,7 @@
         "moduleDir": "plugin-module"
     },
     "field": {
+        "standalone": true,
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
@@ -78,6 +79,7 @@
         ]
     },
     "office": {
+        "standalone": true,
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
