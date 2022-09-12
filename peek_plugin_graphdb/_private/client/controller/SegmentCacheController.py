@@ -15,6 +15,7 @@ from peek_plugin_graphdb._private.tuples.GraphDbEncodedChunkTuple import (
 from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import (
     SegmentIndexUpdateDateTuple,
 )
+from twisted.internet.defer import inlineCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,9 @@ class SegmentCacheController(ACICacheControllerABC):
         ACICacheControllerABC.shutdown(self)
         self._fastGraphDb = None
 
+    @inlineCallbacks
     def _notifyOfChunkKeysUpdated(self, chunkKeys: List[Any]):
-        ACICacheControllerABC._notifyOfChunkKeysUpdated(self, chunkKeys)
+        yield ACICacheControllerABC._notifyOfChunkKeysUpdated(self, chunkKeys)
 
         chunkKeysUpdatedByModelSet: Dict[str, List[str]] = defaultdict(list)
         for chunkKey in chunkKeys:
@@ -54,4 +56,4 @@ class SegmentCacheController(ACICacheControllerABC):
 
         for modelSetKey, updatedChunkKeys in chunkKeysUpdatedByModelSet.items():
             fastGraphDbModel = self._fastGraphDb.graphForModelSet(modelSetKey)
-            fastGraphDbModel.notifyOfUpdate(chunkKeys)
+            yield fastGraphDbModel.notifyOfUpdate(chunkKeys)
