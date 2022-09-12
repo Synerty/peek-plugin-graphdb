@@ -12,6 +12,9 @@ from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.storage.ItemKeyIndexEncodedChunk import (
     ItemKeyIndexEncodedChunk,
 )
+from peek_plugin_graphdb._private.tuples.ItemKeyIndexUpdateDateTuple import (
+    ItemKeyIndexUpdateDateTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,9 @@ class ItemKeyIndexChunkLoadRpc(ACIChunkLoadRpcABC):
     )
     def loadItemKeyIndexDelta(self, indexEncodedPayload: bytes) -> bytes:
         return self.ckiChunkIndexDeltaBlocking(
-            indexEncodedPayload, ItemKeyIndexEncodedChunk
+            indexEncodedPayload,
+            ItemKeyIndexEncodedChunk,
+            ItemKeyIndexUpdateDateTuple,
         )
 
     # -------------

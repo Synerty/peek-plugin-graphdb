@@ -15,6 +15,9 @@ from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
     GraphDbEncodedChunk,
 )
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
+from peek_plugin_graphdb._private.tuples.SegmentIndexUpdateDateTuple import (
+    SegmentIndexUpdateDateTuple,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +49,9 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
     )
     def loadSegmentIndexDelta(self, indexEncodedPayload: bytes) -> bytes:
         return self.ckiChunkIndexDeltaBlocking(
-            indexEncodedPayload, GraphDbEncodedChunk
+            indexEncodedPayload,
+            GraphDbEncodedChunk,
+            SegmentIndexUpdateDateTuple,
         )
 
     # -------------
