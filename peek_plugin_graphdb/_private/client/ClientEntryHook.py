@@ -1,21 +1,8 @@
 import logging
 from typing import Any
 
-from txhttputil.site.FileUnderlayResource import FileUnderlayResource
-
-from peek_plugin_graphdb._private.client.controller.FastGraphDb import (
-    FastGraphDb,
-)
-from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
-    ItemKeyIndexCacheController,
-)
-from peek_plugin_graphdb._private.client.controller.TracerController import (
-    TracerController,
-)
-from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import (
-    ItemKeyIndexCacheHandler,
-)
 from twisted.internet.defer import inlineCallbacks
+from txhttputil.site.FileUnderlayResource import FileUnderlayResource
 from vortex.handler.TupleActionProcessorProxy import TupleActionProcessorProxy
 from vortex.handler.TupleDataObservableProxyHandler import (
     TupleDataObservableProxyHandler,
@@ -26,19 +13,29 @@ from peek_plugin_base.PeekVortexUtil import peekServerName
 from peek_plugin_base.client.PluginClientEntryHookABC import (
     PluginClientEntryHookABC,
 )
-from peek_plugin_graphdb._private.PluginNames import (
-    graphDbFilt,
-    graphDbActionProcessorName,
-)
+from peek_plugin_graphdb._private.PluginNames import graphDbActionProcessorName
+from peek_plugin_graphdb._private.PluginNames import graphDbFilt
 from peek_plugin_graphdb._private.PluginNames import graphDbObservableName
 from peek_plugin_graphdb._private.client.ClientTupleObservable import (
     makeClientTupleDataObservableHandler,
+)
+from peek_plugin_graphdb._private.client.controller.FastGraphDb import (
+    FastGraphDb,
+)
+from peek_plugin_graphdb._private.client.controller.ItemKeyIndexCacheController import (
+    ItemKeyIndexCacheController,
 )
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import (
     SegmentCacheController,
 )
 from peek_plugin_graphdb._private.client.controller.TraceConfigCacheController import (
     TraceConfigCacheController,
+)
+from peek_plugin_graphdb._private.client.controller.TracerController import (
+    TracerController,
+)
+from peek_plugin_graphdb._private.client.handlers.ItemKeyIndexCacheHandler import (
+    ItemKeyIndexCacheHandler,
 )
 from peek_plugin_graphdb._private.client.handlers.SegmentCacheHandler import (
     SegmentCacheHandler,
@@ -214,8 +211,12 @@ class ClientEntryHook(PluginClientEntryHookABC):
 
         # ----------------
         # Start the cache controllers
+        yield segmentHandler.start()
         yield segmentCacheController.start()
+
         yield traceConfigCacheController.start()
+
+        yield itemKeyIndexHandler.start()
         yield itemKeyIndexCacheController.start()
 
         logger.debug("Started")
