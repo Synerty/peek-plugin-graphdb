@@ -19,5 +19,5 @@ logger = logging.getLogger(__name__)
 
 class ItemKeyIndexChunkUpdateHandler(ACIChunkUpdateHandlerABC):
     _ChunkedTuple: ACIEncodedChunkTupleABC = ItemKeyIndexEncodedChunk
-    _updateFromServerFilt: Dict = clientItemKeyIndexUpdateFromServerFilt
+    _updateFromLogicFilt: Dict = clientItemKeyIndexUpdateFromServerFilt
     _logger: logging.Logger = logger

@@ -12,7 +12,9 @@ from peek_abstract_chunked_index.private.tuples.ACIEncodedChunkTupleABC import (
 from peek_plugin_graphdb._private.client.controller.SegmentCacheController import (
     clientSegmentUpdateFromServerFilt,
 )
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
+    GraphDbEncodedChunk,
+)
 from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 
 logger = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class SegmentChunkIndexUpdateHandler(ACIChunkUpdateHandlerABC):
     _ChunkedTuple: ACIEncodedChunkTupleABC = GraphDbEncodedChunk
-    _updateFromServerFilt: Dict = clientSegmentUpdateFromServerFilt
+    _updateFromLogicFilt: Dict = clientSegmentUpdateFromServerFilt
     _logger: logging.Logger = logger
 
     @classmethod
