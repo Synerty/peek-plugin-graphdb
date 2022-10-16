@@ -180,6 +180,10 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         return this._status;
     }
 
+    get offlineEnabled(): boolean {
+        return this.index.initialLoadComplete;
+    }
+
     /** Get Segment Keys
      *
      * Get the objects with matching keywords from the index..

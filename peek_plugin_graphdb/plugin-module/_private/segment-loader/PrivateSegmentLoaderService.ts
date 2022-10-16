@@ -183,6 +183,10 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
         return this._status;
     }
 
+    get offlineEnabled(): boolean {
+        return this.index.initialLoadComplete;
+    }
+
     getSegment(
         modelSetKey: string,
         segmentKey: string

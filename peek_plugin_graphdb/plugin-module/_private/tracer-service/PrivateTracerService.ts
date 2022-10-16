@@ -63,11 +63,14 @@ export class PrivateTracerService extends NgLifeCycleEvents {
             return this.doesKeyExistServer(modelSetKey, vertexOrEdgeKey);
         }
 
-        if (!this.deviceCacheControllerService.offlineModeEnabled) {
+        const offlineEnabled =
+            this.itemKeyLoader.offlineEnabled &&
+            this.segmentLoader.offlineEnabled;
+
+        if (!offlineEnabled) {
             throw new Error(
                 "Peek is not online," +
-                    " and offline caching is not enabled" +
-                    " or has not completed loading." +
+                    " and the offline cache has not completed loading." +
                     " The trace can't be run."
             );
         }
