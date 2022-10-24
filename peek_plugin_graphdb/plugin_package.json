@@ -39,7 +39,7 @@
         "moduleDir": "plugin-module"
     },
     "field": {
-        "standalone": true,
+        "subprocessGroup": "graphdb",
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
@@ -79,7 +79,7 @@
         ]
     },
     "office": {
-        "standalone": true,
+        "subprocessGroup": "graphdb",
         "cfgDir": "_private/both-cfg",
         "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
