@@ -213,7 +213,9 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
 
             # Create the blob data for this index.
             # It could/will be found by a binary sort
-            encPayloadByChunkKey[chunkKey] = Payload(tuples=tuples).toEncodedPayload()
+            encPayloadByChunkKey[chunkKey] = (
+                Payload(tuples=tuples).toEncodedPayload().encode()
+            )
 
         return encPayloadByChunkKey
 
