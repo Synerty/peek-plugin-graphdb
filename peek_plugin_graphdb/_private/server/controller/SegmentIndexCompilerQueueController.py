@@ -19,7 +19,9 @@ from peek_plugin_graphdb._private.server.controller.StatusController import (
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import (
     GraphDbCompilerQueue,
 )
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
+    GraphDbEncodedChunk,
+)
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,9 @@ class _Notifier(ACIProcessorStatusNotifierABC):
         self._adminStatusController.notify()
 
     def addToProcessorTotal(self, delta: int):
-        self._adminStatusController.status.segmentCompilerQueueProcessedTotal += delta
+        self._adminStatusController.status.segmentCompilerQueueProcessedTotal += (
+            delta
+        )
         self._adminStatusController.notify()
 
     def setProcessorError(self, error: str):
@@ -54,7 +58,11 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
 
     _logger = logger
     _QueueDeclarative: ACIProcessorQueueTupleABC = GraphDbCompilerQueue
-    _VacuumDeclaratives = (GraphDbCompilerQueue, GraphDbEncodedChunk, GraphDbSegment)
+    _VacuumDeclaratives = (
+        GraphDbCompilerQueue,
+        GraphDbEncodedChunk,
+        GraphDbSegment,
+    )
 
     def __init__(
         self,

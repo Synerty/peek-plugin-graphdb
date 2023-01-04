@@ -32,8 +32,12 @@ class _Notifier(ACIProcessorStatusNotifierABC):
         self._adminStatusController = adminStatusController
 
     def setProcessorStatus(self, state: bool, queueSize: int):
-        self._adminStatusController.status.itemKeyIndexCompilerQueueStatus = state
-        self._adminStatusController.status.itemKeyIndexCompilerQueueSize = queueSize
+        self._adminStatusController.status.itemKeyIndexCompilerQueueStatus = (
+            state
+        )
+        self._adminStatusController.status.itemKeyIndexCompilerQueueSize = (
+            queueSize
+        )
         self._adminStatusController.notify()
 
     def addToProcessorTotal(self, delta: int):
@@ -43,7 +47,9 @@ class _Notifier(ACIProcessorStatusNotifierABC):
         self._adminStatusController.notify()
 
     def setProcessorError(self, error: str):
-        self._adminStatusController.status.itemKeyIndexCompilerQueueLastError = error
+        self._adminStatusController.status.itemKeyIndexCompilerQueueLastError = (
+            error
+        )
         self._adminStatusController.notify()
 
 
@@ -74,7 +80,9 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
             self, dbSessionCreator, _Notifier(statusController)
         )
 
-        self._clientUpdateHandler: ItemKeyIndexChunkUpdateHandler = clientUpdateHandler
+        self._clientUpdateHandler: ItemKeyIndexChunkUpdateHandler = (
+            clientUpdateHandler
+        )
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
         from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompilerTask import (
