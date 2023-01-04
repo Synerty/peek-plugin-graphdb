@@ -35,7 +35,7 @@ class SegmentCacheController(ACICacheControllerABC):
     _UpdateDateTupleABC = SegmentIndexUpdateDateTuple
     _chunkLoadRpcMethod = SegmentIndexChunkLoadRpc.loadSegmentChunks
     _chunkIndexDeltaRpcMethod = SegmentIndexChunkLoadRpc.loadSegmentIndexDelta
-    _updateFromServerFilt = clientSegmentUpdateFromServerFilt
+    _updateFromLogicFilt = clientSegmentUpdateFromServerFilt
     _logger = logger
 
     def setFastGraphDb(self, fastGraphDb):

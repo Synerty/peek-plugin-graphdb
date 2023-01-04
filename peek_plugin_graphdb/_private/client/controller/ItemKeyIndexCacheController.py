@@ -41,7 +41,7 @@ class ItemKeyIndexCacheController(ACICacheControllerABC):
     _UpdateDateTupleABC = ItemKeyIndexUpdateDateTuple
     _chunkLoadRpcMethod = ItemKeyIndexChunkLoadRpc.loadItemKeyIndexChunks
     _chunkIndexDeltaRpcMethod = ItemKeyIndexChunkLoadRpc.loadItemKeyIndexDelta
-    _updateFromServerFilt = clientItemKeyIndexUpdateFromServerFilt
+    _updateFromLogicFilt = clientItemKeyIndexUpdateFromServerFilt
     _logger = logger
 
     def getSegmentKeys(self, modelSetKey: str, vertexKey: str) -> List[str]:
