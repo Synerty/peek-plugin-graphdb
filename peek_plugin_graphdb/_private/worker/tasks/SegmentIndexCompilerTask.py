@@ -16,7 +16,9 @@ from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_graphdb._private.storage.GraphDbCompilerQueue import (
     GraphDbCompilerQueue,
 )
-from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import GraphDbEncodedChunk
+from peek_plugin_graphdb._private.storage.GraphDbEncodedChunk import (
+    GraphDbEncodedChunk,
+)
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ Compile the graphDb indexes
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def compileSegmentChunk(self, payloadEncodedArgs: bytes) -> List[int]:
+def compileSegmentChunk(self, payloadEncodedArgs: bytes) -> dict[str, str]:
     """Compile GraphDb Index Task
 
     :param self: The reference to this celery task
@@ -53,8 +55,13 @@ def compileSegmentChunk(self, payloadEncodedArgs: bytes) -> List[int]:
         for queueItem in queueItems:
             queueItemsByModelSetId[queueItem.modelSetId].append(queueItem)
 
+        lastUpdateByChunkKey = {}
         for modelSetId, modelSetQueueItems in queueItemsByModelSetId.items():
-            _compileSegmentChunk(conn, transaction, modelSetId, modelSetQueueItems)
+            lastUpdateByChunkKey.update(
+                _compileSegmentChunk(
+                    conn, transaction, modelSetId, modelSetQueueItems
+                )
+            )
 
         queueTable = GraphDbCompilerQueue.__table__
 
@@ -70,12 +77,12 @@ def compileSegmentChunk(self, payloadEncodedArgs: bytes) -> List[int]:
     finally:
         conn.close()
 
-    return list(set([i.chunkKey for i in queueItems]))
+    return lastUpdateByChunkKey
 
 
 def _compileSegmentChunk(
     conn, transaction, modelSetId: int, queueItems: List[GraphDbCompilerQueue]
-) -> None:
+) -> dict[str, str]:
     chunkKeys = list(set([i.chunkKey for i in queueItems]))
 
     compiledTable = GraphDbEncodedChunk.__table__
@@ -96,8 +103,13 @@ def _compileSegmentChunk(
     encKwPayloadByChunkKey = _buildIndex(chunkKeys)
     chunksToDelete = []
 
+    lastUpdateByChunkKey = {}
+
     inserts = []
-    for chunkKey, graphDbIndexChunkEncodedPayload in encKwPayloadByChunkKey.items():
+    for (
+        chunkKey,
+        graphDbIndexChunkEncodedPayload,
+    ) in encKwPayloadByChunkKey.items():
         m = hashlib.sha256()
         m.update(graphDbIndexChunkEncodedPayload)
         encodedHash = b64encode(m.digest()).decode()
@@ -108,6 +120,8 @@ def _compileSegmentChunk(
             # but inserts are quicker
             if encodedHash == existingHashes.pop(chunkKey):
                 continue
+
+        lastUpdateByChunkKey[str(chunkKey)] = lastUpdate
 
         chunksToDelete.append(chunkKey)
         inserts.append(
@@ -125,10 +139,14 @@ def _compileSegmentChunk(
 
     if chunksToDelete:
         # Delete the old chunks
-        conn.execute(compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete)))
+        conn.execute(
+            compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete))
+        )
 
     if inserts:
-        newIdGen = CeleryDbConn.prefetchDeclarativeIds(GraphDbSegment, len(inserts))
+        newIdGen = CeleryDbConn.prefetchDeclarativeIds(
+            GraphDbSegment, len(inserts)
+        )
         for insert in inserts:
             insert["id"] = next(newIdGen)
 
@@ -154,6 +172,8 @@ def _compileSegmentChunk(
         (datetime.now(pytz.utc) - startTime),
     )
 
+    return lastUpdateByChunkKey
+
 
 def _loadExistingHashes(conn, chunkKeys: List[str]) -> Dict[str, str]:
     compiledTable = GraphDbEncodedChunk.__table__
@@ -174,7 +194,9 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
     try:
         indexQry = (
             session.query(
-                GraphDbSegment.chunkKey, GraphDbSegment.key, GraphDbSegment.segmentJson
+                GraphDbSegment.chunkKey,
+                GraphDbSegment.key,
+                GraphDbSegment.segmentJson,
             )
             .filter(GraphDbSegment.chunkKey.in_(chunkKeys))
             .order_by(GraphDbSegment.key)
@@ -186,7 +208,9 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
         packagedJsonByObjIdByChunkKey = defaultdict(dict)
 
         for item in indexQry:
-            packagedJsonByObjIdByChunkKey[item.chunkKey][item.key] = item.segmentJson
+            packagedJsonByObjIdByChunkKey[item.chunkKey][
+                item.key
+            ] = item.segmentJson
 
         encPayloadByChunkKey = {}
 

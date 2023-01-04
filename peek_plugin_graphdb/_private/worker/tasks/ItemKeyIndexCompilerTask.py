@@ -35,7 +35,7 @@ Compile the graphdbindexes
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> List[int]:
+def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> dict[str, str]:
     """Compile ItemKeyIndex Index Task
 
     :param self: A celery reference to this task
@@ -55,8 +55,13 @@ def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> List[int]:
         for queueItem in queueItems:
             queueItemsByModelSetId[queueItem.modelSetId].append(queueItem)
 
+        lastUpdateByChunkKey = {}
         for modelSetId, modelSetQueueItems in queueItemsByModelSetId.items():
-            _compileItemKeyIndexChunk(conn, transaction, modelSetId, modelSetQueueItems)
+            lastUpdateByChunkKey.update(
+                _compileItemKeyIndexChunk(
+                    conn, transaction, modelSetId, modelSetQueueItems
+                )
+            )
 
         queueTable = ItemKeyIndexCompilerQueue.__table__
 
@@ -72,12 +77,15 @@ def compileItemKeyIndexChunk(self, payloadEncodedArgs: bytes) -> List[int]:
     finally:
         conn.close()
 
-    return list(set([i.chunkKey for i in queueItems]))
+    return lastUpdateByChunkKey
 
 
 def _compileItemKeyIndexChunk(
-    conn, transaction, modelSetId: int, queueItems: List[ItemKeyIndexCompilerQueue]
-) -> None:
+    conn,
+    transaction,
+    modelSetId: int,
+    queueItems: List[ItemKeyIndexCompilerQueue],
+) -> dict[str, str]:
     chunkKeys = list(set([i.chunkKey for i in queueItems]))
 
     compiledTable = ItemKeyIndexEncodedChunk.__table__
@@ -98,8 +106,13 @@ def _compileItemKeyIndexChunk(
     encKwPayloadByChunkKey = _buildIndex(chunkKeys)
     chunksToDelete = []
 
+    lastUpdateByChunkKey = {}
+
     inserts = []
-    for chunkKey, graphDbIndexChunkEncodedPayload in encKwPayloadByChunkKey.items():
+    for (
+        chunkKey,
+        graphDbIndexChunkEncodedPayload,
+    ) in encKwPayloadByChunkKey.items():
         m = hashlib.sha256()
         m.update(graphDbIndexChunkEncodedPayload)
         encodedHash = b64encode(m.digest()).decode()
@@ -110,6 +123,8 @@ def _compileItemKeyIndexChunk(
             # but inserts are quicker
             if encodedHash == existingHashes.pop(chunkKey):
                 continue
+
+        lastUpdateByChunkKey[str(chunkKey)] = lastUpdate
 
         chunksToDelete.append(chunkKey)
         inserts.append(
@@ -127,10 +142,14 @@ def _compileItemKeyIndexChunk(
 
     if chunksToDelete:
         # Delete the old chunks
-        conn.execute(compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete)))
+        conn.execute(
+            compiledTable.delete(compiledTable.c.chunkKey.in_(chunksToDelete))
+        )
 
     if inserts:
-        newIdGen = CeleryDbConn.prefetchDeclarativeIds(ItemKeyIndex, len(inserts))
+        newIdGen = CeleryDbConn.prefetchDeclarativeIds(
+            ItemKeyIndex, len(inserts)
+        )
         for insert in inserts:
             insert["id"] = next(newIdGen)
 
@@ -155,6 +174,8 @@ def _compileItemKeyIndexChunk(
         total,
         (datetime.now(pytz.utc) - startTime),
     )
+
+    return lastUpdateByChunkKey
 
 
 def _loadExistingHashes(conn, chunkKeys: List[str]) -> Dict[str, str]:
@@ -193,15 +214,18 @@ def _buildIndex(chunkKeys) -> Dict[str, bytes]:
 
         for item in indexQry:
             (
-                packagedJsonByObjIdByChunkKey[item.chunkKey][item.itemKey].append(
-                    item.segmentKey
-                )
+                packagedJsonByObjIdByChunkKey[item.chunkKey][
+                    item.itemKey
+                ].append(item.segmentKey)
             )
 
         encPayloadByChunkKey = {}
 
         # Sort each bucket by the key
-        for chunkKey, segmentKeysByItemKey in packagedJsonByObjIdByChunkKey.items():
+        for (
+            chunkKey,
+            segmentKeysByItemKey,
+        ) in packagedJsonByObjIdByChunkKey.items():
             # Convert the list to a json string, this reduces the memory footprint when
             # searching the index.
             packedJsonByKey = {
