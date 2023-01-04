@@ -6,8 +6,8 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 from peek_plugin_graphdb._private.server.client_handlers.TraceConfigUpdateHandler import (
     TraceConfigUpdateHandler,
 )
-from peek_plugin_graphdb._private.worker.tasks import SegmentIndexImporter
-from peek_plugin_graphdb._private.worker.tasks import TraceConfigImporter
+from peek_plugin_graphdb._private.worker.tasks import SegmentIndexImporterTask
+from peek_plugin_graphdb._private.worker.tasks import TraceConfigImporterTask
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +21,22 @@ class ImportController:
 
     @inlineCallbacks
     def createOrUpdateSegments(self, graphSegmentEncodedPayload: bytes):
-        yield SegmentIndexImporter.createOrUpdateSegments.delay(
+        yield SegmentIndexImporterTask.createOrUpdateSegments.delay(
             graphSegmentEncodedPayload
         )
 
     @inlineCallbacks
     def deleteSegment(self, modelSetKey: str, importGroupHashes: List[str]):
-        yield SegmentIndexImporter.deleteSegment.delay(modelSetKey, importGroupHashes)
+        yield SegmentIndexImporterTask.deleteSegment.delay(
+            modelSetKey, importGroupHashes
+        )
 
     @inlineCallbacks
     def createOrUpdateTraceConfig(self, traceEncodedPayload: bytes) -> Deferred:
-        insertedOrCreated = yield TraceConfigImporter.createOrUpdateTraceConfigs.delay(
-            traceEncodedPayload
+        insertedOrCreated = (
+            yield TraceConfigImporterTask.createOrUpdateTraceConfigs.delay(
+                traceEncodedPayload
+            )
         )
 
         for modelSetKey, traceConfigKeys in insertedOrCreated.items():
@@ -44,6 +48,8 @@ class ImportController:
     def deleteTraceConfig(
         self, modelSetKey: str, traceConfigKeys: List[str]
     ) -> Deferred:
-        yield TraceConfigImporter.deleteTraceConfig.delay(modelSetKey, traceConfigKeys)
+        yield TraceConfigImporterTask.deleteTraceConfig.delay(
+            modelSetKey, traceConfigKeys
+        )
 
         self._traceConfigUpdateHandler.sendDeleted(modelSetKey, traceConfigKeys)

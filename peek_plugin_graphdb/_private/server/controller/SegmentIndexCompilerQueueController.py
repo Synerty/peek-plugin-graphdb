@@ -71,7 +71,7 @@ class SegmentIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         )
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
-        from peek_plugin_graphdb._private.worker.tasks.SegmentIndexCompiler import (
+        from peek_plugin_graphdb._private.worker.tasks.SegmentIndexCompilerTask import (
             compileSegmentChunk,
         )
 

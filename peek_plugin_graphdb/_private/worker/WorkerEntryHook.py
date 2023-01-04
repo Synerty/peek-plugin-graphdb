@@ -4,11 +4,11 @@ from peek_plugin_base.worker.PluginWorkerEntryHookABC import PluginWorkerEntryHo
 from peek_plugin_graphdb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_graphdb._private.tuples import loadPrivateTuples
 from peek_plugin_graphdb._private.worker.tasks import (
-    SegmentIndexCompiler,
-    SegmentIndexImporter,
-    TraceConfigImporter,
-    ItemKeyIndexCompiler,
-    ItemKeyIndexImporter,
+    SegmentIndexCompilerTask,
+    SegmentIndexImporterTask,
+    TraceConfigImporterTask,
+    ItemKeyIndexCompilerTask,
+    ItemKeyIndexImporterTask,
 )
 from peek_plugin_graphdb.tuples import loadPublicTuples
 
@@ -34,9 +34,9 @@ class WorkerEntryHook(PluginWorkerEntryHookABC):
     @property
     def celeryAppIncludes(self):
         return [
-            TraceConfigImporter.__name__,
-            SegmentIndexImporter.__name__,
-            SegmentIndexCompiler.__name__,
-            ItemKeyIndexImporter.__name__,
-            ItemKeyIndexCompiler.__name__,
+            TraceConfigImporterTask.__name__,
+            SegmentIndexImporterTask.__name__,
+            SegmentIndexCompilerTask.__name__,
+            ItemKeyIndexImporterTask.__name__,
+            ItemKeyIndexCompilerTask.__name__,
         ]

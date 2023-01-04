@@ -77,7 +77,7 @@ class ItemKeyIndexCompilerQueueController(ACIProcessorQueueControllerABC):
         self._clientUpdateHandler: ItemKeyIndexChunkUpdateHandler = clientUpdateHandler
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
-        from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompiler import (
+        from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexCompilerTask import (
             compileItemKeyIndexChunk,
         )
 

@@ -16,7 +16,7 @@ from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 from peek_plugin_graphdb._private.storage.GraphDbSegment import GraphDbSegment
 from peek_plugin_graphdb._private.tuples.ItemKeyTuple import ItemKeyTuple
 from peek_plugin_base.worker.CeleryApp import celeryApp
-from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporter import (
+from peek_plugin_graphdb._private.worker.tasks.ItemKeyIndexImporterTask import (
     ItemKeyImportTuple,
     loadItemKeys,
     deleteItemKeys,
@@ -137,7 +137,9 @@ def _loadModelSets() -> Dict[str, int]:
     try:
         modelSetTable = GraphDbModelSet.__table__
         results = list(
-            conn.execute(select(columns=[modelSetTable.c.id, modelSetTable.c.key]))
+            conn.execute(
+                select(columns=[modelSetTable.c.id, modelSetTable.c.key])
+            )
         )
         modelSetIdByKey = {o.key: o.id for o in results}
         del results
@@ -161,7 +163,9 @@ def _makeModelSet(modelSetKey: str) -> int:
 
 
 def _insertOrUpdateObjects(
-    newSegments: List[GraphDbImportSegmentTuple], modelSetId: int, modelSetKey: str
+    newSegments: List[GraphDbImportSegmentTuple],
+    modelSetId: int,
+    modelSetKey: str,
 ) -> None:
     """Insert or Update Objects
 
@@ -179,7 +183,9 @@ def _insertOrUpdateObjects(
     chunkKeysForQueue: Set[Tuple[int, str]] = set()
 
     # Get the IDs that we need
-    newIdGen = CeleryDbConn.prefetchDeclarativeIds(GraphDbSegment, len(newSegments))
+    newIdGen = CeleryDbConn.prefetchDeclarativeIds(
+        GraphDbSegment, len(newSegments)
+    )
 
     # Create state arrays
     inserts = []
@@ -232,7 +238,9 @@ def _insertOrUpdateObjects(
 
     # Delete old stuff
     if importHashSet:
-        deleteSegment(modelSetKey=modelSetKey, importGroupHashes=list(importHashSet))
+        deleteSegment(
+            modelSetKey=modelSetKey, importGroupHashes=list(importHashSet)
+        )
 
     engine = CeleryDbConn.getDbEngine()
     conn = engine.connect()
