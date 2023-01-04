@@ -24,7 +24,6 @@ class TraceConfigTupleProvider(TuplesProviderABC):
         # the UI doesn't supply the model set at present.
         modelSetKey = tupleSelector.selector.get("modelSetKey")
 
-        data = self._cacheHandler.traceConfigTuples(modelSetKey=modelSetKey)
-
-        # Create the vortex message
-        return Payload(filt, tuples=data).makePayloadEnvelope().toVortexMsg()
+        return self._cacheHandler.cachedVortexMsgBlocking(
+            modelSetKey=modelSetKey, filt=filt
+        )
