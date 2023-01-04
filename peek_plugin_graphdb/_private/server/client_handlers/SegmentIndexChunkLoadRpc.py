@@ -43,7 +43,7 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
     @vortexRPC(
         peekServerName,
         acceptOnlyFromVortex=peekBackendNames,
-        timeoutSeconds=60,
+        timeoutSeconds=120,
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
@@ -58,7 +58,7 @@ class SegmentIndexChunkLoadRpc(ACIChunkLoadRpcABC):
     @vortexRPC(
         peekServerName,
         acceptOnlyFromVortex=peekBackendNames,
-        timeoutSeconds=60,
+        timeoutSeconds=120,
         additionalFilt=graphDbFilt,
         deferToThread=True,
     )
