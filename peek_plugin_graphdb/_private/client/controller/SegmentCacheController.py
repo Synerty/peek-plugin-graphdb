@@ -46,9 +46,7 @@ class SegmentCacheController(ACICacheControllerABC):
         self._fastGraphDb = None
 
     @inlineCallbacks
-    def _notifyOfChunkKeysUpdated(self, chunkKeys: List[Any]):
-        yield ACICacheControllerABC._notifyOfChunkKeysUpdated(self, chunkKeys)
-
+    def notifyFastGraphDbModelChunkKeysUpdated(self, chunkKeys: List[Any]):
         chunkKeysUpdatedByModelSet: Dict[str, List[str]] = defaultdict(list)
         for chunkKey in chunkKeys:
             modelSetKey = chunkKey.split(".")[0]
