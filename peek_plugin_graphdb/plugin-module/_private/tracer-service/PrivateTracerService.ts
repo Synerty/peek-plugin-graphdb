@@ -36,13 +36,6 @@ export class PrivateTracerService extends NgLifeCycleEvents {
         private deviceCacheControllerService: DeviceOfflineCacheService
     ) {
         super();
-
-        this.deviceCacheControllerService.triggerCachingObservable
-            .pipe(takeUntil(this.onDestroyEvent))
-            .pipe(filter((v) => v))
-            .subscribe(() => {
-                // ???
-            });
     }
 
     doesKeyExist(

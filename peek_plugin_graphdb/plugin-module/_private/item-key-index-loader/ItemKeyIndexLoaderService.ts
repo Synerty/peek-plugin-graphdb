@@ -23,13 +23,12 @@ import {
 import { ItemKeyIndexEncodedChunkTuple } from "./ItemKeyIndexEncodedChunkTuple";
 import { ItemKeyIndexUpdateDateTuple } from "./ItemKeyIndexUpdateDateTuple";
 import { ItemKeyTuple } from "./ItemKeyTuple";
-import { ItemKeyIndexLoaderStatusTuple } from "./ItemKeyIndexLoaderStatusTuple";
 import { GraphDbModelSetTuple } from "../../GraphDbModelSetTuple";
 import { GraphDbTupleService } from "../GraphDbTupleService";
 import { GraphDbPackedItemKeyTuple } from "./GraphDbPackedItemKeyTuple";
 import {
     DeviceOfflineCacheService,
-    OfflineCacheStatusTuple,
+    OfflineCacheLoaderStatusTuple,
 } from "@peek/peek_core_device";
 
 // ----------------------------------------------------------------------------
@@ -122,7 +121,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
     // Saving the cache after each chunk is so expensive, we only do it every 20 or so
     private chunksSavedSinceLastIndexSave = 0;
 
-    private index = new ItemKeyIndexUpdateDateTuple();
+    private index: ItemKeyIndexUpdateDateTuple | null = null;
     private askServerChunks: ItemKeyIndexUpdateDateTuple[] = [];
 
     private _hasLoaded = false;
@@ -130,8 +129,8 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
     private _hasLoadedSubject = new Subject<void>();
     private storage: TupleOfflineStorageService;
 
-    private _statusSubject = new Subject<ItemKeyIndexLoaderStatusTuple>();
-    private _status = new ItemKeyIndexLoaderStatusTuple();
+    private _statusSubject = new Subject<OfflineCacheLoaderStatusTuple>();
+    private _status = new OfflineCacheLoaderStatusTuple();
 
     private modelSetByIds: { [id: number]: GraphDbModelSetTuple } = {};
     private _hasModelSetLoaded = false;
@@ -144,6 +143,8 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         private deviceCacheControllerService: DeviceOfflineCacheService
     ) {
         super();
+        this._status.pluginName = "peek_plugin_graphdb";
+        this._status.indexName = "Key Index";
 
         this.storage = new TupleOfflineStorageService(
             storageFactory,
@@ -153,14 +154,29 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         );
 
         this.setupVortexSubscriptions();
-        this._notifyStatus();
 
-        this.deviceCacheControllerService.triggerCachingObservable
+        this.deviceCacheControllerService.offlineModeEnabled$
+            .pipe(takeUntil(this.onDestroyEvent))
+            .pipe(filter((v) => v))
+            .pipe(first())
+            .subscribe(() => {
+                this.initialLoad();
+            });
+
+        this.deviceCacheControllerService.triggerCachingStartObservable
             .pipe(takeUntil(this.onDestroyEvent))
             .pipe(filter((v) => v))
             .subscribe(() => {
-                this.initialLoad();
+                this.askServerForUpdates();
                 this._notifyStatus();
+            });
+
+        this.deviceCacheControllerService.triggerCachingResumeObservable
+            .pipe(takeUntil(this.onDestroyEvent))
+
+            .subscribe(() => {
+                this._notifyStatus();
+                this.askServerForNextUpdateChunk();
             });
     }
 
@@ -172,11 +188,11 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
         return this._hasLoadedSubject;
     }
 
-    statusObservable(): Observable<ItemKeyIndexLoaderStatusTuple> {
+    statusObservable(): Observable<OfflineCacheLoaderStatusTuple> {
         return this._statusSubject;
     }
 
-    status(): ItemKeyIndexLoaderStatusTuple {
+    status(): OfflineCacheLoaderStatusTuple {
         return this._status;
     }
 
@@ -214,29 +230,22 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
             this._hasLoadedSubject.next();
     }
 
-    private _notifyStatus(): void {
-        this._status.cacheForOfflineEnabled =
-            this.deviceCacheControllerService.cachingEnabled;
-        this._status.initialLoadComplete = this.index.initialLoadComplete;
+    private _notifyStatus(paused: boolean = false): void {
+        this._status.lastCheckDate = new Date();
+        this._status.paused = paused;
+        this._status.initialFullLoadComplete = this.index.initialLoadComplete;
 
-        this._status.loadProgress = Object.keys(
-            this.index.updateDateByChunkKey
-        ).length;
-        for (let chunk of this.askServerChunks)
-            this._status.loadProgress -= Object.keys(
+        this._status.loadingQueueCount = 0;
+        for (let chunk of this.askServerChunks) {
+            this._status.loadingQueueCount += Object.keys(
                 chunk.updateDateByChunkKey
             ).length;
+        }
 
         this._statusSubject.next(this._status);
-
-        const status = new OfflineCacheStatusTuple();
-        status.pluginName = "peek_plugin_graphdb";
-        status.indexName = "Key Index";
-        status.loadingQueueCount = this._status.loadProgress;
-        status.totalLoadedCount = this._status.loadTotal;
-        status.lastCheckDate = new Date();
-        status.initialFullLoadComplete = this._status.initialLoadComplete;
-        this.deviceCacheControllerService.updateCachingStatus(status);
+        this.deviceCacheControllerService.updateLoaderCachingStatus(
+            this._status
+        );
     }
 
     /** Initial load
@@ -248,7 +257,9 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
             .loadTuples(new UpdateDateTupleSelector())
             .then((tuplesAny: any[]) => {
                 let tuples: ItemKeyIndexUpdateDateTuple[] = tuplesAny;
-                if (tuples.length != 0) {
+                if (tuples.length === 0) {
+                    this.index = new ItemKeyIndexUpdateDateTuple();
+                } else {
                     this.index = tuples[0];
 
                     if (this.index.initialLoadComplete) {
@@ -257,11 +268,8 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
                     }
                 }
 
-                this.askServerForUpdates();
                 this._notifyStatus();
             });
-
-        this._notifyStatus();
     }
 
     private setupVortexSubscriptions(): void {
@@ -312,7 +320,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
                 let keys = Object.keys(serverIndex.updateDateByChunkKey);
                 let keysNeedingUpdate: string[] = [];
 
-                this._status.loadTotal = keys.length;
+                this._status.totalLoadedCount = keys.length;
 
                 // Tuples is an array of strings
                 for (let chunkKey of keys) {
@@ -361,7 +369,7 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
         this.askServerForNextUpdateChunk();
 
-        this._status.lastCheck = new Date();
+        this._status.lastCheckDate = new Date();
     }
 
     private askServerForNextUpdateChunk() {
@@ -369,22 +377,22 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
         if (this.askServerChunks.length == 0) return;
 
-        this.deviceCacheControllerService //
-            .waitForGarbageCollector()
-            .then(() => {
-                let indexChunk: ItemKeyIndexUpdateDateTuple =
-                    this.askServerChunks.pop();
-                let filt = extend(
-                    {},
-                    clientItemKeyIndexWatchUpdateFromDeviceFilt
-                );
-                filt[cacheAll] = true;
-                let pl = new Payload(filt, [indexChunk]);
-                this.vortexService.sendPayload(pl);
+        if (this.deviceCacheControllerService.isOfflineCachingPaused) {
+            this.saveChunkCacheIndex(true) //
+                .catch((e) => console.log(`ERROR saveChunkCacheIndex: ${e}`));
+            this._notifyStatus(true);
+            return;
+        }
 
-                this._status.lastCheck = new Date();
-                this._notifyStatus();
-            });
+        let indexChunk: ItemKeyIndexUpdateDateTuple =
+            this.askServerChunks.pop();
+        let filt = extend({}, clientItemKeyIndexWatchUpdateFromDeviceFilt);
+        filt[cacheAll] = true;
+        let pl = new Payload(filt, [indexChunk]);
+        this.vortexService.sendPayload(pl);
+
+        this._status.lastCheckDate = new Date();
+        this._notifyStatus();
     }
 
     /** Process ItemKeyIndexes From Server

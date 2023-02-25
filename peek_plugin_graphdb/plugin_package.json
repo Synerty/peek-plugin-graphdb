@@ -40,8 +40,6 @@
     },
     "field": {
         "subprocessGroup": "graphdb",
-        "cfgDir": "_private/both-cfg",
-        "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
@@ -80,8 +78,6 @@
     },
     "office": {
         "subprocessGroup": "graphdb",
-        "cfgDir": "_private/both-cfg",
-        "cfgModule": "graphdb-cfg.module#GraphDbCfgModule",
         "showHomeLink": false,
         "appDir": "_private/both-app",
         "appModule": "graphdb.module#GraphDbModule",
