@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import List, Optional
 
 from vortex.Tuple import Tuple, addTupleType, TupleField
@@ -44,3 +45,9 @@ class GraphDbTraceResultTuple(Tuple):
 
     #:  The message if the trace was aborted
     traceAbortedMessage: Optional[str] = TupleField()
+
+    def allUniqueTracedShapeKeys(self) -> list[str]:
+        edgeKeys = [edge.key for edge in self.edges]
+        vertexes = [vertex.key for vertex in self.vertexes]
+
+        return list(set(chain(edgeKeys, vertexes)))
