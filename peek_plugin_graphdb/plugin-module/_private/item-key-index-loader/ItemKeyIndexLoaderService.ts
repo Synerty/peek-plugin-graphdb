@@ -2,7 +2,6 @@ import { Observable, Subject } from "rxjs";
 import { filter, first, takeUntil } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import {
-    extend,
     NgLifeCycleEvents,
     Payload,
     PayloadEnvelope,
@@ -33,7 +32,7 @@ import {
 
 // ----------------------------------------------------------------------------
 
-let clientItemKeyIndexWatchUpdateFromDeviceFilt = extend(
+let clientItemKeyIndexWatchUpdateFromDeviceFilt = Object.assign(
     { key: "clientItemKeyIndexWatchUpdateFromDevice" },
     graphDbFilt
 );
@@ -380,7 +379,10 @@ export class ItemKeyIndexLoaderService extends NgLifeCycleEvents {
 
         let indexChunk: ItemKeyIndexUpdateDateTuple =
             this.askServerChunks.pop();
-        let filt = extend({}, clientItemKeyIndexWatchUpdateFromDeviceFilt);
+        let filt = Object.assign(
+            {},
+            clientItemKeyIndexWatchUpdateFromDeviceFilt
+        );
         filt[cacheAll] = true;
         let pl = new Payload(filt, [indexChunk]);
         this.vortexService.sendPayload(pl);

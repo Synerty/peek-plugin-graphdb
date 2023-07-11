@@ -2,7 +2,6 @@ import { Observable, Subject } from "rxjs";
 import { filter, first, takeUntil } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import {
-    extend,
     NgLifeCycleEvents,
     Payload,
     PayloadEnvelope,
@@ -39,7 +38,7 @@ export interface SegmentResultI {
 
 // ----------------------------------------------------------------------------
 
-let clientSegmentWatchUpdateFromDeviceFilt = extend(
+let clientSegmentWatchUpdateFromDeviceFilt = Object.assign(
     { key: "clientSegmentWatchUpdateFromDevice" },
     graphDbFilt
 );
@@ -435,7 +434,7 @@ export class PrivateSegmentLoaderService extends NgLifeCycleEvents {
 
         let indexChunk: SegmentIndexUpdateDateTuple =
             this.askServerChunks.pop();
-        let filt = extend({}, clientSegmentWatchUpdateFromDeviceFilt);
+        let filt = Object.assign({}, clientSegmentWatchUpdateFromDeviceFilt);
         filt[cacheAll] = true;
         let pl = new Payload(filt, [indexChunk]);
         this.vortexService.sendPayload(pl);
