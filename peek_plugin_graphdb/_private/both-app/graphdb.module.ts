@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
+import { RouterModule, Route, Routes } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { DocdbComponent } from "./graphdb.component";
