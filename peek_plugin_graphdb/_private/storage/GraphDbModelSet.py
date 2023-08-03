@@ -8,7 +8,7 @@ from .DeclarativeBase import DeclarativeBase
 
 
 @addTupleType
-class GraphDbModelSet(Tuple, DeclarativeBase):
+class GraphDbModelSet(DeclarativeBase, Tuple):
     __tablename__ = "GraphDbModelSet"
     __tupleType__ = graphDbTuplePrefix + __tablename__
 

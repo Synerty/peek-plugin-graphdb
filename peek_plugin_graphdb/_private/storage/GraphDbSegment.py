@@ -9,7 +9,7 @@ from peek_plugin_graphdb._private.storage.GraphDbModelSet import GraphDbModelSet
 
 
 @addTupleType
-class GraphDbSegment(Tuple, DeclarativeBase):
+class GraphDbSegment(DeclarativeBase, Tuple):
     __tupleType__ = graphDbTuplePrefix + "GraphDbSegmentTable"
     __tablename__ = "GraphDbSegment"
 

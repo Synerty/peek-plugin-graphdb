@@ -14,7 +14,7 @@ from peek_plugin_graphdb.tuples.GraphDbTraceConfigTuple import GraphDbTraceConfi
 
 
 @addTupleType
-class GraphDbTraceConfig(Tuple, DeclarativeBase):
+class GraphDbTraceConfig(DeclarativeBase, Tuple):
     __tupleType__ = graphDbTuplePrefix + "GraphDbTraceConfigTable"
     __tablename__ = "GraphDbTraceConfig"
 

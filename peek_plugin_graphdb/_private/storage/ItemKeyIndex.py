@@ -10,7 +10,7 @@ from vortex.Tuple import Tuple, addTupleType
 
 
 @addTupleType
-class ItemKeyIndex(Tuple, DeclarativeBase):
+class ItemKeyIndex(DeclarativeBase, Tuple):
     __tablename__ = "ItemKeyIndex"
     __tupleType__ = graphDbTuplePrefix + "ItemKeyIndexTable"
 

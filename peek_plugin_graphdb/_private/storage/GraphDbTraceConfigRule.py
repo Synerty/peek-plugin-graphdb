@@ -13,7 +13,7 @@ from peek_plugin_graphdb.tuples.GraphDbTraceConfigRuleTuple import (
 
 
 @addTupleType
-class GraphDbTraceConfigRule(Tuple, DeclarativeBase):
+class GraphDbTraceConfigRule(DeclarativeBase, Tuple):
     __tupleType__ = graphDbTuplePrefix + "GraphDbTraceConfigRuleTable"
     __tablename__ = "GraphDbTraceConfigRule"
 
