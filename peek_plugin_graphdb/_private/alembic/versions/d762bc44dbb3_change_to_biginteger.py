@@ -16,11 +16,13 @@ depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import geoalchemy2
 
 
 def _alterColumnPkBigInt(schemaName, tableName):
-    return """
+    return text(
+        """
         
         DO $$
             DECLARE
@@ -69,8 +71,8 @@ def _alterColumnPkBigInt(schemaName, tableName):
         ALTER TABLE %(schemaName)s."%(tableName)s"
         ALTER COLUMN "%(columnName)s" SET DEFAULT 
             nextval('%(schemaName)s."%(tableName)s_%(columnName)s_seq"'::regclass);
-        """ % dict(
-        schemaName=schemaName, tableName=tableName, columnName="id"
+        """
+        % dict(schemaName=schemaName, tableName=tableName, columnName="id")
     )
 
 

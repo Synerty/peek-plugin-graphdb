@@ -50,7 +50,7 @@ class ItemKeyIndexChunkTupleSelector extends TupleSelector {
         super(graphDbTuplePrefix + "ItemKeyIndexChunkTuple", { key: chunkKey });
     }
 
-    toOrderedJsonStr(): string {
+    override toOrderedJsonStr(): string {
         return this.chunkKey;
     }
 }

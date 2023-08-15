@@ -56,7 +56,7 @@ class SegmentChunkTupleSelector extends TupleSelector {
         super(graphDbTuplePrefix + "SegmentChunkTuple", { key: chunkKey });
     }
 
-    toOrderedJsonStr(): string {
+    override toOrderedJsonStr(): string {
         return this.chunkKey;
     }
 }
