@@ -31,7 +31,7 @@ export class ViewTraceComponent extends NgLifeCycleEvents implements OnInit {
         headerService.setTitle("DEV test trace ...");
     }
 
-    ngOnInit() {
+    override ngOnInit() {
         this.route.params
             .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((params: Params) => {
